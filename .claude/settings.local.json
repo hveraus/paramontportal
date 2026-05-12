@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(npx tailwindcss *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174/)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx vite *)",
+      "Bash(mkdir -p \"/Users/Ken/Claude.Code/Paramont V5-May/app/.claude\")",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}

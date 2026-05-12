@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "paramont-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5174"],
+      "cwd": "/Users/Ken/Claude.Code/Paramont V5-May/app",
+      "port": 5174
+    }
+  ]
+}
