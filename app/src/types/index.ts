@@ -1,5 +1,4 @@
-export type ItemStatus    = 'ACTIVE' | 'HOLD' | 'PASS'
-export type ItemStage     = 'Concept' | 'Finished' | 'Discontinued'
+export type ProductStatus = 'Concept' | 'Proposed' | 'Pre-selected' | 'Initial Sampled' | 'Final' | 'Dropped'
 export type ParentOrBaby  = 'Parent' | 'Baby'
 export type AgeGrade      = '3+' | '6+' | '8+' | '14+'
 export type FobPoint      = 'Ningbo' | 'Shenzhen' | 'Huzhiming' | 'Haiphong' | 'Shanghai'
@@ -111,7 +110,7 @@ export interface ProductComment {
 
 export interface ProductDetail {
   // ── Basic Info ──────────────────────────────────────────────────
-  sampleCode: string            // 样品编码  PDM-YYYYMMDD-XXX
+  productCode: string           // 产品编码  PDM-YYYYMMDD-XXX
   itemNo: string                // ITEM# Primary Key
   upc: string | null            // UPC#
   upc12Digit: string | null     // 12 Digit UPC
@@ -119,8 +118,7 @@ export interface ProductDetail {
   categoryPath: string[]        // 品类 (三级)
   productCategory: string       // Product Category
   brand: string                 // Brand
-  stage: ItemStage              // 状态 (Concept / Finished / Discontinued)
-  itemStatus: ItemStatus        // Item Status (ACTIVE / HOLD / PASS)
+  status: ProductStatus         // 状态
   parentOrBaby: ParentOrBaby | null
   parentNumber: string | null
   creatingTeam: 'China' | 'US'

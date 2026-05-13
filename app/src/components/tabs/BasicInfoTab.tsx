@@ -52,8 +52,8 @@ export default function BasicInfoTab({ product }: { product: ProductDetail }) {
       {/* ── Identification ──────────────────────────────────────── */}
       <SectionDivider title="Identification" />
 
-      <Field label="Sample Code">
-        <span className="font-mono text-blue-700 font-medium">{product.sampleCode}</span>
+      <Field label="Product Code">
+        <span className="font-mono text-blue-700 font-medium">{product.productCode}</span>
       </Field>
 
       <Field label="ITEM# (Primary Key)">

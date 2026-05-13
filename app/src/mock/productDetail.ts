@@ -2,7 +2,7 @@ import type { ProductDetail } from '../types'
 
 export const mockProduct: ProductDetail = {
   // ── Basic Info ───────────────────────────────────────────────────────────
-  sampleCode:        'PDM-20241001-138',
+  productCode:       'PDM-20241001-138',
   itemNo:            '1008823',
   upc:               '12345678905',
   upc12Digit:        '012345678905',
@@ -10,8 +10,7 @@ export const mockProduct: ProductDetail = {
   categoryPath:      ['Crafts', 'Yarn', 'Pom-Pom'],
   productCategory:   'NB CRAFT CATEGORY',
   brand:             'WM - Hello Hobby',
-  stage:             'Concept',
-  itemStatus:        'ACTIVE',
+  status:            'Concept',
   parentOrBaby:      'Baby',
   parentNumber:      '1008800',
   creatingTeam:      'China',
@@ -133,8 +132,8 @@ export const mockProduct: ProductDetail = {
         { id: 'att-03', name: 'Color-Fastness-Lab-Result.pdf',      url: '#', type: 'PDF' as const, size: '856 KB', uploadedAt: '2024-11-01', uploadedBy: 'Xiaomei Li' },
       ],
       images: [
-        { id: 'qi-01', url: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=800&q=80', type: 'Reference Images', alt: 'Inspection reference – competitor craft kit' },
-        { id: 'qi-02', url: 'https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=800&q=80', type: 'Reference Images', alt: 'Color swatch reference' },
+        { id: 'qi-01', url: '/Turtle.jpg', type: 'Reference Images', alt: 'Inspection reference – competitor craft kit' },
+        { id: 'qi-02', url: '/box.webp', type: 'Reference Images', alt: 'Color swatch reference' },
         { id: 'qi-03', url: '/Turtle.jpg', type: 'Product Render',    alt: 'Product render – inspection round 1' },
         { id: 'qi-04', url: '/box.webp', type: 'Packaging Render',  alt: 'Packaging render – front view' },
       ],
@@ -153,7 +152,7 @@ export const mockProduct: ProductDetail = {
         { id: 'att-04', name: 'Initial-QC-Report-Round1.pdf', url: '#', type: 'PDF' as const, size: '3.1 MB', uploadedAt: '2024-09-15', uploadedBy: 'Wei Zhang' },
       ],
       images: [
-        { id: 'qi-05', url: 'https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=800&q=80', type: 'Reference Images', alt: 'Color deviation reference photo' },
+        { id: 'qi-05', url: '/Turtle.jpg', type: 'Reference Images', alt: 'Color deviation reference photo' },
       ],
     },
   ],
@@ -206,12 +205,12 @@ export const mockProduct: ProductDetail = {
     },
     {
       id: 'img-04',
-      url: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=800&q=80',
+      url: '/box.webp',
       type: 'Reference Images', alt: 'Market reference – competitor craft kit',
     },
     {
       id: 'img-05',
-      url: 'https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=800&q=80',
+      url: '/Turtle.jpg',
       type: 'Reference Images', alt: 'Color swatch reference',
     },
   ],

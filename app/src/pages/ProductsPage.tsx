@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import TopBar from '../components/TopBar'
 import Sidebar from '../components/Sidebar'
-import StatusTag from '../components/StatusTag'
 import { useNavigation } from '../context/NavigationContext'
 import { MOCK_PRODUCTS, CATEGORY_TREE, type ProductListItem } from '../mock/products'
 
@@ -12,7 +11,6 @@ const TOTAL_RESULTS = 47 // simulated total
 
 interface FilterState {
   categories: string[]
-  stages: string[]
   statuses: string[]
   countries: string[]
   hasPatent: boolean | null
@@ -23,7 +21,6 @@ interface FilterState {
 
 const DEFAULT_FILTERS: FilterState = {
   categories: [],
-  stages: [],
   statuses: [],
   countries: [],
   hasPatent: null,
@@ -99,8 +96,8 @@ function FilterSection({ title, children, defaultOpen = true }: {
 
 // ── Checkbox helper ───────────────────────────────────────────────────────
 
-function Checkbox({ label, checked, onChange, indeterminate = false }: {
-  label: string; checked: boolean; onChange: () => void; indeterminate?: boolean
+function Checkbox({ label, checked, onChange, indeterminate = false, count }: {
+  label: string; checked: boolean; onChange: () => void; indeterminate?: boolean; count?: number
 }) {
   return (
     <label className="flex items-center gap-2.5 py-1 cursor-pointer group">
@@ -115,18 +112,27 @@ function Checkbox({ label, checked, onChange, indeterminate = false }: {
         </svg>}
         {indeterminate && <div className="w-2 h-0.5 bg-white rounded" />}
       </div>
-      <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors select-none">{label}</span>
+      <span className="flex-1 text-sm text-slate-600 group-hover:text-slate-900 transition-colors select-none">{label}</span>
+      {count !== undefined && (
+        <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded-full min-w-[20px] text-center leading-none transition-colors
+          ${checked || indeterminate
+            ? 'bg-blue-100 text-blue-600'
+            : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
+          {count}
+        </span>
+      )}
     </label>
   )
 }
 
 // ── Filter panel ──────────────────────────────────────────────────────────
 
-function FilterPanel({ filters, onChange }: {
+function FilterPanel({ filters, onChange, categoryCounts }: {
   filters: FilterState
   onChange: (f: FilterState) => void
+  categoryCounts: Record<string, number>
 }) {
-  const toggle = (key: 'categories' | 'stages' | 'statuses' | 'countries', val: string) => {
+  const toggle = (key: 'categories' | 'statuses' | 'countries', val: string) => {
     const arr = filters[key]
     onChange({ ...filters, [key]: arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val] })
   }
@@ -152,6 +158,7 @@ function FilterPanel({ filters, onChange }: {
           {CATEGORY_TREE.map(cat => {
             const allSelected = cat.children.every(c => filters.categories.includes(c))
             const someSelected = cat.children.some(c => filters.categories.includes(c))
+            const parentCount = cat.children.reduce((sum, c) => sum + (categoryCounts[c] ?? 0), 0)
             return (
               <div key={cat.name}>
                 <Checkbox
@@ -159,6 +166,7 @@ function FilterPanel({ filters, onChange }: {
                   checked={allSelected}
                   indeterminate={!allSelected && someSelected}
                   onChange={() => toggleParentCat(cat.name, cat.children)}
+                  count={parentCount || undefined}
                 />
                 <div className="ml-5 space-y-0.5">
                   {cat.children.map(child => (
@@ -166,6 +174,7 @@ function FilterPanel({ filters, onChange }: {
                       key={child} label={child}
                       checked={filters.categories.includes(child)}
                       onChange={() => toggle('categories', child)}
+                      count={categoryCounts[child] || undefined}
                     />
                   ))}
                 </div>
@@ -175,19 +184,9 @@ function FilterPanel({ filters, onChange }: {
         </div>
       </FilterSection>
 
-      {/* Status (Stage) */}
-      <FilterSection title="Stage">
-        {(['Concept', 'Finished', 'Discontinued'] as const).map(s => (
-          <Checkbox key={s} label={s}
-            checked={filters.stages.includes(s)}
-            onChange={() => toggle('stages', s)}
-          />
-        ))}
-      </FilterSection>
-
-      {/* Item Status */}
-      <FilterSection title="Item Status" defaultOpen={false}>
-        {(['ACTIVE', 'HOLD', 'PASS'] as const).map(s => (
+      {/* Status */}
+      <FilterSection title="Status">
+        {(['Concept', 'Proposed', 'Pre-selected', 'Initial Sampled', 'Final', 'Dropped'] as const).map(s => (
           <Checkbox key={s} label={s}
             checked={filters.statuses.includes(s)}
             onChange={() => toggle('statuses', s)}
@@ -277,13 +276,13 @@ function FilterPanel({ filters, onChange }: {
 
 // ── Product card ──────────────────────────────────────────────────────────
 
-const STATUS_VARIANT: Record<string, 'green' | 'orange' | 'red'> = {
-  ACTIVE: 'green', HOLD: 'orange', PASS: 'red',
-}
-const STAGE_COLOR: Record<string, string> = {
-  Concept: 'bg-blue-50 text-blue-700',
-  Finished: 'bg-emerald-50 text-emerald-700',
-  Discontinued: 'bg-slate-100 text-slate-500',
+const STATUS_COLOR: Record<string, string> = {
+  'Concept':        'bg-blue-50 text-blue-700 border border-blue-200',
+  'Proposed':       'bg-violet-50 text-violet-700 border border-violet-200',
+  'Pre-selected':   'bg-amber-50 text-amber-700 border border-amber-200',
+  'Initial Sampled':'bg-orange-50 text-orange-700 border border-orange-200',
+  'Final':          'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  'Dropped':        'bg-slate-100 text-slate-500 border border-slate-200',
 }
 
 function ProductCard({ product, onView }: { product: ProductListItem; onView: () => void }) {
@@ -323,12 +322,11 @@ function ProductCard({ product, onView }: { product: ProductListItem; onView: ()
         <p className="text-sm font-semibold text-slate-900 line-clamp-2 leading-snug">{product.name}</p>
         <p className="text-xs font-mono text-slate-400">#{product.itemNo}</p>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <StatusTag label={product.itemStatus} variant={STATUS_VARIANT[product.itemStatus]} />
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STAGE_COLOR[product.stage]}`}>
-            {product.stage}
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[product.status] ?? 'bg-slate-100 text-slate-500'}`}>
+            {product.status}
           </span>
           {product.committed && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
               Committed
             </span>
           )}
@@ -361,9 +359,8 @@ function ProductRow({ product, onView }: { product: ProductListItem; onView: () 
         <p className="text-xs text-slate-400 font-mono mt-0.5">#{product.itemNo} · {product.category} / {product.subcategory}</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <StatusTag label={product.itemStatus} variant={STATUS_VARIANT[product.itemStatus]} />
-        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STAGE_COLOR[product.stage]}`}>
-          {product.stage}
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[product.status] ?? 'bg-slate-100 text-slate-500'}`}>
+          {product.status}
         </span>
       </div>
       <div className="text-sm font-semibold text-slate-800 w-16 text-right flex-shrink-0">
@@ -420,11 +417,18 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [page, setPage] = useState(1)
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    MOCK_PRODUCTS.forEach(p => {
+      counts[p.subcategory] = (counts[p.subcategory] ?? 0) + 1
+    })
+    return counts
+  }, [])
+
   const filtered = useMemo(() => {
     let list = [...MOCK_PRODUCTS]
     if (filters.categories.length) list = list.filter(p => filters.categories.includes(p.subcategory))
-    if (filters.stages.length)     list = list.filter(p => filters.stages.includes(p.stage))
-    if (filters.statuses.length)   list = list.filter(p => filters.statuses.includes(p.itemStatus))
+    if (filters.statuses.length)   list = list.filter(p => filters.statuses.includes(p.status))
     if (filters.countries.length)  list = list.filter(p => filters.countries.includes(p.country))
     if (filters.hasPatent !== null) list = list.filter(p => p.hasPatent === filters.hasPatent)
     if (filters.committed !== null) list = list.filter(p => p.committed === filters.committed)
@@ -442,7 +446,7 @@ export default function ProductsPage() {
   }, [filtered, sortBy])
 
   // Simulate larger total for pagination display
-  const displayTotal = filters.categories.length || filters.stages.length || filters.statuses.length ||
+  const displayTotal = filters.categories.length || filters.statuses.length ||
     filters.countries.length || filters.hasPatent !== null || filters.committed !== null
     ? sorted.length
     : TOTAL_RESULTS
@@ -451,7 +455,6 @@ export default function ProductsPage() {
 
   const activeFilterCount = [
     filters.categories.length,
-    filters.stages.length,
     filters.statuses.length,
     filters.countries.length,
     filters.hasPatent !== null ? 1 : 0,
@@ -478,7 +481,7 @@ export default function ProductsPage() {
           {/* Content */}
           <div className="flex gap-5 items-start">
             {/* Filter panel */}
-            <FilterPanel filters={filters} onChange={(f) => { setFilters(f); setPage(1) }} />
+            <FilterPanel filters={filters} onChange={(f) => { setFilters(f); setPage(1) }} categoryCounts={categoryCounts} />
 
             {/* Results */}
             <div className="flex-1 min-w-0 space-y-4">
