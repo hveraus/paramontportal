@@ -40,20 +40,6 @@ export const MODULE_FEATURES: Record<string, { label: string; features: Record<s
       location: '样品间位置管理',
     },
   },
-  audit: {
-    label: '数据审计',
-    features: {
-      archive: '文件归档',
-      analytics: '浏览数据',
-    },
-  },
-  ai: {
-    label: '智能化应用',
-    features: {
-      recommend: '智能搜推',
-      agent: 'Agent 入口',
-    },
-  },
 }
 
 export const MENU_ITEMS = [

@@ -199,9 +199,11 @@ function OrgTreeNode({ node, selectedId, onSelect, searchText, defaultExpanded }
           )}
         </div>
 
-        {/* hasCustomConfig badge */}
-        {node.hasCustomConfig && (
-          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-orange-400" title="已配置自定义权限" />
+        {/* hasCustomConfig badge — users only */}
+        {node.type === 'user' && node.hasCustomConfig && (
+          <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600 border border-orange-200 leading-none">
+            定制权限
+          </span>
         )}
       </button>
 
@@ -610,8 +612,9 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
   if (!nodeId) {
     return (
       <div className="p-4 flex flex-col items-center justify-center h-full text-slate-400">
-        <span className="text-sm">权限预览</span>
-        <span className="text-xs mt-1">请先选择节点</span>
+        <span className="text-2xl mb-2 opacity-30">⚙</span>
+        <span className="text-sm font-medium">权限预览</span>
+        <span className="text-xs mt-1">请从左侧选择人员或部门</span>
       </div>
     )
   }
@@ -619,85 +622,200 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
   const node = findNode(nodeId)
   if (!node) return null
 
-  // Compute effective using latest configs (merge override)
   const effective = computeEffective(nodeId)
 
-  // Determine sources for features
   const deptId = node.type === 'user' ? node.departmentId : null
   const deptName = deptId ? getDeptName(deptId) : null
 
-  const inheritedFeatures: string[] = []
-  const overriddenFeatures: string[] = []
+  // Feature stats
+  let totalFeatures = 0
+  let enabledFeatures = 0
+  const inheritedCount = { features: 0 }
+  const overriddenCount = { features: 0 }
 
-  if (node.type === 'user') {
-    for (const mod of Object.keys(MODULE_FEATURES)) {
-      for (const feat of Object.keys(MODULE_FEATURES[mod].features)) {
-        const userVal = configs[nodeId]?.feature[mod]?.[feat] ?? 'inherit'
-        if (userVal !== 'inherit') {
-          overriddenFeatures.push(`${MODULE_FEATURES[mod].features[feat]}`)
-        } else {
-          inheritedFeatures.push(`${MODULE_FEATURES[mod].features[feat]}`)
-        }
+  for (const modKey of Object.keys(MODULE_FEATURES)) {
+    for (const featKey of Object.keys(MODULE_FEATURES[modKey].features)) {
+      totalFeatures++
+      if (effective.feature[modKey]?.[featKey] === true) enabledFeatures++
+      if (node.type === 'user') {
+        const userVal = configs[nodeId]?.feature[modKey]?.[featKey] ?? 'inherit'
+        if (userVal !== 'inherit') overriddenCount.features++
+        else inheritedCount.features++
       }
     }
   }
 
+  // Menu stats
+  const enabledMenus = MENU_ITEMS.filter(m => effective.menu[m.id] === true)
+  const totalMenus = MENU_ITEMS.length
+
+  // Scope info
+  const scopeOption = SCOPE_OPTIONS.find(o => o.value === effective.dataScope)
+  const scopeColors: Record<string, string> = {
+    public: 'bg-slate-100 text-slate-600',
+    department: 'bg-blue-100 text-blue-700',
+    all: 'bg-violet-100 text-violet-700',
+    confidential: 'bg-red-100 text-red-700',
+  }
+
+  // Node type display
+  const nodeTypeLabel = node.type === 'company' ? '公司' : node.type === 'department' ? '部门' : null
+
   return (
-    <div className="p-4 overflow-y-auto h-full">
-      <div className="mb-3">
-        <p className="text-sm font-semibold text-slate-800">权限预览</p>
-        <p className="text-xs text-slate-500 mt-0.5">最终生效权限（并集 + 个人覆盖）</p>
-      </div>
-
-      <div className="space-y-4">
-        {Object.entries(MODULE_FEATURES).map(([modKey, mod]) => (
-          <div key={modKey}>
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-              {mod.label}
-            </p>
-            <div className="space-y-1">
-              {Object.entries(mod.features).map(([featKey, featLabel]) => {
-                const hasIt = effective.feature[modKey]?.[featKey] === true
-                return (
-                  <div key={featKey} className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${hasIt ? 'bg-green-500' : 'bg-slate-300'}`} />
-                    <span className={`text-xs ${hasIt ? 'text-slate-700' : 'text-slate-400'}`}>
-                      {featLabel}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
+    <div className="overflow-y-auto h-full flex flex-col">
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3 border-b border-slate-100">
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">权限预览</p>
+        {/* Node identity */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-slate-500">
+            {node.type === 'user' ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            ) : node.type === 'department' ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            )}
           </div>
-        ))}
-      </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-800 truncate">{node.name}</p>
+            <p className="text-xs text-slate-400 truncate">
+              {node.type === 'user' ? (node.role ?? '成员') + (deptName ? ` · ${deptName}` : '') : nodeTypeLabel}
+            </p>
+          </div>
+          {node.type === 'user' && node.hasCustomConfig && (
+            <span className="flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 border border-orange-200 leading-none ml-auto">
+              定制权限
+            </span>
+          )}
+        </div>
 
-      {/* Data scope */}
-      <div className="mt-4 pt-3 border-t border-slate-100">
-        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">数据权限</p>
-        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-          {SCOPE_OPTIONS.find(o => o.value === effective.dataScope)?.label ?? effective.dataScope}
-        </span>
-      </div>
-
-      {/* Source analysis */}
-      {node.type === 'user' && (
-        <div className="mt-4 pt-3 border-t border-slate-100">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">权限来源分析</p>
-          <div className="flex flex-wrap gap-1">
-            {deptName && inheritedFeatures.length > 0 && (
-              <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                继承自{deptName}
-              </span>
-            )}
-            {overriddenFeatures.length > 0 && (
-              <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                个人覆盖
-              </span>
-            )}
+        {/* Summary stats */}
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="bg-slate-50 rounded-lg px-2.5 py-2 text-center">
+            <p className="text-base font-bold text-slate-800 leading-none">{enabledFeatures}<span className="text-xs font-normal text-slate-400">/{totalFeatures}</span></p>
+            <p className="text-[10px] text-slate-500 mt-0.5">功能已开启</p>
+          </div>
+          <div className="bg-slate-50 rounded-lg px-2.5 py-2 text-center">
+            <p className="text-base font-bold text-slate-800 leading-none">{enabledMenus.length}<span className="text-xs font-normal text-slate-400">/{totalMenus}</span></p>
+            <p className="text-[10px] text-slate-500 mt-0.5">菜单可访问</p>
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="px-4 py-3 space-y-4 flex-1">
+        {/* Feature modules */}
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">功能权限</p>
+          <div className="space-y-3">
+            {Object.entries(MODULE_FEATURES).map(([modKey, mod]) => {
+              const modEnabled = Object.keys(mod.features).filter(
+                fk => effective.feature[modKey]?.[fk] === true
+              ).length
+              const modTotal = Object.keys(mod.features).length
+              return (
+                <div key={modKey}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-medium text-slate-500">{mod.label}</p>
+                    <span className={`text-[10px] font-medium ${modEnabled > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                      {modEnabled}/{modTotal}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {Object.entries(mod.features).map(([featKey, featLabel]) => {
+                      const hasIt = effective.feature[modKey]?.[featKey] === true
+                      return (
+                        <div key={featKey} className="flex items-center gap-2">
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${hasIt ? 'bg-green-500' : 'bg-slate-200'}`} />
+                          <span className={`text-xs ${hasIt ? 'text-slate-700' : 'text-slate-400'}`}>{featLabel}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Menu access */}
+        <div className="pt-3 border-t border-slate-100">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">菜单访问</p>
+          <div className="flex flex-wrap gap-1">
+            {MENU_ITEMS.map(m => {
+              const canAccess = effective.menu[m.id] === true
+              return (
+                <span
+                  key={m.id}
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                    canAccess
+                      ? 'bg-green-50 text-green-700 border border-green-200'
+                      : 'bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  {m.label}
+                </span>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Data scope */}
+        <div className="pt-3 border-t border-slate-100">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">数据权限</p>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${scopeColors[effective.dataScope] ?? 'bg-slate-100 text-slate-600'}`}>
+              {scopeOption?.label ?? effective.dataScope}
+            </span>
+          </div>
+          {scopeOption && (
+            <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">{scopeOption.desc}</p>
+          )}
+        </div>
+
+        {/* Source analysis (users only) */}
+        {node.type === 'user' && (
+          <div className="pt-3 border-t border-slate-100">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">权限来源</p>
+            <div className="space-y-1.5">
+              {deptName && inheritedCount.features > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
+                    <span className="text-[10px] text-slate-500">继承自{deptName}</span>
+                  </div>
+                  <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full">
+                    {inheritedCount.features} 项
+                  </span>
+                </div>
+              )}
+              {overriddenCount.features > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
+                    <span className="text-[10px] text-slate-500">个人定制覆盖</span>
+                  </div>
+                  <span className="text-[10px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full">
+                    {overriddenCount.features} 项
+                  </span>
+                </div>
+              )}
+              {overriddenCount.features === 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-slate-300 flex-shrink-0" />
+                  <span className="text-[10px] text-slate-400">全部继承自部门</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1353,7 +1471,7 @@ export default function SettingsPage() {
                         <span className="text-sm font-semibold text-slate-900">{selectedNode.name}</span>
                         {selectedNode.hasCustomConfig && (
                           <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                            已配置
+                            定制权限
                           </span>
                         )}
                       </div>
@@ -1377,7 +1495,7 @@ export default function SettingsPage() {
                         <span className="text-sm font-semibold text-slate-900">{selectedNode?.name}</span>
                         {selectedNode?.hasCustomConfig && (
                           <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                            已配置
+                            定制权限
                           </span>
                         )}
                       </div>
@@ -1461,7 +1579,7 @@ export default function SettingsPage() {
                     onClick={() => setShowResetConfirm(true)}
                     className="px-5 py-2 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
                   >
-                    重置为部门默认
+                    重置权限
                   </button>
                 )}
                 {leftMode === 'org' && selectedNode?.type === 'department' && (
