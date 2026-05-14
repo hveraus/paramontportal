@@ -77,12 +77,17 @@ interface TriSwitchProps {
   onChange: (v: PermVal) => void
   inheritedFrom?: string
   inheritedSource?: string
+  allowInherit?: boolean
   disabled?: boolean
 }
 
-function TriSwitch({ value, onChange, inheritedFrom, inheritedSource = '上级部门配置', disabled }: TriSwitchProps) {
+function TriSwitch({ value, onChange, inheritedFrom, inheritedSource = '上级部门配置', allowInherit = true, disabled }: TriSwitchProps) {
   const cycle = () => {
     if (disabled) return
+    if (!allowInherit) {
+      onChange(value === true ? false : true)
+      return
+    }
     if (value === true) onChange(false)
     else if (value === false) onChange('inherit')
     else onChange(true)
@@ -95,7 +100,7 @@ function TriSwitch({ value, onChange, inheritedFrom, inheritedSource = '上级�
     <div className="relative group inline-flex">
       <button
         onClick={cycle}
-        title={isInherit && inheritedFrom ? `继承来源：${inheritedSource}（${inheritedFrom}）` : undefined}
+        title={allowInherit && isInherit && inheritedFrom ? `继承来源：${inheritedSource}（${inheritedFrom}）` : undefined}
         disabled={disabled}
         className={`relative inline-flex items-center w-9 h-5 rounded-full transition-colors focus:outline-none
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -116,7 +121,7 @@ function TriSwitch({ value, onChange, inheritedFrom, inheritedSource = '上级�
             }`}
         />
       </button>
-      {isInherit && inheritedFrom && (
+      {allowInherit && isInherit && inheritedFrom && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50 pointer-events-none">
           <div className="bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
             继承来源：{inheritedSource} · {inheritedFrom}
@@ -222,7 +227,7 @@ function OrgTreeNode({ node, selectedId, onSelect, searchText, defaultExpanded }
 interface FeatureTabProps {
   config: NodePermConfig
   onChange: (config: NodePermConfig) => void
-  nodeType: 'company' | 'department' | 'user'
+  nodeType: 'company' | 'department' | 'user' | 'role'
   deptName?: string
 }
 
@@ -258,6 +263,7 @@ const FEATURE_MATRIX = [
 ] as const
 
 function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
+  const isRole = nodeType === 'role'
   const inheritedFrom = nodeType === 'user'
     ? (deptName ?? '所属部门')
     : nodeType === 'department'
@@ -279,14 +285,17 @@ function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
             <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-28">模块</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">子功能</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-56">当前配置对象</th>
-            <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 w-36">继承自部门</th>
+            {!isRole && (
+              <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 w-36">继承自部门</th>
+            )}
           </tr>
         </thead>
         <tbody>
           {FEATURE_MATRIX.map(mod => (
             <>
               {mod.features.map((feature, idx) => {
-                const val = config.feature[mod.key]?.[feature.key] ?? false
+                const rawVal = config.feature[mod.key]?.[feature.key] ?? false
+                const val = isRole && rawVal === 'inherit' ? false : rawVal
                 const stateLabel = val === true ? '开启' : val === false ? '关闭' : '继承'
                 const stateClass = val === true
                   ? 'bg-blue-50 text-blue-700'
@@ -313,22 +322,81 @@ function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
                           onChange={v => handleChange(mod.key, feature.key, v)}
                           inheritedFrom={inheritedFrom}
                           inheritedSource="上级部门配置"
+                          allowInherit={!isRole}
                         />
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-center">
-                      <span className="text-xs text-slate-400">
-                        {val === 'inherit' ? (inheritedFrom ?? '—') : '—'}
-                      </span>
-                    </td>
+                    {!isRole && (
+                      <td className="px-3 py-2 text-center">
+                        <span className="text-xs text-slate-400">
+                          {val === 'inherit' ? (inheritedFrom ?? '—') : '—'}
+                        </span>
+                      </td>
+                    )}
                   </tr>
                 )
               })}
-              <tr className="h-1.5 bg-slate-50/40"><td colSpan={4} /></tr>
+              <tr className="h-1.5 bg-slate-50/40"><td colSpan={isRole ? 3 : 4} /></tr>
             </>
           ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+// ── Tab: Role Permissions (Org only) ─────────────────────────────────────────
+
+interface RolePermissionTabProps {
+  nodeType: 'company' | 'department' | 'user'
+  roles: RoleItem[]
+  selectedRoleIds: string[]
+  onChange: (roleIds: string[]) => void
+}
+
+function RolePermissionTab({ nodeType, roles, selectedRoleIds, onChange }: RolePermissionTabProps) {
+  if (nodeType === 'company') {
+    return (
+      <div className="px-5 py-6 text-center text-slate-400">
+        <p className="text-sm text-slate-500">公司节点不支持角色勾选</p>
+        <p className="text-xs mt-1">请选择部门或个人进行角色权限配置</p>
+      </div>
+    )
+  }
+
+  const toggleRole = (roleId: string) => {
+    const next = selectedRoleIds.includes(roleId)
+      ? selectedRoleIds.filter(id => id !== roleId)
+      : [...selectedRoleIds, roleId]
+    onChange(next)
+  }
+
+  return (
+    <div className="px-5 py-4">
+      <p className="text-xs text-slate-500 mb-3">可为当前{nodeType === 'user' ? '人员' : '部门'}勾选一个或多个角色</p>
+      <div className="space-y-2">
+        {roles.map(role => (
+          <label key={role.id} className="flex items-center justify-between gap-3 p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-700 truncate">{role.name}</p>
+              <p className="text-xs text-slate-500 truncate mt-0.5">{role.description}</p>
+            </div>
+            <div
+              className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${selectedRoleIds.includes(role.id) ? 'bg-blue-500 border-blue-500' : 'border-slate-300 bg-white'}`}
+              onClick={e => {
+                e.preventDefault()
+                toggleRole(role.id)
+              }}
+            >
+              {selectedRoleIds.includes(role.id) && (
+                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+          </label>
+        ))}
+      </div>
     </div>
   )
 }
@@ -338,22 +406,24 @@ function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
 interface MenuTabProps {
   config: NodePermConfig
   onChange: (config: NodePermConfig) => void
-  nodeType: 'company' | 'department' | 'user'
+  nodeType: 'company' | 'department' | 'user' | 'role'
   deptName?: string
 }
 
 type MenuItem = { id: string; label: string; children: MenuItem[] }
 
 function MenuItemRow({
-  item, config, onChange, depth, deptName
+  item, config, onChange, depth, deptName, allowInherit
 }: {
   item: MenuItem
   config: NodePermConfig
   onChange: (config: NodePermConfig) => void
   depth: number
   deptName?: string
+  allowInherit: boolean
 }) {
-  const val = config.menu[item.id] ?? false
+  const rawVal = config.menu[item.id] ?? false
+  const val = !allowInherit && rawVal === 'inherit' ? false : rawVal
 
   const handleParentChange = (nextVal: PermVal) => {
     const next = deepClone(config)
@@ -383,6 +453,7 @@ function MenuItemRow({
           onChange={v => handleParentChange(v)}
           inheritedFrom={deptName}
           inheritedSource="上级部门菜单权限"
+          allowInherit={allowInherit}
         />
       </div>
       {/* Children */}
@@ -396,10 +467,11 @@ function MenuItemRow({
             <span className="text-xs text-slate-600">{child.label}</span>
           </div>
           <TriSwitch
-            value={config.menu[child.id] ?? false}
+            value={!allowInherit && (config.menu[child.id] ?? false) === 'inherit' ? false : (config.menu[child.id] ?? false)}
             onChange={v => handleChildChange(child.id, v)}
             inheritedFrom={deptName}
             inheritedSource="上级部门菜单权限"
+            allowInherit={allowInherit}
           />
         </div>
       ))}
@@ -408,6 +480,8 @@ function MenuItemRow({
 }
 
 function MenuTab({ config, onChange, nodeType, deptName }: MenuTabProps) {
+  const allowInherit = nodeType !== 'role'
+
   return (
     <div className="space-y-1 py-2">
       {(MENU_ITEMS as MenuItem[]).map(item => (
@@ -418,6 +492,7 @@ function MenuTab({ config, onChange, nodeType, deptName }: MenuTabProps) {
           onChange={onChange}
           depth={0}
           deptName={nodeType === 'user' ? deptName : undefined}
+          allowInherit={allowInherit}
         />
       ))}
     </div>
@@ -458,13 +533,15 @@ const SCOPE_OPTIONS: { value: DataScope; label: string; desc: string; includes: 
 interface ButtonTabProps {
   config: NodePermConfig
   onChange: (config: NodePermConfig) => void
-  nodeType: 'company' | 'department' | 'user'
+  nodeType: 'company' | 'department' | 'user' | 'role'
   deptName?: string
 }
 
 const BUTTON_TAB_MODULES = ['产品管理', '样品管理'] as const
 
 function ButtonTab({ config, onChange, nodeType, deptName }: ButtonTabProps) {
+  const allowInherit = nodeType !== 'role'
+
   const handleChange = (mod: string, action: string, val: PermVal) => {
     const next = deepClone(config)
     if (!next.buttons[mod]) next.buttons[mod] = {}
@@ -490,13 +567,15 @@ function ButtonTab({ config, onChange, nodeType, deptName }: ButtonTabProps) {
             <tr key={action} className="border-b border-slate-50 hover:bg-slate-50/40">
               <td className="px-3 py-2 text-xs text-slate-700 font-medium">{action}</td>
               {BUTTON_TAB_MODULES.map(mod => {
-                const val = config.buttons[mod]?.[action] ?? false
+                const rawVal = config.buttons[mod]?.[action] ?? false
+                const val = !allowInherit && rawVal === 'inherit' ? false : rawVal
                 return (
                   <td key={mod} className="px-2 py-2 text-center">
                     <TriSwitch
                       value={val}
                       onChange={v => handleChange(mod, action, v)}
                       inheritedFrom={nodeType === 'user' ? deptName : undefined}
+                      allowInherit={allowInherit}
                     />
                   </td>
                 )
@@ -512,11 +591,22 @@ function ButtonTab({ config, onChange, nodeType, deptName }: ButtonTabProps) {
 // ── Right: Preview Panel ──────────────────────────────────────────────────────
 
 interface PreviewPanelProps {
+  mode: 'org' | 'role'
   nodeId: string | null
   configs: Record<string, NodePermConfig>
+  roleName?: string
 }
 
-function PreviewPanel({ nodeId, configs }: PreviewPanelProps) {
+function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
+  if (mode === 'role') {
+    return (
+      <div className="p-4 flex flex-col items-center justify-center h-full text-slate-400">
+        <span className="text-sm">权限预览</span>
+        <span className="text-xs mt-1">{roleName ? `当前角色：${roleName}` : '请先选择角色'}</span>
+      </div>
+    )
+  }
+
   if (!nodeId) {
     return (
       <div className="p-4 flex flex-col items-center justify-center h-full text-slate-400">
@@ -741,58 +831,142 @@ function Toast({ message }: { message: string | null }) {
 
 // ── Main SettingsPage ─────────────────────────────────────────────────────────
 
-const TABS = ['菜单权限', '功能模块权限', '按钮权限']
+interface RoleItem {
+  id: string
+  name: string
+  description: string
+  memberCount: number
+}
+
+const INITIAL_ROLES: RoleItem[] = [
+  { id: 'role-pd-designer', name: 'PD 设计师', description: '负责产品设计和打样流程', memberCount: 6 },
+  { id: 'role-sales-manager', name: '销售经理', description: '负责销售跟进与客户沟通', memberCount: 4 },
+  { id: 'role-quality-auditor', name: '质量审核员', description: '负责质量检查和问题追踪', memberCount: 3 },
+]
+
+function buildRoleConfigs(roles: RoleItem[]) {
+  return roles.reduce<Record<string, NodePermConfig>>((acc, role) => {
+    acc[role.id] = deepClone(COMPANY_DEFAULTS)
+    return acc
+  }, {})
+}
+
+const ORG_TABS = ['角色权限', '菜单权限', '功能模块权限', '按钮权限']
+const ROLE_TABS = ['菜单权限', '功能模块权限', '按钮权限']
 
 export default function SettingsPage() {
   const { navigate } = useNavigation()
+  const [leftMode, setLeftMode] = useState<'org' | 'role'>('org')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState(0)
   const [configs, setConfigs] = useState<Record<string, NodePermConfig>>(() => deepClone(PERM_CONFIGS))
   const [savedConfigs, setSavedConfigs] = useState<Record<string, NodePermConfig>>(() => deepClone(PERM_CONFIGS))
-  const [pendingId, setPendingId] = useState<string | null>(null)
+  const [nodeRoleBindings, setNodeRoleBindings] = useState<Record<string, string[]>>({})
+  const [savedNodeRoleBindings, setSavedNodeRoleBindings] = useState<Record<string, string[]>>({})
+  const [roles, setRoles] = useState<RoleItem[]>(() => deepClone(INITIAL_ROLES))
+  const [roleConfigs, setRoleConfigs] = useState<Record<string, NodePermConfig>>(() => buildRoleConfigs(INITIAL_ROLES))
+  const [savedRoleConfigs, setSavedRoleConfigs] = useState<Record<string, NodePermConfig>>(() => buildRoleConfigs(INITIAL_ROLES))
+  const [pendingTarget, setPendingTarget] = useState<{ mode: 'org' | 'role'; id: string } | null>(null)
   const [showUnsaved, setShowUnsaved] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showCopyModal, setShowCopyModal] = useState(false)
+  const [showDeleteRoleConfirm, setShowDeleteRoleConfirm] = useState(false)
+  const [pendingDeleteRoleId, setPendingDeleteRoleId] = useState<string | null>(null)
+  const [roleFormMode, setRoleFormMode] = useState<'create' | 'edit' | null>(null)
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
+  const [roleFormName, setRoleFormName] = useState('')
+  const [roleFormDescription, setRoleFormDescription] = useState('')
   const [toast, setToast] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
 
-  const selectedNode = selectedId ? findNode(selectedId) : null
-  const isDirty = selectedId
-    ? JSON.stringify(configs[selectedId]) !== JSON.stringify(savedConfigs[selectedId])
-    : false
+  const selectedNode = leftMode === 'org' && selectedId ? findNode(selectedId) : null
+  const selectedRole = leftMode === 'role' ? roles.find(r => r.id === selectedRoleId) : undefined
+  const selectedNodeRoleIds = selectedId ? (nodeRoleBindings[selectedId] ?? []) : []
+  const isDirty = leftMode === 'org'
+    ? (selectedId
+      ? (JSON.stringify(configs[selectedId]) !== JSON.stringify(savedConfigs[selectedId])
+        || JSON.stringify(nodeRoleBindings[selectedId] ?? []) !== JSON.stringify(savedNodeRoleBindings[selectedId] ?? []))
+      : false)
+    : (selectedRoleId ? JSON.stringify(roleConfigs[selectedRoleId]) !== JSON.stringify(savedRoleConfigs[selectedRoleId]) : false)
 
   const showToast = (msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 2000)
   }
 
-  const handleSelectNode = useCallback((id: string) => {
-    if (id === selectedId) return
-    if (isDirty) {
-      setPendingId(id)
-      setShowUnsaved(true)
+  const applyTarget = useCallback((target: { mode: 'org' | 'role'; id: string }) => {
+    setLeftMode(target.mode)
+    if (target.mode === 'org') {
+      setSelectedId(target.id)
+      setSelectedRoleId(null)
     } else {
-      setSelectedId(id)
-      setActiveTab(0)
+      setSelectedRoleId(target.id)
+      setSelectedId(null)
     }
-  }, [selectedId, isDirty])
+    setActiveTab(0)
+  }, [])
+
+  const handleSelectTarget = useCallback((target: { mode: 'org' | 'role'; id: string }) => {
+    const currentId = leftMode === 'org' ? selectedId : selectedRoleId
+    if (target.mode === leftMode && target.id === currentId) return
+
+    if (isDirty) {
+      setPendingTarget(target)
+      setShowUnsaved(true)
+      return
+    }
+
+    applyTarget(target)
+  }, [applyTarget, isDirty, leftMode, selectedId, selectedRoleId])
+
+  const handleSelectNode = useCallback((id: string) => {
+    handleSelectTarget({ mode: 'org', id })
+  }, [handleSelectTarget])
+
+  const handleSelectRole = useCallback((id: string) => {
+    handleSelectTarget({ mode: 'role', id })
+  }, [handleSelectTarget])
+
+  const handleSwitchLeftMode = (mode: 'org' | 'role') => {
+    if (mode === 'org') {
+      handleSelectTarget({ mode: 'org', id: selectedId ?? ORG_TREE.id })
+      return
+    }
+
+    const fallbackRoleId = selectedRoleId ?? roles[0]?.id
+    if (!fallbackRoleId) {
+      setLeftMode('role')
+      setSelectedId(null)
+      return
+    }
+    handleSelectTarget({ mode: 'role', id: fallbackRoleId })
+  }
 
   const handleDiscardAndSwitch = () => {
-    if (pendingId) {
-      // Reset current node changes
-      if (selectedId) {
-        setConfigs(prev => ({ ...prev, [selectedId]: deepClone(savedConfigs[selectedId]) }))
-      }
-      setSelectedId(pendingId)
-      setActiveTab(0)
+    if (leftMode === 'org' && selectedId) {
+      setConfigs(prev => ({ ...prev, [selectedId]: deepClone(savedConfigs[selectedId]) }))
+      setNodeRoleBindings(prev => ({ ...prev, [selectedId]: deepClone(savedNodeRoleBindings[selectedId] ?? []) }))
     }
+    if (leftMode === 'role' && selectedRoleId) {
+      setRoleConfigs(prev => ({ ...prev, [selectedRoleId]: deepClone(savedRoleConfigs[selectedRoleId]) }))
+    }
+
+    if (pendingTarget) applyTarget(pendingTarget)
+
     setShowUnsaved(false)
-    setPendingId(null)
+    setPendingTarget(null)
   }
 
   const handleSave = () => {
-    if (!selectedId) return
-    setSavedConfigs(prev => ({ ...prev, [selectedId]: deepClone(configs[selectedId]) }))
+    if (leftMode === 'org') {
+      if (!selectedId) return
+      setSavedConfigs(prev => ({ ...prev, [selectedId]: deepClone(configs[selectedId]) }))
+      setSavedNodeRoleBindings(prev => ({ ...prev, [selectedId]: deepClone(nodeRoleBindings[selectedId] ?? []) }))
+    } else {
+      if (!selectedRoleId) return
+      setSavedRoleConfigs(prev => ({ ...prev, [selectedRoleId]: deepClone(roleConfigs[selectedRoleId]) }))
+    }
     showToast('权限已保存')
   }
 
@@ -849,13 +1023,132 @@ export default function SettingsPage() {
   }
 
   const handleConfigChange = (newConfig: NodePermConfig) => {
-    if (!selectedId) return
-    setConfigs(prev => ({ ...prev, [selectedId]: newConfig }))
+    if (leftMode === 'org') {
+      if (!selectedId) return
+      setConfigs(prev => ({ ...prev, [selectedId]: newConfig }))
+      return
+    }
+    if (!selectedRoleId) return
+    setRoleConfigs(prev => ({ ...prev, [selectedRoleId]: newConfig }))
   }
 
-  const currentConfig = selectedId ? (configs[selectedId] ?? COMPANY_DEFAULTS) : COMPANY_DEFAULTS
+  const handleNodeRoleBindingsChange = (roleIds: string[]) => {
+    if (!selectedId) return
+    setNodeRoleBindings(prev => ({ ...prev, [selectedId]: roleIds }))
+  }
+
+  const openCreateRoleForm = () => {
+    setRoleFormMode('create')
+    setEditingRoleId(null)
+    setRoleFormName('')
+    setRoleFormDescription('')
+  }
+
+  const openEditRoleForm = (role: RoleItem) => {
+    setRoleFormMode('edit')
+    setEditingRoleId(role.id)
+    setRoleFormName(role.name)
+    setRoleFormDescription(role.description)
+    if (leftMode !== 'role' || selectedRoleId !== role.id) {
+      handleSelectRole(role.id)
+    }
+  }
+
+  const handleSubmitRoleForm = () => {
+    const name = roleFormName.trim()
+    const description = roleFormDescription.trim()
+    if (!name) {
+      showToast('角色名称不能为空')
+      return
+    }
+
+    if (roleFormMode === 'create') {
+      const id = `role-${Date.now()}`
+      const newRole: RoleItem = {
+        id,
+        name,
+        description: description || '未设置描述',
+        memberCount: 0,
+      }
+      setRoles(prev => [...prev, newRole])
+      setRoleConfigs(prev => ({ ...prev, [id]: deepClone(COMPANY_DEFAULTS) }))
+      setSavedRoleConfigs(prev => ({ ...prev, [id]: deepClone(COMPANY_DEFAULTS) }))
+      setRoleFormMode(null)
+      setEditingRoleId(null)
+      setRoleFormName('')
+      setRoleFormDescription('')
+      setLeftMode('role')
+      setSelectedId(null)
+      setSelectedRoleId(id)
+      setActiveTab(0)
+      showToast('角色已创建')
+      return
+    }
+
+    if (roleFormMode === 'edit' && editingRoleId) {
+      setRoles(prev => prev.map(role =>
+        role.id === editingRoleId
+          ? { ...role, name, description: description || '未设置描述' }
+          : role
+      ))
+      setRoleFormMode(null)
+      setEditingRoleId(null)
+      setRoleFormName('')
+      setRoleFormDescription('')
+      showToast('角色已更新')
+    }
+  }
+
+  const handleDeleteRole = (roleId: string) => {
+    setPendingDeleteRoleId(roleId)
+    setShowDeleteRoleConfirm(true)
+  }
+
+  const confirmDeleteRole = () => {
+    if (!pendingDeleteRoleId) return
+
+    setRoles(prev => prev.filter(role => role.id !== pendingDeleteRoleId))
+    setRoleConfigs(prev => {
+      const next = { ...prev }
+      delete next[pendingDeleteRoleId]
+      return next
+    })
+    setSavedRoleConfigs(prev => {
+      const next = { ...prev }
+      delete next[pendingDeleteRoleId]
+      return next
+    })
+    setNodeRoleBindings(prev => {
+      const next: Record<string, string[]> = {}
+      for (const [nodeId, roleIds] of Object.entries(prev)) {
+        next[nodeId] = roleIds.filter(roleId => roleId !== pendingDeleteRoleId)
+      }
+      return next
+    })
+    setSavedNodeRoleBindings(prev => {
+      const next: Record<string, string[]> = {}
+      for (const [nodeId, roleIds] of Object.entries(prev)) {
+        next[nodeId] = roleIds.filter(roleId => roleId !== pendingDeleteRoleId)
+      }
+      return next
+    })
+
+    if (selectedRoleId === pendingDeleteRoleId) {
+      setSelectedRoleId(null)
+    }
+
+    setShowDeleteRoleConfirm(false)
+    setPendingDeleteRoleId(null)
+    showToast('角色已删除')
+  }
+
+  const currentConfig = leftMode === 'org'
+    ? (selectedId ? (configs[selectedId] ?? COMPANY_DEFAULTS) : COMPANY_DEFAULTS)
+    : (selectedRoleId ? (roleConfigs[selectedRoleId] ?? COMPANY_DEFAULTS) : COMPANY_DEFAULTS)
   const deptId = selectedNode?.type === 'user' ? selectedNode.departmentId : null
   const deptName = deptId ? getDeptName(deptId) : undefined
+  const filteredRoles = roles.filter(role => role.name.toLowerCase().includes(searchText.toLowerCase()))
+  const tabs = leftMode === 'org' ? ORG_TABS : ROLE_TABS
 
   // Count members for depts
   const memberCount = selectedNode?.children?.filter(c => c.type === 'user').length ?? 0
@@ -884,10 +1177,36 @@ export default function SettingsPage() {
           {/* ── Permissions 3-column layout ── */}
           <div className="flex flex-1 min-h-0">
 
-        {/* ── Left: Org Tree ── */}
+        {/* ── Left: Org/Role Panel ── */}
         <div className="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
           <div className="px-3 pt-3 pb-2">
-            <p className="text-xs font-semibold text-slate-700 px-1 mb-2">组织架构</p>
+            <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-lg mb-2">
+              <button
+                onClick={() => handleSwitchLeftMode('org')}
+                className={`text-xs py-1 rounded-md transition-colors ${leftMode === 'org' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+              >
+                组织架构
+              </button>
+              <button
+                onClick={() => handleSwitchLeftMode('role')}
+                className={`text-xs py-1 rounded-md transition-colors ${leftMode === 'role' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+              >
+                角色管理
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between px-1 mb-2">
+              <p className="text-xs font-semibold text-slate-700">{leftMode === 'org' ? '组织架构' : '角色管理'}</p>
+              {leftMode === 'role' && (
+                <button
+                  onClick={openCreateRoleForm}
+                  className="text-[11px] text-blue-600 hover:text-blue-700"
+                >
+                  + 新增角色
+                </button>
+              )}
+            </div>
+
             {/* Search */}
             <div className="relative">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -895,7 +1214,7 @@ export default function SettingsPage() {
               </span>
               <input
                 type="text"
-                placeholder="搜索成员..."
+                placeholder={leftMode === 'org' ? '搜索成员...' : '搜索角色...'}
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg
@@ -903,34 +1222,125 @@ export default function SettingsPage() {
                            focus:border-blue-400 transition-colors"
               />
             </div>
+
+            {leftMode === 'role' && roleFormMode && (
+              <div className="mt-2 p-2 border border-slate-200 rounded-lg bg-slate-50 space-y-1.5">
+                <input
+                  value={roleFormName}
+                  onChange={e => setRoleFormName(e.target.value)}
+                  placeholder="角色名称"
+                  className="w-full px-2 py-1 text-xs border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                />
+                <input
+                  value={roleFormDescription}
+                  onChange={e => setRoleFormDescription(e.target.value)}
+                  placeholder="角色描述"
+                  className="w-full px-2 py-1 text-xs border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                />
+                <div className="flex justify-end gap-1">
+                  <button
+                    onClick={() => {
+                      setRoleFormMode(null)
+                      setEditingRoleId(null)
+                      setRoleFormName('')
+                      setRoleFormDescription('')
+                    }}
+                    className="px-2 py-1 text-[11px] text-slate-600 border border-slate-200 rounded-md hover:bg-white"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleSubmitRoleForm}
+                    className="px-2 py-1 text-[11px] text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                  >
+                    {roleFormMode === 'create' ? '创建' : '保存'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
-            <OrgTreeNode
-              node={ORG_TREE}
-              selectedId={selectedId}
-              onSelect={handleSelectNode}
-              searchText={searchText}
-              defaultExpanded
-            />
+            {leftMode === 'org' ? (
+              <OrgTreeNode
+                node={ORG_TREE}
+                selectedId={selectedId}
+                onSelect={handleSelectNode}
+                searchText={searchText}
+                defaultExpanded
+              />
+            ) : (
+              filteredRoles.map(role => {
+                const isActive = selectedRoleId === role.id
+                const hasCustomConfig = JSON.stringify(savedRoleConfigs[role.id]) !== JSON.stringify(COMPANY_DEFAULTS)
+                return (
+                  <div
+                    key={role.id}
+                    className={`px-2.5 py-2 rounded-lg border transition-colors ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                  >
+                    <button
+                      onClick={() => handleSelectRole(role.id)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-semibold ${isActive ? 'text-blue-700' : 'text-slate-700'}`}>{role.name}</span>
+                        {hasCustomConfig && <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">{role.description}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">{role.memberCount} 人</p>
+                    </button>
+                    <div className="flex gap-2 mt-2 justify-end">
+                      <button
+                        onClick={() => openEditRoleForm(role)}
+                        className="text-[11px] text-slate-500 hover:text-blue-600"
+                      >
+                        编辑
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRole(role.id)}
+                        className="text-[11px] text-slate-500 hover:text-red-600"
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
         </div>
 
         {/* ── Middle: Permission Panel ── */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {!selectedId ? (
+          {!selectedId && !selectedRoleId ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
               <svg className="w-10 h-10 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <p className="text-sm text-slate-500">← 请从左侧选择部门或人员</p>
+              <p className="text-sm text-slate-500">← 请从左侧选择{leftMode === 'org' ? '部门或人员' : '角色'}</p>
               <p className="text-xs text-slate-400 mt-1">选中后可在此配置权限</p>
             </div>
           ) : (
             <div className="space-y-4">
               {/* Header */}
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 px-5 py-4">
-                {selectedNode?.type === 'user' ? (
+                {leftMode === 'role' && selectedRole ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-semibold text-indigo-700">R</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-slate-900">{selectedRole.name}</span>
+                        <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">角色</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">{selectedRole.description} · {selectedRole.memberCount} 人</p>
+                    </div>
+                    <span className="text-slate-300">
+                      <IconInfo />
+                    </span>
+                  </div>
+                ) : selectedNode?.type === 'user' ? (
                   <div className="flex items-center gap-3">
                     {/* Avatar initials */}
                     <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -986,7 +1396,7 @@ export default function SettingsPage() {
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 {/* Tab Bar */}
                 <div className="border-b border-slate-200 flex">
-                  {TABS.map((tab, i) => (
+                  {tabs.map((tab, i) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(i)}
@@ -1003,27 +1413,35 @@ export default function SettingsPage() {
 
                 {/* Tab Content */}
                 <div className="min-h-64">
-                  {activeTab === 0 && (
+                  {leftMode === 'org' && activeTab === 0 && (
+                    <RolePermissionTab
+                      nodeType={selectedNode?.type ?? 'department'}
+                      roles={roles}
+                      selectedRoleIds={selectedNodeRoleIds}
+                      onChange={handleNodeRoleBindingsChange}
+                    />
+                  )}
+                  {((leftMode === 'org' && activeTab === 1) || (leftMode === 'role' && activeTab === 0)) && (
                     <MenuTab
                       config={currentConfig}
                       onChange={handleConfigChange}
-                      nodeType={selectedNode?.type ?? 'department'}
+                      nodeType={leftMode === 'org' ? (selectedNode?.type ?? 'department') : 'role'}
                       deptName={deptName}
                     />
                   )}
-                  {activeTab === 1 && (
+                  {((leftMode === 'org' && activeTab === 2) || (leftMode === 'role' && activeTab === 1)) && (
                     <FeatureTab
                       config={currentConfig}
                       onChange={handleConfigChange}
-                      nodeType={selectedNode?.type ?? 'department'}
+                      nodeType={leftMode === 'org' ? (selectedNode?.type ?? 'department') : 'role'}
                       deptName={deptName}
                     />
                   )}
-                  {activeTab === 2 && (
+                  {((leftMode === 'org' && activeTab === 3) || (leftMode === 'role' && activeTab === 2)) && (
                     <ButtonTab
                       config={currentConfig}
                       onChange={handleConfigChange}
-                      nodeType={selectedNode?.type ?? 'department'}
+                      nodeType={leftMode === 'org' ? (selectedNode?.type ?? 'department') : 'role'}
                       deptName={deptName}
                     />
                   )}
@@ -1038,7 +1456,7 @@ export default function SettingsPage() {
                 >
                   保存
                 </button>
-                {selectedNode?.type === 'user' && (
+                {leftMode === 'org' && selectedNode?.type === 'user' && (
                   <button
                     onClick={() => setShowResetConfirm(true)}
                     className="px-5 py-2 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
@@ -1046,7 +1464,7 @@ export default function SettingsPage() {
                     重置为部门默认
                   </button>
                 )}
-                {selectedNode?.type === 'department' && (
+                {leftMode === 'org' && selectedNode?.type === 'department' && (
                   <button
                     onClick={() => setShowCopyModal(true)}
                     className="px-5 py-2 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
@@ -1064,7 +1482,12 @@ export default function SettingsPage() {
 
         {/* ── Right: Preview Panel ── */}
         <div className="w-72 flex-shrink-0 bg-white border-l border-slate-200 overflow-hidden flex flex-col">
-          <PreviewPanel nodeId={selectedId} configs={configs} />
+          <PreviewPanel
+            mode={leftMode}
+            nodeId={leftMode === 'org' ? selectedId : null}
+            configs={configs}
+            roleName={selectedRole?.name}
+          />
         </div>
           </div>{/* end 3-col layout */}
         </div>{/* end content column */}
@@ -1077,7 +1500,7 @@ export default function SettingsPage() {
         message="当前页有未保存的权限修改，切换后将会丢失这些更改。"
         confirmLabel="放弃修改"
         confirmClass="bg-red-500 hover:bg-red-600"
-        onCancel={() => { setShowUnsaved(false); setPendingId(null) }}
+        onCancel={() => { setShowUnsaved(false); setPendingTarget(null) }}
         onConfirm={handleDiscardAndSwitch}
       />
 
@@ -1096,6 +1519,19 @@ export default function SettingsPage() {
         currentDeptId={selectedNode?.type === 'department' ? selectedId : null}
         onCancel={() => setShowCopyModal(false)}
         onConfirm={handleCopyToDept}
+      />
+
+      <ConfirmDialog
+        open={showDeleteRoleConfirm}
+        title="确认删除角色？"
+        message="删除后将移除该角色及其权限配置。此操作不可撤销。"
+        confirmLabel="确认删除"
+        confirmClass="bg-red-500 hover:bg-red-600"
+        onCancel={() => {
+          setShowDeleteRoleConfirm(false)
+          setPendingDeleteRoleId(null)
+        }}
+        onConfirm={confirmDeleteRole}
       />
 
       <Toast message={toast} />
