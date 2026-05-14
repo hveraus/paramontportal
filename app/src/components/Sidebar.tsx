@@ -173,9 +173,14 @@ export default function Sidebar({ topOffset = 44 }: { topOffset?: number }) {
 
       {/* Settings — pinned to bottom */}
       <div className="mt-auto px-3 py-3 border-t border-slate-100">
-        <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm
-          text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors group">
-          <span className="text-slate-400 group-hover:text-slate-600 transition-colors">
+        <button
+          onClick={() => navigate('settings')}
+          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors group
+            ${page === 'settings' || page === 'settings-permissions'
+              ? 'bg-blue-50 text-blue-700 font-medium'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
+        >
+          <span className={page === 'settings' || page === 'settings-permissions' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600 transition-colors'}>
             <IconSettings />
           </span>
           Settings

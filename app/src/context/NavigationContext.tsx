@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
-export type Page = 'dashboard' | 'products' | 'product-detail'
+export type Page = 'dashboard' | 'products' | 'product-detail' | 'settings' | 'settings-permissions'
 
 interface NavigationCtx {
   page: Page
