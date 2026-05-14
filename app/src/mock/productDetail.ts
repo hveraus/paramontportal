@@ -132,10 +132,10 @@ export const mockProduct: ProductDetail = {
         { id: 'att-03', name: 'Color-Fastness-Lab-Result.pdf',      url: '#', type: 'PDF' as const, size: '856 KB', uploadedAt: '2024-11-01', uploadedBy: 'Xiaomei Li' },
       ],
       images: [
-        { id: 'qi-01', url: '/Turtle.jpg', type: 'Reference Images', alt: 'Inspection reference – competitor craft kit' },
-        { id: 'qi-02', url: '/box.webp', type: 'Reference Images', alt: 'Color swatch reference' },
-        { id: 'qi-03', url: '/Turtle.jpg', type: 'Product Render',    alt: 'Product render – inspection round 1' },
-        { id: 'qi-04', url: '/box.webp', type: 'Packaging Render',  alt: 'Packaging render – front view' },
+        { id: 'qi-01', url: `${import.meta.env.BASE_URL}Turtle.jpg`, type: 'Reference Images', alt: 'Inspection reference – competitor craft kit' },
+        { id: 'qi-02', url: `${import.meta.env.BASE_URL}box.webp`, type: 'Reference Images', alt: 'Color swatch reference' },
+        { id: 'qi-03', url: `${import.meta.env.BASE_URL}Turtle.jpg`, type: 'Product Render',    alt: 'Product render – inspection round 1' },
+        { id: 'qi-04', url: `${import.meta.env.BASE_URL}box.webp`, type: 'Packaging Render',  alt: 'Packaging render – front view' },
       ],
     },
     {
@@ -152,7 +152,7 @@ export const mockProduct: ProductDetail = {
         { id: 'att-04', name: 'Initial-QC-Report-Round1.pdf', url: '#', type: 'PDF' as const, size: '3.1 MB', uploadedAt: '2024-09-15', uploadedBy: 'Wei Zhang' },
       ],
       images: [
-        { id: 'qi-05', url: '/Turtle.jpg', type: 'Reference Images', alt: 'Color deviation reference photo' },
+        { id: 'qi-05', url: `${import.meta.env.BASE_URL}Turtle.jpg`, type: 'Reference Images', alt: 'Color deviation reference photo' },
       ],
     },
   ],
@@ -190,27 +190,27 @@ export const mockProduct: ProductDetail = {
   images: [
     {
       id: 'img-01',
-      url: '/Turtle.jpg',
+      url: `${import.meta.env.BASE_URL}Turtle.jpg`,
       type: 'Product Render', alt: 'Pom-Pom Yarn Kit – main product render',
     },
     {
       id: 'img-02',
-      url: '/box.webp',
+      url: `${import.meta.env.BASE_URL}box.webp`,
       type: 'Packaging Render', alt: 'Hang card packaging front view',
     },
     {
       id: 'img-03',
-      url: '/box.webp',
+      url: `${import.meta.env.BASE_URL}box.webp`,
       type: 'Packaging Render', alt: 'Hang card packaging back view',
     },
     {
       id: 'img-04',
-      url: '/box.webp',
+      url: `${import.meta.env.BASE_URL}box.webp`,
       type: 'Reference Images', alt: 'Market reference – competitor craft kit',
     },
     {
       id: 'img-05',
-      url: '/Turtle.jpg',
+      url: `${import.meta.env.BASE_URL}Turtle.jpg`,
       type: 'Reference Images', alt: 'Color swatch reference',
     },
   ],

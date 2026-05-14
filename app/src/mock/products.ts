@@ -24,7 +24,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - Hello Hobby', category: 'Crafts', subcategory: 'Yarn',
     status: 'Concept', retail: 1.25, moq: 48000,
     hasPatent: true, committed: true, country: 'China', updatedAt: '2024-11-05',
-    image: '/Turtle.jpg',
+    image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
   {
     id: 'p-02', itemNo: '1008791',
@@ -32,7 +32,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - Hello Hobby', category: 'Art Supplies', subcategory: 'Paints',
     status: 'Final', retail: 2.50, moq: 24000,
     hasPatent: false, committed: true, country: 'China', updatedAt: '2024-10-28',
-    image: '/Turtle.jpg',
+    image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
   {
     id: 'p-03', itemNo: '1008754',
@@ -40,7 +40,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - Hello Hobby', category: 'Crafts', subcategory: 'Paper Craft',
     status: 'Proposed', retail: 1.00, moq: 72000,
     hasPatent: false, committed: false, country: 'China', updatedAt: '2024-10-15',
-    image: '/box.webp',
+    image: `${import.meta.env.BASE_URL}box.webp`,
   },
   {
     id: 'p-04', itemNo: '1008812',
@@ -48,7 +48,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - Hello Hobby', category: 'Art Supplies', subcategory: 'Canvas & Paper',
     status: 'Final', retail: 3.00, moq: 36000,
     hasPatent: false, committed: true, country: 'US', updatedAt: '2024-10-20',
-    image: '/Turtle.jpg',
+    image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
   {
     id: 'p-05', itemNo: '1008765',
@@ -56,7 +56,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - PlaySmart', category: 'Toys & Games', subcategory: 'Outdoor Toys',
     status: 'Pre-selected', retail: 1.50, moq: 60000,
     hasPatent: false, committed: false, country: 'China', updatedAt: '2024-09-30',
-    image: '/box.webp',
+    image: `${import.meta.env.BASE_URL}box.webp`,
   },
   {
     id: 'p-06', itemNo: '1008730',
@@ -64,7 +64,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - Hello Hobby', category: 'Party & Seasonal', subcategory: 'Holiday Décor',
     status: 'Dropped', retail: 4.00, moq: 12000,
     hasPatent: false, committed: false, country: 'China', updatedAt: '2024-08-14',
-    image: '/Turtle.jpg',
+    image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
   {
     id: 'p-07', itemNo: '1008840',
@@ -72,7 +72,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - PlaySmart', category: 'Toys & Games', subcategory: 'Puzzles',
     status: 'Initial Sampled', retail: 5.00, moq: 18000,
     hasPatent: true, committed: true, country: 'China', updatedAt: '2024-11-01',
-    image: '/box.webp',
+    image: `${import.meta.env.BASE_URL}box.webp`,
   },
   {
     id: 'p-08', itemNo: '1008799',
@@ -80,7 +80,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - Hello Hobby', category: 'Crafts', subcategory: 'Sewing & Needlework',
     status: 'Pre-selected', retail: 2.75, moq: 30000,
     hasPatent: false, committed: true, country: 'China', updatedAt: '2024-10-10',
-    image: '/Turtle.jpg',
+    image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
   {
     id: 'p-09', itemNo: '1008778',
@@ -88,7 +88,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - Hello Hobby', category: 'Art Supplies', subcategory: 'Brushes & Tools',
     status: 'Proposed', retail: 1.75, moq: 42000,
     hasPatent: false, committed: false, country: 'China', updatedAt: '2024-09-22',
-    image: '/box.webp',
+    image: `${import.meta.env.BASE_URL}box.webp`,
   },
   {
     id: 'p-10', itemNo: '1008856',
@@ -96,7 +96,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - PartyPop', category: 'Party & Seasonal', subcategory: 'Party Supplies',
     status: 'Concept', retail: 3.50, moq: 24000,
     hasPatent: false, committed: false, country: 'China', updatedAt: '2024-11-03',
-    image: '/Turtle.jpg',
+    image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
   {
     id: 'p-11', itemNo: '1008817',
@@ -104,7 +104,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - DeskMate', category: 'Stationery', subcategory: 'Notebooks',
     status: 'Final', retail: 2.25, moq: 48000,
     hasPatent: false, committed: true, country: 'US', updatedAt: '2024-10-08',
-    image: '/box.webp',
+    image: `${import.meta.env.BASE_URL}box.webp`,
   },
   {
     id: 'p-12', itemNo: '1008803',
@@ -112,7 +112,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     brand: 'WM - PlaySmart', category: 'Toys & Games', subcategory: 'Board Games',
     status: 'Initial Sampled', retail: 8.00, moq: 12000,
     hasPatent: true, committed: true, country: 'China', updatedAt: '2024-10-25',
-    image: '/Turtle.jpg',
+    image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
 ]
 
