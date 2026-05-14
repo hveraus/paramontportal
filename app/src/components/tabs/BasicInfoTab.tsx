@@ -1,15 +1,6 @@
-import type { ProductDetail, ItemStatus, ItemStage } from '../../types'
-import StatusTag from '../StatusTag'
+import type { ProductDetail } from '../../types'
 
 // ── helpers ──────────────────────────────────────────────────────────────
-
-const ITEM_STATUS_VARIANT: Record<ItemStatus, 'green' | 'orange' | 'red'> = {
-  ACTIVE: 'green', HOLD: 'orange', PASS: 'red',
-}
-
-const STAGE_VARIANT: Record<ItemStage, 'blue' | 'green' | 'red'> = {
-  Concept: 'blue', Finished: 'green', Discontinued: 'red',
-}
 
 function yesNo(v: boolean | null) {
   if (v === null || v === undefined) return <span className="text-slate-300">—</span>

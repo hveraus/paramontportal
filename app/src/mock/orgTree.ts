@@ -189,17 +189,6 @@ export const ORG_TREE: OrgNode = {
 
 // ── Permission Configs ────────────────────────────────────────────────────────
 
-function makeAllFalseFeature(): FeaturePerm {
-  const result: FeaturePerm = {}
-  for (const mod of Object.keys(MODULE_FEATURES)) {
-    result[mod] = {}
-    for (const feat of Object.keys(MODULE_FEATURES[mod].features)) {
-      result[mod][feat] = false
-    }
-  }
-  return result
-}
-
 function makeAllTrueFeature(): FeaturePerm {
   const result: FeaturePerm = {}
   for (const mod of Object.keys(MODULE_FEATURES)) {

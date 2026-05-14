@@ -136,7 +136,7 @@ function FilterPanel({ filters, onChange, categoryCounts }: {
     const arr = filters[key]
     onChange({ ...filters, [key]: arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val] })
   }
-  const toggleParentCat = (parent: string, children: string[]) => {
+  const toggleParentCat = (_parent: string, children: string[]) => {
     const allSelected = children.every(c => filters.categories.includes(c))
     const without = filters.categories.filter(c => !children.includes(c))
     onChange({ ...filters, categories: allSelected ? without : [...without, ...children] })
