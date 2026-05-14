@@ -129,6 +129,28 @@ export const ORG_TREE: OrgNode = {
           role: 'PD 设计师',
           departmentId: 'dept-cn-pd',
         },
+        {
+          id: 'user-xiaowang',
+          name: '小王',
+          type: 'user',
+          role: 'PD 设计师',
+          departmentId: 'dept-cn-pd',
+          hasCustomConfig: true,
+        },
+        {
+          id: 'user-xiaochen',
+          name: '小陈',
+          type: 'user',
+          role: 'PD 设计师',
+          departmentId: 'dept-cn-pd',
+        },
+        {
+          id: 'user-linxiao',
+          name: '林晓',
+          type: 'user',
+          role: '高级设计师',
+          departmentId: 'dept-cn-pd',
+        },
       ],
     },
     {
@@ -151,6 +173,28 @@ export const ORG_TREE: OrgNode = {
           role: 'PD 设计师',
           departmentId: 'dept-us-pd',
         },
+        {
+          id: 'user-sarah',
+          name: 'Sarah',
+          type: 'user',
+          role: 'Senior Designer',
+          departmentId: 'dept-us-pd',
+          hasCustomConfig: true,
+        },
+        {
+          id: 'user-tom',
+          name: 'Tom',
+          type: 'user',
+          role: 'PD 设计师',
+          departmentId: 'dept-us-pd',
+        },
+        {
+          id: 'user-emma',
+          name: 'Emma',
+          type: 'user',
+          role: 'PD 设计师',
+          departmentId: 'dept-us-pd',
+        },
       ],
     },
     {
@@ -164,6 +208,28 @@ export const ORG_TREE: OrgNode = {
           name: '张伟',
           type: 'user',
           role: '销售经理',
+          departmentId: 'dept-sales',
+        },
+        {
+          id: 'user-lina',
+          name: '李娜',
+          type: 'user',
+          role: '销售专员',
+          departmentId: 'dept-sales',
+        },
+        {
+          id: 'user-wangfang',
+          name: '王芳',
+          type: 'user',
+          role: '销售专员',
+          departmentId: 'dept-sales',
+          hasCustomConfig: true,
+        },
+        {
+          id: 'user-zhaoming',
+          name: '赵明',
+          type: 'user',
+          role: '客户经理',
           departmentId: 'dept-sales',
         },
       ],
@@ -181,6 +247,21 @@ export const ORG_TREE: OrgNode = {
           role: '产品经理',
           departmentId: 'dept-mgmt',
           hasCustomConfig: true,
+        },
+        {
+          id: 'user-alex',
+          name: 'Alex',
+          type: 'user',
+          role: 'COO',
+          departmentId: 'dept-mgmt',
+          hasCustomConfig: true,
+        },
+        {
+          id: 'user-lizong',
+          name: '李总',
+          type: 'user',
+          role: 'CEO',
+          departmentId: 'dept-mgmt',
         },
       ],
     },
@@ -388,6 +469,50 @@ const userSummerConfig: NodePermConfig = {
   buttons: makeButtonPerm('inherit'),
 }
 
+const userXiaowangConfig: NodePermConfig = {
+  feature: {
+    ...makeAllInheritFeature(),
+    pdm: { basic: 'inherit', quality: 'inherit', cost: 'inherit', patent: false, cert: 'inherit' },
+    ai:  { recommend: true, agent: false },
+  },
+  menu: makeMenuPerm('inherit'),
+  dataScope: 'inherit',
+  buttons: makeButtonPerm('inherit'),
+}
+
+const userSarahConfig: NodePermConfig = {
+  feature: {
+    ...makeAllTrueFeature(),
+    audit: { archive: false, analytics: true },
+  },
+  menu: {
+    ...makeMenuPerm(true),
+    'settings': false,
+    'settings.permissions': false,
+    'settings.users': false,
+    'settings.system': false,
+  },
+  dataScope: 'all',
+  buttons: makeButtonPerm(true),
+}
+
+const userWangfangConfig: NodePermConfig = {
+  feature: {
+    ...makeAllInheritFeature(),
+    portal: { home: 'inherit', category: 'inherit', preview: true, dashboard: false },
+  },
+  menu: makeMenuPerm('inherit'),
+  dataScope: 'inherit',
+  buttons: makeButtonPerm('inherit'),
+}
+
+const userAlexConfig: NodePermConfig = {
+  feature: makeAllTrueFeature(),
+  menu: makeMenuPerm(true),
+  dataScope: 'all',
+  buttons: makeButtonPerm(true),
+}
+
 const userKimiConfig: NodePermConfig = {
   feature: makeAllTrueFeature(),
   menu: makeMenuPerm(true),
@@ -405,17 +530,28 @@ function makeInheritConfig(): NodePermConfig {
 }
 
 export const PERM_CONFIGS: Record<string, NodePermConfig> = {
-  'company':       COMPANY_DEFAULTS,
-  'dept-cn-pd':    deptCnPdConfig,
-  'dept-us-pd':    deptUsPdConfig,
-  'dept-sales':    deptSalesConfig,
-  'dept-mgmt':     deptMgmtConfig,
-  'user-summer':   userSummerConfig,
-  'user-xiali':    makeInheritConfig(),
-  'user-josh':     makeInheritConfig(),
-  'user-mike':     makeInheritConfig(),
-  'user-zhangwei': makeInheritConfig(),
-  'user-kimi':     userKimiConfig,
+  'company':        COMPANY_DEFAULTS,
+  'dept-cn-pd':     deptCnPdConfig,
+  'dept-us-pd':     deptUsPdConfig,
+  'dept-sales':     deptSalesConfig,
+  'dept-mgmt':      deptMgmtConfig,
+  'user-summer':    userSummerConfig,
+  'user-xiali':     makeInheritConfig(),
+  'user-xiaowang':  userXiaowangConfig,
+  'user-xiaochen':  makeInheritConfig(),
+  'user-linxiao':   makeInheritConfig(),
+  'user-josh':      makeInheritConfig(),
+  'user-mike':      makeInheritConfig(),
+  'user-sarah':     userSarahConfig,
+  'user-tom':       makeInheritConfig(),
+  'user-emma':      makeInheritConfig(),
+  'user-zhangwei':  makeInheritConfig(),
+  'user-lina':      makeInheritConfig(),
+  'user-wangfang':  userWangfangConfig,
+  'user-zhaoming':  makeInheritConfig(),
+  'user-kimi':      userKimiConfig,
+  'user-alex':      userAlexConfig,
+  'user-lizong':    makeInheritConfig(),
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
