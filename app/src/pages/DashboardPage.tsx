@@ -122,14 +122,14 @@ const STATS_DATA = [
 // ── Category cards data ───────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { name: { en: 'Crafts', zh: '手工艺' },         count: 312, image: '/Turtle.jpg' },
-  { name: { en: 'Toys & Games', zh: '玩具游戏' },  count: 248, image: '/box.webp' },
-  { name: { en: 'Art Supplies', zh: '美术用品' },  count: 186, image: '/Turtle.jpg' },
-  { name: { en: 'Party & Seasonal', zh: '派对季节' }, count: 124, image: '/box.webp' },
-  { name: { en: 'Stationery', zh: '文具' },        count: 198, image: '/Turtle.jpg' },
-  { name: { en: 'Outdoor Toys', zh: '户外玩具' },  count: 89,  image: '/box.webp' },
-  { name: { en: 'Educational', zh: '教育益智' },   count: 143, image: '/Turtle.jpg' },
-  { name: { en: 'Holiday Décor', zh: '节日装饰' }, count: 76,  image: '/box.webp' },
+  { name: { en: 'Crafts', zh: '手工艺' },         count: 312, image: `${import.meta.env.BASE_URL}Turtle.jpg` },
+  { name: { en: 'Toys & Games', zh: '玩具游戏' },  count: 248, image: `${import.meta.env.BASE_URL}box.webp` },
+  { name: { en: 'Art Supplies', zh: '美术用品' },  count: 186, image: `${import.meta.env.BASE_URL}Turtle.jpg` },
+  { name: { en: 'Party & Seasonal', zh: '派对季节' }, count: 124, image: `${import.meta.env.BASE_URL}box.webp` },
+  { name: { en: 'Stationery', zh: '文具' },        count: 198, image: `${import.meta.env.BASE_URL}Turtle.jpg` },
+  { name: { en: 'Outdoor Toys', zh: '户外玩具' },  count: 89,  image: `${import.meta.env.BASE_URL}box.webp` },
+  { name: { en: 'Educational', zh: '教育益智' },   count: 143, image: `${import.meta.env.BASE_URL}Turtle.jpg` },
+  { name: { en: 'Holiday Décor', zh: '节日装饰' }, count: 76,  image: `${import.meta.env.BASE_URL}box.webp` },
 ]
 
 // ── Brand data ────────────────────────────────────────────────────────────
@@ -504,10 +504,10 @@ export default function DashboardPage() {
               {/* Right: product mosaic — right-aligned */}
               <div className="hidden lg:grid grid-cols-2 gap-3 flex-shrink-0 w-72 ml-auto">
                 {[
-                  { src: '/Turtle.jpg',  mt: '0' },
-                  { src: '/box.webp',    mt: '24px' },
-                  { src: '/box.webp',    mt: '-16px' },
-                  { src: '/Turtle.jpg',  mt: '8px' },
+                  { src: `${import.meta.env.BASE_URL}Turtle.jpg`,  mt: '0' },
+                  { src: `${import.meta.env.BASE_URL}box.webp`,    mt: '24px' },
+                  { src: `${import.meta.env.BASE_URL}box.webp`,    mt: '-16px' },
+                  { src: `${import.meta.env.BASE_URL}Turtle.jpg`,  mt: '8px' },
                 ].map((img, i) => (
                   <div
                     key={i}

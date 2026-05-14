@@ -30,7 +30,7 @@ export default function TopBar() {
 
       {/* Col 1 — Logo */}
       <div className="w-56 flex-shrink-0 flex items-center">
-        <img src="/paramontlogo.svg" alt="Paramont" className="h-8 w-auto object-contain" />
+        <img src={`${import.meta.env.BASE_URL}paramontlogo.svg`} alt="Paramont" className="h-8 w-auto object-contain" />
       </div>
 
       {/* Col 2 — Search */}
