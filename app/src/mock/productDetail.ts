@@ -380,4 +380,32 @@ export const mockProduct: ProductDetail = {
       description: 'Item PDM-20241001-138 created with initial stage: Concept',
     },
   ],
+
+  committedRecords: [
+    {
+      id: 'cr-01',
+      committedDate: '2024-11-05',
+      projectName: 'WM Holiday Craft 2025',
+      programCode: 'WM-HC-2025',
+      projectId: 'proj-wm-holiday-2025',
+      customer: 'Walmart',
+    },
+    {
+      id: 'cr-02',
+      committedDate: '2024-09-18',
+      projectName: 'Dollar Tree Q2 2025 Arts & Crafts',
+      programCode: 'DT-Q2-2025',
+      projectId: 'proj-dt-q2-2025',
+      customer: 'Dollar Tree',
+    },
+    {
+      id: 'cr-03',
+      committedDate: '2024-07-22',
+      projectName: 'Five Below Summer 2025',
+      programCode: 'FB-SUM-2025',
+      projectId: 'proj-fb-summer-2025',
+      customer: 'Five Below',
+      clientPending: true,
+    },
+  ],
 }

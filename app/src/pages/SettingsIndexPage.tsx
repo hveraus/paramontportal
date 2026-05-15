@@ -79,61 +79,73 @@ export default function SettingsIndexPage() {
     <div className="min-h-screen bg-slate-100">
       <TopBar />
 
-      <div className="flex">
+      <div className="flex" style={{ height: 'calc(100vh - 56px)' }}>
         <Sidebar topOffset={56} />
 
-        <div className="flex-1 min-w-0 px-6 py-5">
+        <div className="flex flex-col flex-1 min-w-0">
 
-          {/* Breadcrumb */}
-          <p className="text-xs text-slate-400 mb-5">
-            <span className="text-slate-600 font-medium">Settings</span>
-          </p>
-
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-slate-900">{lang === 'en' ? 'Settings' : '设置'}</h1>
-            <p className="text-sm text-slate-500 mt-1">{lang === 'en' ? 'Manage system preferences, account information and permission settings' : '管理系统偏好、账号信息与权限配置'}</p>
+          {/* Breadcrumb — white bar */}
+          <div className="px-6 pt-5 pb-3 flex-shrink-0 bg-white border-b border-slate-200">
+            <p className="text-xs text-slate-400">
+              <span className="text-slate-600 font-medium">Settings</span>
+            </p>
           </div>
 
-          {/* Settings list */}
-          <div className="max-w-2xl space-y-3">
-            {SETTINGS_ITEMS.map(item => (
-              <button
-                key={item.id}
-                onClick={() => item.page ? navigate(item.page) : undefined}
-                disabled={!item.page}
-                className={`w-full bg-white border border-slate-200 rounded-2xl shadow-sm px-5 py-4
-                  flex items-center gap-4 text-left transition-all duration-150
-                  ${item.page
-                    ? 'hover:shadow-md hover:border-blue-300 cursor-pointer'
-                    : 'cursor-default opacity-60'
-                  }`}
-              >
-                {/* Icon */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color}`}>
-                  {item.icon}
-                </div>
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-6 py-6">
 
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900">{lang === 'en' ? item.labelEn : item.label}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{lang === 'en' ? item.descriptionEn : item.description}</p>
-                </div>
+            {/* Header */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-slate-900">{lang === 'en' ? 'Settings' : '设置'}</h1>
+              <p className="text-sm text-slate-500 mt-1">{lang === 'en' ? 'Manage system preferences, account information and permission settings' : '管理系统偏好、账号信息与权限配置'}</p>
+            </div>
 
-                {/* Arrow */}
-                {item.page ? (
-                  <svg className="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                ) : (
-                  <span className="text-[10px] text-slate-300 font-medium flex-shrink-0">{lang === 'en' ? 'Coming Soon' : '即将推出'}</span>
-                )}
-              </button>
-            ))}
+            {/* Settings list */}
+            <div className="max-w-2xl space-y-2">
+              {SETTINGS_ITEMS.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => item.page ? navigate(item.page) : undefined}
+                  disabled={!item.page}
+                  className={`w-full rounded-2xl px-5 py-4 flex items-center gap-4 text-left transition-all duration-150 border
+                    ${item.page
+                      ? 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 cursor-pointer'
+                      : 'bg-slate-50 border-slate-200 cursor-default'
+                    }`}
+                >
+                  {/* Icon */}
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color} ${!item.page ? 'opacity-50' : ''}`}>
+                    {item.icon}
+                  </div>
+
+                  {/* Text */}
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold ${item.page ? 'text-slate-900' : 'text-slate-400'}`}>
+                      {lang === 'en' ? item.labelEn : item.label}
+                    </p>
+                    <p className={`text-xs mt-0.5 ${item.page ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {lang === 'en' ? item.descriptionEn : item.description}
+                    </p>
+                  </div>
+
+                  {/* Arrow / badge */}
+                  {item.page ? (
+                    <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-medium bg-slate-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                      {lang === 'en' ? 'Coming Soon' : '即将推出'}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Version info */}
+            <p className="mt-8 text-xs text-slate-400">PDM Portal · v5.0 · © 2025 Paramont Group</p>
           </div>
 
-          {/* Version info */}
-          <p className="mt-8 text-xs text-slate-300">PDM Portal · v5.0 · © 2025 Paramont Group</p>
         </div>
       </div>
     </div>

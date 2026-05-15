@@ -1,5 +1,8 @@
 import type { ProductDetail } from '../../types'
 
+const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
+const SELECT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors appearance-none"
+
 const IN_TO_M = 0.0254
 const CBM_TO_CUFT = 35.3147
 
@@ -17,7 +20,13 @@ function num(v: number | null | undefined, decimals = 0) {
   return <span className="font-medium">{v.toFixed(decimals)}</span>
 }
 
-export default function PackagingTab({ product }: { product: ProductDetail }) {
+interface Props {
+  product: ProductDetail
+  isEditing: boolean
+  onChange: (fields: Partial<ProductDetail>) => void
+}
+
+export default function PackagingTab({ product, isEditing, onChange }: Props) {
   const { masterQty, innerQty, countPerPackage, packagingType,
           masterHeight, masterWidth, masterDepth, estOrderQty } = product
 
@@ -41,21 +50,49 @@ export default function PackagingTab({ product }: { product: ProductDetail }) {
       <div className="grid grid-cols-2 gap-x-8 gap-y-5">
 
         <Field label="Packaging Type">
-          {packagingType
-            ? <span>{packagingType}</span>
-            : <span className="text-slate-300">—</span>}
+          {isEditing
+            ? <select className={SELECT_CLS} value={packagingType} onChange={e => onChange({ packagingType: e.target.value })}>
+                <option value="">—</option>
+                <option value="Hang Tag">Hang Tag</option>
+                <option value="Box">Box</option>
+                <option value="Polybag">Polybag</option>
+                <option value="Blister">Blister</option>
+                <option value="Other">Other</option>
+              </select>
+            : packagingType
+              ? <span>{packagingType}</span>
+              : <span className="text-slate-300">—</span>
+          }
+        </Field>
+
+        <Field label="Packaging Material">
+          {isEditing
+            ? <input type="text" className={INPUT_CLS} value={product.packagingMaterial ?? ''} onChange={e => onChange({ packagingMaterial: e.target.value })} />
+            : product.packagingMaterial
+              ? <span>{product.packagingMaterial}</span>
+              : <span className="text-slate-300">—</span>
+          }
         </Field>
 
         <Field label="Count Per Package">
-          {num(countPerPackage)} {countPerPackage !== null && <span className="text-slate-400 text-xs ml-1">pc</span>}
+          {isEditing
+            ? <input type="number" step="1" className={INPUT_CLS} value={countPerPackage} onChange={e => onChange({ countPerPackage: e.target.value === '' ? 0 : Math.round(Number(e.target.value)) })} />
+            : <>{num(countPerPackage)} {countPerPackage !== null && <span className="text-slate-400 text-xs ml-1">pc</span>}</>
+          }
         </Field>
 
         <Field label="Master Qty">
-          {num(masterQty)} {masterQty !== null && <span className="text-slate-400 text-xs ml-1">pcs / carton</span>}
+          {isEditing
+            ? <input type="number" step="1" className={INPUT_CLS} value={masterQty} onChange={e => onChange({ masterQty: e.target.value === '' ? 0 : Math.round(Number(e.target.value)) })} />
+            : <>{num(masterQty)} {masterQty !== null && <span className="text-slate-400 text-xs ml-1">pcs / carton</span>}</>
+          }
         </Field>
 
         <Field label="Inner Qty">
-          {num(innerQty)} {innerQty !== null && <span className="text-slate-400 text-xs ml-1">pcs / inner box</span>}
+          {isEditing
+            ? <input type="number" step="1" className={INPUT_CLS} value={innerQty} onChange={e => onChange({ innerQty: e.target.value === '' ? 0 : Math.round(Number(e.target.value)) })} />
+            : <>{num(innerQty)} {innerQty !== null && <span className="text-slate-400 text-xs ml-1">pcs / inner box</span>}</>
+          }
         </Field>
 
         <Field label="Inner per Master">

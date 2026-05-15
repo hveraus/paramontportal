@@ -1,5 +1,9 @@
 import type { ProductDetail } from '../../types'
 
+const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
+const TEXTAREA_CLS = "w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 resize-none transition-colors"
+const SELECT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors appearance-none"
+
 // ── helpers ──────────────────────────────────────────────────────────────
 
 function yesNo(v: boolean | null) {
@@ -27,16 +31,24 @@ function Field({ label, children, span2 }: { label: string; children: React.Reac
 
 function SectionDivider({ title }: { title: string }) {
   return (
-    <div className="col-span-2 flex items-center gap-3 pt-4 pb-1">
+    <div className="col-span-2 flex items-center gap-3 pb-1">
       <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">{title}</span>
       <div className="flex-1 h-px bg-slate-200" />
     </div>
   )
 }
 
+// ── props ─────────────────────────────────────────────────────────────────
+
+interface Props {
+  product: ProductDetail
+  isEditing: boolean
+  onChange: (fields: Partial<ProductDetail>) => void
+}
+
 // ── main ─────────────────────────────────────────────────────────────────
 
-export default function BasicInfoTab({ product }: { product: ProductDetail }) {
+export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
   return (
     <div className="grid grid-cols-2 gap-x-8 gap-y-5">
 
@@ -59,33 +71,31 @@ export default function BasicInfoTab({ product }: { product: ProductDetail }) {
         {val(product.upc12Digit, true)}
       </Field>
 
-      {/* ── Status ──────────────────────────────────────────────── */}
-      <SectionDivider title="Hierarchy & Planning" />
-
-      <Field label="Parent or Baby">
-        {val(product.parentOrBaby)}
-      </Field>
-
-      <Field label="Parent #">
-        {val(product.parentNumber, true)}
-      </Field>
-
-      <Field label="Committed?">
-        {yesNo(product.committed)}
-      </Field>
-
-      <Field label="Item Data Finalized?">
-        {yesNo(product.itemDataFinalized)}
-      </Field>
-
       {/* ── Product Details ──────────────────────────────────────── */}
       <SectionDivider title="Product Details" />
 
       <Field label="Product Name" span2>
-        <span className="font-medium text-slate-900">{product.productName}</span>
+        {isEditing
+          ? <input type="text" className={INPUT_CLS} value={product.productName} onChange={e => onChange({ productName: e.target.value })} />
+          : <span className="font-medium text-slate-900">{product.productName}</span>
+        }
       </Field>
 
-      <Field label="Category (品类)">
+      <Field label="Brand">
+        {isEditing
+          ? <input type="text" className={INPUT_CLS} value={product.brand} onChange={e => onChange({ brand: e.target.value })} />
+          : val(product.brand)
+        }
+      </Field>
+
+      <Field label="Product Category">
+        {isEditing
+          ? <input type="text" className={INPUT_CLS} value={product.productCategory} onChange={e => onChange({ productCategory: e.target.value })} />
+          : val(product.productCategory)
+        }
+      </Field>
+
+      <Field label="Category">
         <div className="flex items-center gap-1.5 flex-wrap">
           {product.categoryPath.map((c, i) => (
             <span key={i} className="flex items-center gap-1.5">
@@ -97,26 +107,88 @@ export default function BasicInfoTab({ product }: { product: ProductDetail }) {
         </div>
       </Field>
 
-      <Field label="Product Category">
-        {val(product.productCategory)}
-      </Field>
-
-      <Field label="Brand">
-        {val(product.brand)}
-      </Field>
-
       <Field label="Age Grade">
-        {val(product.ageGrade)}
+        {isEditing
+          ? <select className={SELECT_CLS} value={product.ageGrade ?? ''} onChange={e => onChange({ ageGrade: (e.target.value || null) as ProductDetail['ageGrade'] })}>
+              <option value="">—</option>
+              <option value="3+">3+</option>
+              <option value="6+">6+</option>
+              <option value="8+">8+</option>
+              <option value="14+">14+</option>
+            </select>
+          : val(product.ageGrade)
+        }
+      </Field>
+
+      <Field label="Status">
+        {isEditing
+          ? <select className={SELECT_CLS} value={product.status} onChange={e => onChange({ status: e.target.value as ProductDetail['status'] })}>
+              <option value="Concept">Concept</option>
+              <option value="Proposed">Proposed</option>
+              <option value="Pre-selected">Pre-selected</option>
+              <option value="Initial Sampled">Initial Sampled</option>
+              <option value="Final">Final</option>
+              <option value="Dropped">Dropped</option>
+            </select>
+          : val(product.status)
+        }
+      </Field>
+
+      {/* ── Hierarchy & Planning ──────────────────────────────────── */}
+      <SectionDivider title="Hierarchy & Planning" />
+
+      <Field label="Parent or Baby">
+        {isEditing
+          ? <select className={SELECT_CLS} value={product.parentOrBaby ?? ''} onChange={e => onChange({ parentOrBaby: (e.target.value || null) as ProductDetail['parentOrBaby'] })}>
+              <option value="">—</option>
+              <option value="Parent">Parent</option>
+              <option value="Baby">Baby</option>
+            </select>
+          : val(product.parentOrBaby)
+        }
+      </Field>
+
+      <Field label="Parent #">
+        {isEditing
+          ? <input type="text" className={INPUT_CLS} value={product.parentNumber ?? ''} onChange={e => onChange({ parentNumber: e.target.value || null })} />
+          : val(product.parentNumber, true)
+        }
+      </Field>
+
+      <Field label="Committed?">
+        {isEditing
+          ? <label className="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={!!product.committed} onChange={e => onChange({ committed: e.target.checked })} className="w-4 h-4 rounded accent-blue-600" />
+              <span className="text-sm text-slate-600">{product.committed ? 'Yes' : 'No'}</span>
+            </label>
+          : yesNo(product.committed)
+        }
+      </Field>
+
+      <Field label="Item Data Finalized?">
+        {isEditing
+          ? <label className="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={!!product.itemDataFinalized} onChange={e => onChange({ itemDataFinalized: e.target.checked })} className="w-4 h-4 rounded accent-blue-600" />
+              <span className="text-sm text-slate-600">{product.itemDataFinalized ? 'Yes' : 'No'}</span>
+            </label>
+          : yesNo(product.itemDataFinalized)
+        }
       </Field>
 
       {/* ── Operations ───────────────────────────────────────────── */}
       <SectionDivider title="Operations" />
 
       <Field label="Creating Team">
-        <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full
-          ${product.creatingTeam === 'China' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
-          {product.creatingTeam === 'China' ? '🇨🇳' : '🇺🇸'} {product.creatingTeam}
-        </span>
+        {isEditing
+          ? <select className={SELECT_CLS} value={product.creatingTeam} onChange={e => onChange({ creatingTeam: e.target.value as 'China' | 'US' })}>
+              <option value="China">China</option>
+              <option value="US">US</option>
+            </select>
+          : <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full
+              ${product.creatingTeam === 'China' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+              {product.creatingTeam === 'China' ? '🇨🇳' : '🇺🇸'} {product.creatingTeam}
+            </span>
+        }
       </Field>
 
       <Field label="Owner">
@@ -127,25 +199,51 @@ export default function BasicInfoTab({ product }: { product: ProductDetail }) {
       </Field>
 
       <Field label="Initial Selection">
-        {val(product.initialSelection)}
+        {isEditing
+          ? <input type="text" className={INPUT_CLS} value={product.initialSelection} onChange={e => onChange({ initialSelection: e.target.value })} />
+          : val(product.initialSelection)
+        }
       </Field>
 
       <Field label="Border - Domestic">
-        {val(product.borderDomestic)}
+        {isEditing
+          ? <select className={SELECT_CLS} value={product.borderDomestic ?? ''} onChange={e => onChange({ borderDomestic: (e.target.value || null) as ProductDetail['borderDomestic'] })}>
+              <option value="">—</option>
+              <option value="Domestic">Domestic</option>
+              <option value="Direct Import">Direct Import</option>
+            </select>
+          : val(product.borderDomestic)
+        }
       </Field>
 
       <Field label="FOB Point">
-        {val(product.fobPoint)}
+        {isEditing
+          ? <select className={SELECT_CLS} value={product.fobPoint ?? ''} onChange={e => onChange({ fobPoint: (e.target.value || null) as ProductDetail['fobPoint'] })}>
+              <option value="">—</option>
+              <option value="Ningbo">Ningbo</option>
+              <option value="Shenzhen">Shenzhen</option>
+              <option value="Huzhiming">Huzhiming</option>
+              <option value="Haiphong">Haiphong</option>
+              <option value="Shanghai">Shanghai</option>
+            </select>
+          : val(product.fobPoint)
+        }
       </Field>
 
       <Field label="Factory Name">
-        {val(product.factoryName)}
+        {isEditing
+          ? <input type="text" className={INPUT_CLS} value={product.factoryName ?? ''} onChange={e => onChange({ factoryName: e.target.value || null })} />
+          : val(product.factoryName)
+        }
       </Field>
 
       <Field label="Est. Order QTY">
-        {product.estOrderQty !== null
-          ? <span className="font-medium">{product.estOrderQty.toLocaleString()}</span>
-          : <span className="text-slate-300">—</span>}
+        {isEditing
+          ? <input type="number" className={INPUT_CLS} value={product.estOrderQty ?? ''} onChange={e => onChange({ estOrderQty: e.target.value === '' ? null : Number(e.target.value) })} />
+          : product.estOrderQty !== null
+            ? <span className="font-medium">{product.estOrderQty.toLocaleString()}</span>
+            : <span className="text-slate-300">—</span>
+        }
       </Field>
 
       <Field label="Created At">
@@ -160,41 +258,59 @@ export default function BasicInfoTab({ product }: { product: ProductDetail }) {
       <SectionDivider title="Descriptions" />
 
       <Field label="Description (Features & Benefits)" span2>
-        <div
-          className="text-sm text-slate-700 leading-relaxed prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: product.itemDescription }}
-        />
+        {isEditing
+          ? <textarea className={TEXTAREA_CLS} rows={5} value={product.itemDescription} onChange={e => onChange({ itemDescription: e.target.value })} />
+          : <div
+              className="text-sm text-slate-700 leading-relaxed prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: product.itemDescription }}
+            />
+        }
       </Field>
 
-      {product.productSpec && (
-        <Field label="Product Spec" span2>
-          <p className="text-slate-700 leading-relaxed">{product.productSpec}</p>
-        </Field>
-      )}
+      <Field label="Product Spec" span2>
+        {isEditing
+          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.productSpec ?? ''} onChange={e => onChange({ productSpec: e.target.value || null })} />
+          : product.productSpec
+            ? <p className="text-slate-700 leading-relaxed">{product.productSpec}</p>
+            : <span className="text-slate-300">—</span>
+        }
+      </Field>
 
-      {product.itemPackagingSpec && (
-        <Field label="Item Packaging Spec" span2>
-          <p className="text-slate-700 leading-relaxed">{product.itemPackagingSpec}</p>
-        </Field>
-      )}
+      <Field label="Item Packaging Spec" span2>
+        {isEditing
+          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.itemPackagingSpec ?? ''} onChange={e => onChange({ itemPackagingSpec: e.target.value || null })} />
+          : product.itemPackagingSpec
+            ? <p className="text-slate-700 leading-relaxed">{product.itemPackagingSpec}</p>
+            : <span className="text-slate-300">—</span>
+        }
+      </Field>
 
-      {product.materialBreakdown && (
-        <Field label="Material Breakdown" span2>
-          <p className="text-slate-700 leading-relaxed">{product.materialBreakdown}</p>
-        </Field>
-      )}
+      <Field label="Material Breakdown" span2>
+        {isEditing
+          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.materialBreakdown ?? ''} onChange={e => onChange({ materialBreakdown: e.target.value || null })} />
+          : product.materialBreakdown
+            ? <p className="text-slate-700 leading-relaxed">{product.materialBreakdown}</p>
+            : <span className="text-slate-300">—</span>
+        }
+      </Field>
 
-      {product.assortmentBreakdown && (
-        <Field label="Assortment Breakdown" span2>
-          <p className="text-slate-700 leading-relaxed">{product.assortmentBreakdown}</p>
-        </Field>
-      )}
+      <Field label="Assortment Breakdown" span2>
+        {isEditing
+          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.assortmentBreakdown ?? ''} onChange={e => onChange({ assortmentBreakdown: e.target.value || null })} />
+          : product.assortmentBreakdown
+            ? <p className="text-slate-700 leading-relaxed">{product.assortmentBreakdown}</p>
+            : <span className="text-slate-300">—</span>
+        }
+      </Field>
 
-      {product.solComments && (
-        <Field label="Comments (SOL)" span2>
-          <p className="text-slate-700 leading-relaxed">{product.solComments}</p>
-        </Field>
-      )}
+      <Field label="Comments (SOL)" span2>
+        {isEditing
+          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.solComments ?? ''} onChange={e => onChange({ solComments: e.target.value || null })} />
+          : product.solComments
+            ? <p className="text-slate-700 leading-relaxed">{product.solComments}</p>
+            : <span className="text-slate-300">—</span>
+        }
+      </Field>
 
     </div>
   )

@@ -1,5 +1,7 @@
 import type { ProductDetail } from '../../types'
 
+const EDIT_INPUT_CLS = "w-full h-8 px-2 text-sm text-right rounded border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+
 function usd(v: number | null, decimals = 3) {
   if (v === null || v === undefined) return <span className="text-slate-300">—</span>
   return <span className="font-mono tabular-nums">${v.toFixed(decimals)}</span>
@@ -15,10 +17,10 @@ function pct(v: number | null) {
   return <span className="font-mono tabular-nums">{v.toFixed(1)}%</span>
 }
 
-function SectionDivider({ title }: { title: string }) {
+function SectionDivider({ title, first }: { title: string; first?: boolean }) {
   return (
     <tr>
-      <td colSpan={2} className="pt-5 pb-1">
+      <td colSpan={2} className={`${first ? '' : 'pt-5'} pb-1`}>
         <div className="flex items-center gap-3">
           <span className="text-xs font-semibold text-slate-700 whitespace-nowrap uppercase tracking-wide">{title}</span>
           <div className="flex-1 h-px bg-slate-200" />
@@ -47,44 +49,134 @@ function Row({
   )
 }
 
-export default function CostTab({ product }: { product: ProductDetail }) {
+function NumInput({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+  return (
+    <input
+      type="number"
+      step="0.01"
+      className={EDIT_INPUT_CLS}
+      value={value ?? ''}
+      onChange={e => onChange(e.target.value === '' ? null : Number(e.target.value))}
+    />
+  )
+}
+
+interface Props {
+  product: ProductDetail
+  isEditing: boolean
+  onChange: (fields: Partial<ProductDetail>) => void
+}
+
+export default function CostTab({ product, isEditing, onChange }: Props) {
   const gp = product.nbGpPercent
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start gap-2 bg-amber-50 rounded-lg px-3 py-2 text-xs text-amber-700">
-        <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        Cost data is confidential. Do not share externally.
-      </div>
-
       <table className="w-full">
         <tbody>
-          <SectionDivider title="Pricing" />
-          <Row label="Retail">{usd(product.retail, 2)}</Row>
-          <Row label="RMB Purchase">{cny(product.rmbPurchase)}</Row>
-          <Row label="Dollar Purchase">{usd(product.dollarPurchase)}</Row>
-          <Row label="Est. Plating / Molding Cost (CNY)">{cny(product.estPlatingMoldingCost)}</Row>
+          <SectionDivider title="Pricing" first />
+          <Row label="Retail">
+            {isEditing
+              ? <NumInput value={product.retail} onChange={v => onChange({ retail: v })} />
+              : usd(product.retail, 2)
+            }
+          </Row>
+          <Row label="RMB Purchase">
+            {isEditing
+              ? <NumInput value={product.rmbPurchase} onChange={v => onChange({ rmbPurchase: v })} />
+              : cny(product.rmbPurchase)
+            }
+          </Row>
+          <Row label="Dollar Purchase">
+            {isEditing
+              ? <NumInput value={product.dollarPurchase} onChange={v => onChange({ dollarPurchase: v })} />
+              : usd(product.dollarPurchase)
+            }
+          </Row>
+          <Row label="Est. Plating / Molding Cost (CNY)">
+            {isEditing
+              ? <NumInput value={product.estPlatingMoldingCost} onChange={v => onChange({ estPlatingMoldingCost: v })} />
+              : cny(product.estPlatingMoldingCost)
+            }
+          </Row>
 
           <SectionDivider title="COGS" />
-          <Row label="NB Suggested COGS">{usd(product.nbSuggestedCogs)}</Row>
-          <Row label="Finalized COGS (NB)">{usd(product.finalizedCogsNb)}</Row>
-          <Row label="Total COGS" highlight>{usd(product.totalCogs)}</Row>
+          <Row label="NB Suggested COGS">
+            {isEditing
+              ? <NumInput value={product.nbSuggestedCogs} onChange={v => onChange({ nbSuggestedCogs: v })} />
+              : usd(product.nbSuggestedCogs)
+            }
+          </Row>
+          <Row label="Finalized COGS (NB)">
+            {isEditing
+              ? <NumInput value={product.finalizedCogsNb} onChange={v => onChange({ finalizedCogsNb: v })} />
+              : usd(product.finalizedCogsNb)
+            }
+          </Row>
+          <Row label="Total COGS" highlight>
+            {isEditing
+              ? <NumInput value={product.totalCogs} onChange={v => onChange({ totalCogs: v })} />
+              : usd(product.totalCogs)
+            }
+          </Row>
 
           <SectionDivider title="Margin" />
-          <Row label="NB GP%" highlight>{pct(product.nbGpPercent)}</Row>
-          <Row label="PGUS Margin">{pct(product.pgusMargin)}</Row>
-          <Row label="FOB NB with PGUS Margin">{usd(product.fobNbWithPgusMargin)}</Row>
-          <Row label="Customer Commission">{pct(product.customerCommission)}</Row>
+          <Row label="NB GP%" highlight>
+            {isEditing
+              ? <NumInput value={product.nbGpPercent} onChange={v => onChange({ nbGpPercent: v })} />
+              : pct(product.nbGpPercent)
+            }
+          </Row>
+          <Row label="PGUS Margin">
+            {isEditing
+              ? <NumInput value={product.pgusMargin} onChange={v => onChange({ pgusMargin: v })} />
+              : pct(product.pgusMargin)
+            }
+          </Row>
+          <Row label="FOB NB with PGUS Margin">
+            {isEditing
+              ? <NumInput value={product.fobNbWithPgusMargin} onChange={v => onChange({ fobNbWithPgusMargin: v })} />
+              : usd(product.fobNbWithPgusMargin)
+            }
+          </Row>
+          <Row label="Customer Commission">
+            {isEditing
+              ? <NumInput value={product.customerCommission} onChange={v => onChange({ customerCommission: v })} />
+              : pct(product.customerCommission)
+            }
+          </Row>
 
           <SectionDivider title="Logistics & Duties" />
-          <Row label="DI Freight Rate">{usd(product.diFreightRate)}</Row>
-          <Row label="DO Freight Rate">{usd(product.doFreightRate)}</Row>
-          <Row label="Texas Warehouse Cost">{usd(product.texasWarehouseCost)}</Row>
-          <Row label="Declaration Price">{usd(product.declarationPrice, 2)}</Row>
-          <Row label="Duty Cost">{usd(product.dutyCost)}</Row>
+          <Row label="DI Freight Rate">
+            {isEditing
+              ? <NumInput value={product.diFreightRate} onChange={v => onChange({ diFreightRate: v })} />
+              : usd(product.diFreightRate)
+            }
+          </Row>
+          <Row label="DO Freight Rate">
+            {isEditing
+              ? <NumInput value={product.doFreightRate} onChange={v => onChange({ doFreightRate: v })} />
+              : usd(product.doFreightRate)
+            }
+          </Row>
+          <Row label="Texas Warehouse Cost">
+            {isEditing
+              ? <NumInput value={product.texasWarehouseCost} onChange={v => onChange({ texasWarehouseCost: v })} />
+              : usd(product.texasWarehouseCost)
+            }
+          </Row>
+          <Row label="Declaration Price">
+            {isEditing
+              ? <NumInput value={product.declarationPrice} onChange={v => onChange({ declarationPrice: v })} />
+              : usd(product.declarationPrice, 2)
+            }
+          </Row>
+          <Row label="Duty Cost">
+            {isEditing
+              ? <NumInput value={product.dutyCost} onChange={v => onChange({ dutyCost: v })} />
+              : usd(product.dutyCost)
+            }
+          </Row>
         </tbody>
       </table>
 

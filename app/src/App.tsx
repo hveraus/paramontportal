@@ -4,14 +4,18 @@ import { LangProvider } from './context/LanguageContext'
 import DashboardPage from './pages/DashboardPage'
 import ProductDetailPage from './ProductDetailPage'
 import ProductsPage from './pages/ProductsPage'
+import ArchivesPage from './pages/ArchivesPage'
+import SampleRoomPage from './pages/SampleRoomPage'
 import SettingsIndexPage from './pages/SettingsIndexPage'
 import SettingsPage from './pages/SettingsPage'
 
 function PageRouter() {
   const { page } = useNavigation()
-  if (page === 'product-detail')      return <ProductDetailPage />
-  if (page === 'products')            return <ProductsPage />
-  if (page === 'settings')            return <SettingsIndexPage />
+  if (page === 'product-detail')       return <ProductDetailPage />
+  if (page === 'products')             return <ProductsPage />
+  if (page === 'archives')             return <ArchivesPage />
+  if (page === 'sample-room')          return <SampleRoomPage />
+  if (page === 'settings')             return <SettingsIndexPage />
   if (page === 'settings-permissions') return <SettingsPage />
   return <DashboardPage />
 }

@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { mockProduct } from './mock/productDetail'
+import { SAMPLE_SLOTS } from './mock/sampleRoom'
 import { useRole } from './context/RoleContext'
+import type { ProductDetail } from './types'
 import Breadcrumb from './components/Breadcrumb'
 import ImageGallery from './components/ImageGallery'
 import StatusTag from './components/StatusTag'
@@ -12,11 +14,12 @@ import CostTab from './components/tabs/CostTab'
 import CustomsTab from './components/tabs/CustomsTab'
 import PatentsTab from './components/tabs/PatentsTab'
 import CertificationsTab from './components/tabs/CertificationsTab'
+import CommittedTab from './components/tabs/CommittedTab'
 import ActivityPanel from './components/ActivityPanel'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 
-type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'certifications' | 'patents'
+type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'certifications' | 'patents' | 'committed'
 
 const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean }[] = [
   { id: 'basic',           label: 'Basic Info' },
@@ -27,6 +30,7 @@ const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean
   { id: 'customs',         label: 'Customs' },
   { id: 'certifications',  label: 'Certifications' },
   { id: 'patents',         label: 'Patents',        patentOnly: true },
+  { id: 'committed',       label: 'Program' },
 ]
 
 const STATUS_VARIANT: Record<string, 'blue' | 'green' | 'red' | 'purple' | 'yellow' | 'orange' | 'gray'> = {
@@ -36,6 +40,10 @@ const STATUS_VARIANT: Record<string, 'blue' | 'green' | 'red' | 'purple' | 'yell
   'Initial Sampled':'orange',
   'Final':          'green',
   'Dropped':        'gray',
+}
+
+function deepClone<T>(val: T): T {
+  return JSON.parse(JSON.stringify(val)) as T
 }
 
 // ── Export dropdown ────────────────────────────────────────────────────────
@@ -157,25 +165,160 @@ function AddToProposalButton() {
   )
 }
 
-// ── Edit button ────────────────────────────────────────────────────────────
+// ── Sample Room assign modal ───────────────────────────────────────────────
 
-function EditButton() {
+interface SampleLocation { room: string; shelf: string; position: string }
+
+function SampleAssignModal({
+  current,
+  onAssign,
+  onClose,
+}: {
+  current: SampleLocation | null
+  onAssign: (loc: SampleLocation) => void
+  onClose: () => void
+}) {
+  const rooms = useMemo(() => [...new Set(SAMPLE_SLOTS.map(s => s.room))].sort(), [])
+
+  const [room,     setRoom]     = useState(current?.room     ?? '')
+  const [shelf,    setShelf]    = useState(current?.shelf    ?? '')
+  const [position, setPosition] = useState(current?.position ?? '')
+  const [slotId,   setSlotId]   = useState('')
+
+  const shelves = useMemo(() =>
+    room ? [...new Set(SAMPLE_SLOTS.filter(s => s.room === room).map(s => s.shelf))].sort() : [],
+  [room])
+
+  const selectStyle = {
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat' as const,
+    backgroundPosition: 'right 10px center',
+    backgroundSize: '14px',
+  }
+
+  // slotId is used internally for future slot tracking
+  void slotId
+
   return (
-    <button className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border
-      bg-blue-600 text-white border-blue-600 hover:bg-blue-700 transition-colors font-medium">
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round"
-          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-      </svg>
-      Edit
-    </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
+            <h2 className="text-sm font-semibold text-slate-900">Assign to Sample Room</h2>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          {/* Room */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Room</label>
+            <select
+              value={room}
+              onChange={e => { setRoom(e.target.value); setShelf(''); setSlotId('') }}
+              className="w-full h-10 pl-3 pr-9 text-sm rounded-lg border border-slate-200 bg-white
+                text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 appearance-none"
+              style={selectStyle}
+            >
+              <option value="">Select room…</option>
+              {rooms.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+
+          {/* Shelf */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Shelf</label>
+            <select
+              value={shelf}
+              onChange={e => { setShelf(e.target.value); setSlotId('') }}
+              disabled={!room}
+              className="w-full h-10 pl-3 pr-9 text-sm rounded-lg border border-slate-200 bg-white
+                text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 appearance-none
+                disabled:opacity-40 disabled:cursor-not-allowed"
+              style={selectStyle}
+            >
+              <option value="">Select shelf…</option>
+              {shelves.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          {/* Position */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Position</label>
+            <input
+              type="text"
+              value={position}
+              onChange={e => setPosition(e.target.value)}
+              disabled={!shelf}
+              placeholder="e.g. A-02-03"
+              className="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 bg-white
+                text-slate-700 placeholder:text-slate-400 font-mono
+                focus:outline-none focus:ring-2 focus:ring-violet-500
+                disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-50"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
+          {current && (
+            <button
+              onClick={() => { onAssign({ room: '', shelf: '', position: '' }); onClose() }}
+              className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+            >
+              Remove location
+            </button>
+          )}
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => room && shelf && position.trim() && onAssign({ room, shelf, position: position.trim() })}
+              disabled={!room || !shelf || !position.trim()}
+              className="px-4 py-2 text-sm rounded-lg bg-violet-600 text-white font-medium
+                hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
+// ── Main page ──────────────────────────────────────────────────────────────
+
 export default function ProductDetailPage() {
   const { can } = useRole()
-  const [activeTab, setActiveTab] = useState<TabId>('basic')
-  const product = mockProduct
+  const [activeTab, setActiveTab]       = useState<TabId>('basic')
+  const [sampleLoc, setSampleLoc]   = useState<SampleLocation | null>(null)
+  const [showAssign, setShowAssign] = useState(false)
+
+  const [product, setProduct]       = useState<ProductDetail>(() => deepClone(mockProduct))
+  const [editingTab, setEditingTab] = useState<TabId | null>(null)
+  const [draft, setDraft]           = useState<ProductDetail>(() => deepClone(mockProduct))
+  const [pendingTab, setPendingTab] = useState<TabId | null>(null)
+
+  const startEdit = (tab: TabId) => { setDraft(deepClone(product)); setEditingTab(tab) }
+  const cancelEdit = () => setEditingTab(null)
+  const saveEdit = () => { setProduct(deepClone(draft)); setEditingTab(null) }
+  const onChange = (fields: Partial<ProductDetail>) =>
+    setDraft(prev => ({ ...prev, ...fields }))
 
   const visibleTabs = TABS.filter((t) =>
     (!t.costOnly || can('view_cost')) && (!t.patentOnly || can('view_patents'))
@@ -212,6 +355,43 @@ export default function ProductDetailPage() {
               <span className="text-sm font-mono text-slate-400">{product.itemNo}</span>
               <span className="text-slate-200">·</span>
               <StatusTag label={product.status} variant={statusVariant} />
+              <span className="text-slate-200">·</span>
+
+              {/* Sample Room location — inline with status */}
+              {sampleLoc ? (
+                <span className="inline-flex items-center gap-2 text-xs bg-violet-50 text-violet-700
+                  border border-violet-200 rounded-full pl-2.5 pr-1.5 py-1">
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                  <span>{sampleLoc.room}</span>
+                  <span className="text-violet-300">·</span>
+                  <span>{sampleLoc.shelf}</span>
+                  <span className="text-violet-300">·</span>
+                  <span className="font-mono font-semibold">{sampleLoc.position}</span>
+                  <button onClick={() => setShowAssign(true)} title="Edit location"
+                    className="ml-0.5 p-0.5 rounded-full hover:bg-violet-100 transition-colors">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button onClick={() => setSampleLoc(null)} title="Remove location"
+                    className="p-0.5 rounded-full hover:bg-red-100 hover:text-red-500 transition-colors">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </span>
+              ) : (
+                <button onClick={() => setShowAssign(true)}
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 border border-dashed
+                    border-slate-300 hover:border-violet-400 hover:text-violet-600 rounded-full px-3 py-1 transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                  Assign to Sample Room
+                </button>
+              )}
             </div>
           </div>
 
@@ -219,8 +399,6 @@ export default function ProductDetailPage() {
             <ExportDropdown />
             <FavoriteButton />
             <AddToProposalButton />
-            <div className="w-px h-5 bg-slate-200 mx-1" />
-            <EditButton />
           </div>
         </div>
 
@@ -242,7 +420,13 @@ export default function ProductDetailPage() {
                 {visibleTabs.map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      if (editingTab !== null && editingTab !== tab.id) {
+                        setPendingTab(tab.id)
+                      } else {
+                        setActiveTab(tab.id)
+                      }
+                    }}
                     className={`flex-shrink-0 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       ${resolvedTab === tab.id
                         ? 'border-blue-600 text-blue-700 bg-blue-50/50'
@@ -255,15 +439,162 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Tab content */}
-              <div className="p-6">
-                {resolvedTab === 'basic'     && <BasicInfoTab   product={product} />}
-                {resolvedTab === 'specs'     && <SpecsTab       product={product} />}
-                {resolvedTab === 'packaging' && <PackagingTab   product={product} />}
-                {resolvedTab === 'quality'   && <QualityTab     qualityRecords={product.qualityRecords} />}
-                {resolvedTab === 'cost'      && <CostTab        product={product} />}
-                {resolvedTab === 'customs'   && <CustomsTab     product={product} />}
-                {resolvedTab === 'certifications' && <CertificationsTab certifications={product.certifications} />}
-                {resolvedTab === 'patents'        && <PatentsTab        patents={product.patents} />}
+              <div>
+                {/* Action bar */}
+                <div className={`flex items-center justify-end px-5 py-2 border-b ${
+                    editingTab === resolvedTab
+                      ? 'bg-blue-50 border-blue-100'
+                      : 'bg-slate-50 border-slate-100'
+                  }`}>
+                    {/* Left: contextual info + editing label */}
+                    <div className="mr-auto flex items-center gap-3">
+                      {/* Cost: confidential warning */}
+                      {resolvedTab === 'cost' && (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-amber-600">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          Cost data is confidential. Do not share externally.
+                        </span>
+                      )}
+                      {/* Certifications: summary counts */}
+                      {resolvedTab === 'certifications' && (() => {
+                        const certs = editingTab === 'certifications' ? draft.certifications : product.certifications
+                        if (certs.length === 0) return null
+                        const counts = certs.reduce<Record<string, number>>((acc, c) => {
+                          acc[c.certType] = (acc[c.certType] ?? 0) + 1
+                          return acc
+                        }, {})
+                        const typeStyle: Record<string, { bg: string; text: string }> = {
+                          CE:    { bg: 'bg-blue-50',    text: 'text-blue-700'    },
+                          FCC:   { bg: 'bg-purple-50',  text: 'text-purple-700'  },
+                          RoHS:  { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+                          Other: { bg: 'bg-slate-100',  text: 'text-slate-600'   },
+                        }
+                        return (
+                          <span className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400">{certs.length} certification{certs.length !== 1 ? 's' : ''}</span>
+                            {Object.entries(counts).map(([type, count]) => {
+                              const s = typeStyle[type] ?? typeStyle.Other
+                              return (
+                                <span key={type} className={`text-xs font-medium px-2 py-0.5 rounded ${s.bg} ${s.text}`}>
+                                  {count} {type}
+                                </span>
+                              )
+                            })}
+                          </span>
+                        )
+                      })()}
+                      {/* Patents: summary counts */}
+                      {resolvedTab === 'patents' && (() => {
+                        const pts = editingTab === 'patents' ? draft.patents : product.patents
+                        if (pts.length === 0) return null
+                        const counts = { Granted: 0, Pending: 0, Expired: 0 }
+                        pts.forEach(p => { if (p.status) counts[p.status as keyof typeof counts]++ })
+                        return (
+                          <span className="flex items-center gap-3">
+                            <span className="text-xs text-slate-400">{pts.length} patent{pts.length !== 1 ? 's' : ''}</span>
+                            {counts.Granted > 0 && (
+                              <span className="flex items-center gap-1 text-xs text-emerald-600">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                {counts.Granted} Granted
+                              </span>
+                            )}
+                            {counts.Pending > 0 && (
+                              <span className="flex items-center gap-1 text-xs text-amber-600">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                {counts.Pending} Pending
+                              </span>
+                            )}
+                            {counts.Expired > 0 && (
+                              <span className="flex items-center gap-1 text-xs text-slate-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                {counts.Expired} Expired
+                              </span>
+                            )}
+                          </span>
+                        )
+                      })()}
+                      {editingTab === resolvedTab && (
+                        <span className="text-xs text-blue-600 font-medium">Editing…</span>
+                      )}
+                    </div>
+
+                    {/* Program tab: CRM tip (no edit button) */}
+                    {resolvedTab === 'committed' && (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-slate-400 mr-auto truncate py-1 border border-transparent">
+                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Customer names are sourced from the external CRM system. Pending entries will update automatically when data is available.
+                      </span>
+                    )}
+
+                    {/* Other tabs: Edit / Save / Cancel */}
+                    {resolvedTab !== 'committed' && (
+                      <div className="flex items-center gap-2">
+                        {editingTab === resolvedTab ? (
+                          <>
+                            <button
+                              onClick={cancelEdit}
+                              className="px-3 py-1 text-xs rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={saveEdit}
+                              className="px-3 py-1 text-xs rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              Save changes
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => startEdit(resolvedTab)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                {/* Unsaved changes guard */}
+                {pendingTab !== null && (
+                  <div className="flex items-center justify-between gap-3 px-5 py-3 bg-amber-50 border-b border-amber-200">
+                    <p className="text-sm text-amber-800">You have unsaved changes. Discard and switch tabs?</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setPendingTab(null)}
+                        className="px-3 py-1.5 text-xs rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors"
+                      >
+                        Stay
+                      </button>
+                      <button
+                        onClick={() => { cancelEdit(); setActiveTab(pendingTab); setPendingTab(null) }}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+                      >
+                        Discard &amp; Switch
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="px-6 pt-3 pb-6">
+                  {resolvedTab === 'basic'     && <BasicInfoTab   product={editingTab === 'basic' ? draft : product}     isEditing={editingTab === 'basic'}     onChange={onChange} />}
+                  {resolvedTab === 'specs'     && <SpecsTab       product={editingTab === 'specs' ? draft : product}     isEditing={editingTab === 'specs'}     onChange={onChange} />}
+                  {resolvedTab === 'packaging' && <PackagingTab   product={editingTab === 'packaging' ? draft : product} isEditing={editingTab === 'packaging'} onChange={onChange} />}
+                  {resolvedTab === 'quality'   && <QualityTab     qualityRecords={editingTab === 'quality' ? draft.qualityRecords : product.qualityRecords} isEditing={editingTab === 'quality'} onChange={onChange} />}
+                  {resolvedTab === 'cost'      && <CostTab        product={editingTab === 'cost' ? draft : product}     isEditing={editingTab === 'cost'}     onChange={onChange} />}
+                  {resolvedTab === 'customs'   && <CustomsTab     product={editingTab === 'customs' ? draft : product}  isEditing={editingTab === 'customs'}  onChange={onChange} />}
+                  {resolvedTab === 'certifications' && <CertificationsTab certifications={editingTab === 'certifications' ? draft.certifications : product.certifications} isEditing={editingTab === 'certifications'} onChange={onChange} />}
+                  {resolvedTab === 'patents'        && <PatentsTab        patents={editingTab === 'patents' ? draft.patents : product.patents} isEditing={editingTab === 'patents'} onChange={onChange} />}
+                  {resolvedTab === 'committed'      && <CommittedTab      committedRecords={product.committedRecords} />}
+                </div>
               </div>
             </div>
           </div>
@@ -278,6 +609,15 @@ export default function ProductDetailPage() {
         <div className="h-8" />
         </div> {/* end content column */}
       </div> {/* end flex row */}
+
+      {/* Sample Room assign modal */}
+      {showAssign && (
+        <SampleAssignModal
+          current={sampleLoc}
+          onAssign={loc => { setSampleLoc(loc.position ? loc : null); setShowAssign(false) }}
+          onClose={() => setShowAssign(false)}
+        />
+      )}
     </div>
   )
 }

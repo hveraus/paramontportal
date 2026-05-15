@@ -1,5 +1,7 @@
 import type { ProductDetail } from '../../types'
 
+const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
+
 const IN_TO_CM = 2.54
 const G_TO_LBS = 1 / 453.592
 const KG_TO_LBS = 2.20462
@@ -30,14 +32,39 @@ function Cell({ label, primary, secondary }: {
 
 function SectionDivider({ title }: { title: string }) {
   return (
-    <div className="flex items-center gap-3 pt-2">
+    <div className="flex items-center gap-3">
       <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">{title}</span>
       <div className="flex-1 h-px bg-slate-200" />
     </div>
   )
 }
 
-export default function SpecsTab({ product }: { product: ProductDetail }) {
+function EditCell({ label, value, onChange }: {
+  label: string
+  value: number | null
+  onChange: (v: number | null) => void
+}) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+      <input
+        type="number"
+        step="0.01"
+        className={INPUT_CLS}
+        value={value ?? ''}
+        onChange={e => onChange(e.target.value === '' ? null : Number(e.target.value))}
+      />
+    </div>
+  )
+}
+
+interface Props {
+  product: ProductDetail
+  isEditing: boolean
+  onChange: (fields: Partial<ProductDetail>) => void
+}
+
+export default function SpecsTab({ product, isEditing, onChange }: Props) {
   const { itemHeight, itemWidth, itemDepth, itemWeightG,
           innerHeight, innerWidth, innerDepth, innerWeightLbs,
           masterHeight, masterWidth, masterDepth,
@@ -55,6 +82,41 @@ export default function SpecsTab({ product }: { product: ProductDetail }) {
   const gwLbs = grossWeightKg !== null ? grossWeightKg * KG_TO_LBS : null
   const nwLbs = netWeightKg   !== null ? netWeightKg   * KG_TO_LBS : null
   const itemWeightLbs = itemWeightG !== null ? itemWeightG * G_TO_LBS : null
+
+  if (isEditing) {
+    return (
+      <div className="space-y-5">
+        <SectionDivider title="Item" />
+        <div className="grid grid-cols-3 gap-x-6 gap-y-5">
+          <EditCell label="Item Height (inch)" value={itemHeight} onChange={v => onChange({ itemHeight: v })} />
+          <EditCell label="Item Width (inch)"  value={itemWidth}  onChange={v => onChange({ itemWidth: v })} />
+          <EditCell label="Item Depth (inch)"  value={itemDepth}  onChange={v => onChange({ itemDepth: v })} />
+          <EditCell label="Item Weight (g)"    value={itemWeightG} onChange={v => onChange({ itemWeightG: v })} />
+        </div>
+
+        <SectionDivider title="Inner Box" />
+        <div className="grid grid-cols-3 gap-x-6 gap-y-5">
+          <EditCell label="Inner Height (inch)" value={innerHeight}    onChange={v => onChange({ innerHeight: v })} />
+          <EditCell label="Inner Width (inch)"  value={innerWidth}     onChange={v => onChange({ innerWidth: v })} />
+          <EditCell label="Inner Depth (inch)"  value={innerDepth}     onChange={v => onChange({ innerDepth: v })} />
+          <EditCell label="Inner Weight (lbs)"  value={innerWeightLbs} onChange={v => onChange({ innerWeightLbs: v })} />
+        </div>
+
+        <SectionDivider title="Master Carton" />
+        <div className="grid grid-cols-3 gap-x-6 gap-y-5">
+          <EditCell label="Master Height (inch)" value={masterHeight} onChange={v => onChange({ masterHeight: v })} />
+          <EditCell label="Master Width (inch)"  value={masterWidth}  onChange={v => onChange({ masterWidth: v })} />
+          <EditCell label="Master Depth (inch)"  value={masterDepth}  onChange={v => onChange({ masterDepth: v })} />
+        </div>
+
+        <SectionDivider title="Weight" />
+        <div className="grid grid-cols-3 gap-x-6 gap-y-5">
+          <EditCell label="G.W. (kg)" value={grossWeightKg} onChange={v => onChange({ grossWeightKg: v })} />
+          <EditCell label="N.W. (kg)" value={netWeightKg}   onChange={v => onChange({ netWeightKg: v })} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">

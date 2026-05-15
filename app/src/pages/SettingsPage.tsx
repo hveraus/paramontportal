@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import TopBar from '../components/TopBar'
 import Sidebar from '../components/Sidebar'
 import { useNavigation } from '../context/NavigationContext'
+import { useLang } from '../context/LanguageContext'
 import {
   ORG_TREE,
   PERM_CONFIGS,
@@ -81,7 +82,10 @@ interface TriSwitchProps {
   disabled?: boolean
 }
 
-function TriSwitch({ value, onChange, inheritedFrom, inheritedSource = '上级部门配置', allowInherit = true, disabled }: TriSwitchProps) {
+function TriSwitch({ value, onChange, inheritedFrom, inheritedSource, allowInherit = true, disabled }: TriSwitchProps) {
+  const { lang } = useLang()
+  const defaultSource = lang === 'en' ? 'Dept. Config' : '上级部门配置'
+  const source = inheritedSource ?? defaultSource
   const cycle = () => {
     if (disabled) return
     if (!allowInherit) {
@@ -100,7 +104,7 @@ function TriSwitch({ value, onChange, inheritedFrom, inheritedSource = '上级�
     <div className="relative group inline-flex">
       <button
         onClick={cycle}
-        title={allowInherit && isInherit && inheritedFrom ? `继承来源：${inheritedSource}（${inheritedFrom}）` : undefined}
+        title={allowInherit && isInherit && inheritedFrom ? (lang === 'en' ? `Inherited from: ${source} (${inheritedFrom})` : `继承来源：${source}（${inheritedFrom}）`) : undefined}
         disabled={disabled}
         className={`relative inline-flex items-center w-9 h-5 rounded-full transition-colors focus:outline-none
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -124,7 +128,7 @@ function TriSwitch({ value, onChange, inheritedFrom, inheritedSource = '上级�
       {allowInherit && isInherit && inheritedFrom && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50 pointer-events-none">
           <div className="bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-            继承来源：{inheritedSource} · {inheritedFrom}
+            {lang === 'en' ? `Inherited: ${source} · ${inheritedFrom}` : `继承来源：${source} · ${inheritedFrom}`}
           </div>
         </div>
       )}
@@ -143,6 +147,7 @@ interface OrgTreeNodeProps {
 }
 
 function OrgTreeNode({ node, selectedId, onSelect, searchText, defaultExpanded }: OrgTreeNodeProps) {
+  const { lang } = useLang()
   const [expanded, setExpanded] = useState(defaultExpanded ?? node.type === 'department')
 
   const matchesSearch = !searchText || node.name.toLowerCase().includes(searchText.toLowerCase())
@@ -199,12 +204,6 @@ function OrgTreeNode({ node, selectedId, onSelect, searchText, defaultExpanded }
           )}
         </div>
 
-        {/* hasCustomConfig badge — users only */}
-        {node.type === 'user' && node.hasCustomConfig && (
-          <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600 border border-orange-200 leading-none">
-            定制权限
-          </span>
-        )}
       </button>
 
       {hasChildren && expanded && (
@@ -237,39 +236,42 @@ const FEATURE_MATRIX = [
   {
     key: 'portal',
     label: '门户应用',
+    labelEn: 'Portal',
     features: [
-      { key: 'overview', label: 'Overview' },
-      { key: 'browseByCategory', label: 'Browse by Category' },
-      { key: 'ourBrands', label: 'Our Brands' },
-      { key: 'hotProducts', label: 'Hot Products' },
-      { key: 'recentlyViewed', label: 'Recently Viewed' },
-      { key: 'myFavorites', label: 'My Favorites' },
-      { key: 'recentlyUpdated', label: 'Recently Updated' },
+      { key: 'overview', label: 'Overview', labelEn: 'Overview' },
+      { key: 'browseByCategory', label: 'Browse by Category', labelEn: 'Browse by Category' },
+      { key: 'ourBrands', label: 'Our Brands', labelEn: 'Our Brands' },
+      { key: 'hotProducts', label: 'Hot Products', labelEn: 'Hot Products' },
+      { key: 'recentlyViewed', label: 'Recently Viewed', labelEn: 'Recently Viewed' },
+      { key: 'myFavorites', label: 'My Favorites', labelEn: 'My Favorites' },
+      { key: 'recentlyUpdated', label: 'Recently Updated', labelEn: 'Recently Updated' },
     ],
   },
   {
     key: 'pdm',
     label: '产品信息管理',
+    labelEn: 'Product Info',
     features: [
-      { key: 'basic', label: '基础信息' },
-      { key: 'specs', label: 'Specs' },
-      { key: 'packaging', label: 'Packaging' },
-      { key: 'quality', label: '质量信息' },
-      { key: 'cost', label: '成本信息' },
-      { key: 'patent', label: '专利信息' },
-      { key: 'cert', label: '认证信息' },
-      { key: 'customs', label: '报关信息' },
-      { key: 'gallery', label: 'Gallery' },
+      { key: 'basic', label: '基础信息', labelEn: 'Basic Info' },
+      { key: 'specs', label: 'Specs', labelEn: 'Specs' },
+      { key: 'packaging', label: 'Packaging', labelEn: 'Packaging' },
+      { key: 'quality', label: '质量信息', labelEn: 'Quality' },
+      { key: 'cost', label: '成本信息', labelEn: 'Cost' },
+      { key: 'patent', label: '专利信息', labelEn: 'Patents' },
+      { key: 'cert', label: '认证信息', labelEn: 'Certifications' },
+      { key: 'customs', label: '报关信息', labelEn: 'Customs' },
+      { key: 'gallery', label: 'Gallery', labelEn: 'Gallery' },
     ],
   },
 ] as const
 
 function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
+  const { lang } = useLang()
   const isRole = nodeType === 'role'
   const inheritedFrom = nodeType === 'user'
-    ? (deptName ?? '所属部门')
+    ? (deptName ?? (lang === 'en' ? 'Home Dept.' : '所属部门'))
     : nodeType === 'department'
-      ? '公司'
+      ? (lang === 'en' ? 'Company' : '公司')
       : undefined
 
   const handleChange = (mod: string, feat: string, val: PermVal) => {
@@ -284,11 +286,11 @@ function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b border-slate-100">
-            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-28">模块</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">子功能</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-56">当前配置对象</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-28">{lang === 'en' ? 'Module' : '模块'}</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">{lang === 'en' ? 'Feature' : '子功能'}</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-56">{lang === 'en' ? 'Current Config' : '当前配置对象'}</th>
             {!isRole && (
-              <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 w-36">继承自部门</th>
+              <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 w-36">{lang === 'en' ? 'Inherited From' : '继承自部门'}</th>
             )}
           </tr>
         </thead>
@@ -298,7 +300,9 @@ function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
               {mod.features.map((feature, idx) => {
                 const rawVal = config.feature[mod.key]?.[feature.key] ?? false
                 const val = isRole && rawVal === 'inherit' ? false : rawVal
-                const stateLabel = val === true ? '开启' : val === false ? '关闭' : '继承'
+                const stateLabel = lang === 'en'
+                  ? (val === true ? 'On' : val === false ? 'Off' : 'Inherit')
+                  : (val === true ? '开启' : val === false ? '关闭' : '继承')
                 const stateClass = val === true
                   ? 'bg-blue-50 text-blue-700'
                   : val === false
@@ -308,9 +312,9 @@ function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
                 return (
                   <tr key={`${mod.key}-${feature.key}`} className="border-b border-slate-50 hover:bg-slate-50/40">
                     <td className="px-3 py-2 text-xs text-slate-700 font-medium">
-                      {idx === 0 ? mod.label : <span className="text-slate-300">—</span>}
+                      {idx === 0 ? (lang === 'en' ? mod.labelEn : mod.label) : <span className="text-slate-300">—</span>}
                     </td>
-                    <td className="px-3 py-2 text-xs text-slate-700">{feature.label}</td>
+                    <td className="px-3 py-2 text-xs text-slate-700">{lang === 'en' ? feature.labelEn : feature.label}</td>
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
@@ -323,7 +327,7 @@ function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
                           value={val}
                           onChange={v => handleChange(mod.key, feature.key, v)}
                           inheritedFrom={inheritedFrom}
-                          inheritedSource="上级部门配置"
+                          inheritedSource={lang === 'en' ? 'Dept. Config' : '上级部门配置'}
                           allowInherit={!isRole}
                         />
                       </div>
@@ -357,11 +361,12 @@ interface RolePermissionTabProps {
 }
 
 function RolePermissionTab({ nodeType, roles, selectedRoleIds, onChange }: RolePermissionTabProps) {
+  const { lang } = useLang()
   if (nodeType === 'company') {
     return (
       <div className="px-5 py-6 text-center text-slate-400">
-        <p className="text-sm text-slate-500">公司节点不支持角色勾选</p>
-        <p className="text-xs mt-1">请选择部门或个人进行角色权限配置</p>
+        <p className="text-sm text-slate-500">{lang === 'en' ? 'Role assignment is not available at the company level' : '公司节点不支持角色勾选'}</p>
+        <p className="text-xs mt-1">{lang === 'en' ? 'Select a department or member to configure roles' : '请选择部门或个人进行角色权限配置'}</p>
       </div>
     )
   }
@@ -375,7 +380,11 @@ function RolePermissionTab({ nodeType, roles, selectedRoleIds, onChange }: RoleP
 
   return (
     <div className="px-5 py-4">
-      <p className="text-xs text-slate-500 mb-3">可为当前{nodeType === 'user' ? '人员' : '部门'}勾选一个或多个角色</p>
+      <p className="text-xs text-slate-500 mb-3">
+        {lang === 'en'
+          ? `Select one or more roles for this ${nodeType === 'user' ? 'member' : 'department'}`
+          : `可为当前${nodeType === 'user' ? '人员' : '部门'}勾选一个或多个角色`}
+      </p>
       <div className="space-y-2">
         {roles.map(role => (
           <label key={role.id} className="flex items-center justify-between gap-3 p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
@@ -412,10 +421,10 @@ interface MenuTabProps {
   deptName?: string
 }
 
-type MenuItem = { id: string; label: string; children: MenuItem[] }
+type MenuItem = { id: string; label: string; labelEn?: string; children: MenuItem[] }
 
 function MenuItemRow({
-  item, config, onChange, depth, deptName, allowInherit
+  item, config, onChange, depth, deptName, allowInherit, lang
 }: {
   item: MenuItem
   config: NodePermConfig
@@ -423,6 +432,7 @@ function MenuItemRow({
   depth: number
   deptName?: string
   allowInherit: boolean
+  lang: 'en' | 'zh'
 }) {
   const rawVal = config.menu[item.id] ?? false
   const val = !allowInherit && rawVal === 'inherit' ? false : rawVal
@@ -448,13 +458,13 @@ function MenuItemRow({
         style={{ paddingLeft: `${12 + depth * 20}px` }}
       >
         <div className="min-w-0 flex items-center gap-2">
-          <span className="text-xs text-slate-700 font-medium">{item.label}</span>
+          <span className="text-xs text-slate-700 font-medium">{lang === 'en' ? (item as {labelEn?: string}).labelEn ?? item.label : item.label}</span>
         </div>
         <TriSwitch
           value={val}
           onChange={v => handleParentChange(v)}
           inheritedFrom={deptName}
-          inheritedSource="上级部门菜单权限"
+          inheritedSource={lang === 'en' ? 'Dept. Menu Perms' : '上级部门菜单权限'}
           allowInherit={allowInherit}
         />
       </div>
@@ -466,13 +476,13 @@ function MenuItemRow({
           style={{ paddingLeft: `${12 + (depth + 1) * 20}px` }}
         >
           <div className="min-w-0 flex items-center gap-2">
-            <span className="text-xs text-slate-600">{child.label}</span>
+            <span className="text-xs text-slate-600">{lang === 'en' ? (child as {labelEn?: string}).labelEn ?? child.label : child.label}</span>
           </div>
           <TriSwitch
             value={!allowInherit && (config.menu[child.id] ?? false) === 'inherit' ? false : (config.menu[child.id] ?? false)}
             onChange={v => handleChildChange(child.id, v)}
             inheritedFrom={deptName}
-            inheritedSource="上级部门菜单权限"
+            inheritedSource={lang === 'en' ? 'Dept. Menu Perms' : '上级部门菜单权限'}
             allowInherit={allowInherit}
           />
         </div>
@@ -482,6 +492,7 @@ function MenuItemRow({
 }
 
 function MenuTab({ config, onChange, nodeType, deptName }: MenuTabProps) {
+  const { lang } = useLang()
   const allowInherit = nodeType !== 'role'
 
   return (
@@ -495,6 +506,7 @@ function MenuTab({ config, onChange, nodeType, deptName }: MenuTabProps) {
           depth={0}
           deptName={nodeType === 'user' ? deptName : undefined}
           allowInherit={allowInherit}
+          lang={lang}
         />
       ))}
     </div>
@@ -503,29 +515,29 @@ function MenuTab({ config, onChange, nodeType, deptName }: MenuTabProps) {
 
 // ── Tab: Data Permissions ─────────────────────────────────────────────────────
 
-const SCOPE_OPTIONS: { value: DataScope; label: string; desc: string; includes: string[] }[] = [
+const SCOPE_OPTIONS: { value: DataScope; label: string; labelEn: string; desc: string; descEn: string; includes: string[] }[] = [
   {
     value: 'public',
-    label: '公开数据',
-    desc: '仅限公开的产品基础信息',
+    label: '公开数据', labelEn: 'Public Data',
+    desc: '仅限公开的产品基础信息', descEn: 'Public product basics only',
     includes: ['基础产品信息', '品类信息'],
   },
   {
     value: 'department',
-    label: '本部门数据',
-    desc: '本部门相关的数据，包含内部记录',
+    label: '本部门数据', labelEn: 'Dept. Data',
+    desc: '本部门相关的数据，包含内部记录', descEn: 'Department data including internal records',
     includes: ['基础产品信息', '品类信息', '质量记录', '内部备注'],
   },
   {
     value: 'all',
-    label: '全部数据',
-    desc: '全公司所有数据，包含敏感信息',
+    label: '全部数据', labelEn: 'All Data',
+    desc: '全公司所有数据，包含敏感信息', descEn: 'All company data including sensitive info',
     includes: ['基础产品信息', '品类信息', '质量记录', '内部备注', '成本数据', '供应商资料'],
   },
   {
     value: 'confidential',
-    label: '保密数据',
-    desc: '最高权限，包含核心机密',
+    label: '保密数据', labelEn: 'Confidential',
+    desc: '最高权限，包含核心机密', descEn: 'Highest access, includes core confidential data',
     includes: ['基础产品信息', '品类信息', '质量记录', '内部备注', '成本数据', '供应商资料', '专利文件', '核心配方'],
   },
 ]
@@ -540,8 +552,11 @@ interface ButtonTabProps {
 }
 
 const BUTTON_TAB_MODULES = ['产品管理', '样品管理'] as const
+const BUTTON_TAB_MODULES_EN: Record<string, string> = { '产品管理': 'Product Mgmt', '样品管理': 'Sample Mgmt' }
+const BUTTON_ACTIONS_EN: Record<string, string> = { '查看': 'View', '编辑': 'Edit', '删除': 'Delete', '下载': 'Download', '分享': 'Share', '导出': 'Export' }
 
 function ButtonTab({ config, onChange, nodeType, deptName }: ButtonTabProps) {
+  const { lang } = useLang()
   const allowInherit = nodeType !== 'role'
 
   const handleChange = (mod: string, action: string, val: PermVal) => {
@@ -556,10 +571,10 @@ function ButtonTab({ config, onChange, nodeType, deptName }: ButtonTabProps) {
       <table className="w-full text-xs border-collapse">
         <thead>
           <tr className="border-b border-slate-100">
-            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-20">操作</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-20">{lang === 'en' ? 'Action' : '操作'}</th>
             {BUTTON_TAB_MODULES.map(mod => (
               <th key={mod} className="text-center py-2 px-2 text-xs font-medium text-slate-500 w-24">
-                {mod}
+                {lang === 'en' ? BUTTON_TAB_MODULES_EN[mod] : mod}
               </th>
             ))}
           </tr>
@@ -567,7 +582,7 @@ function ButtonTab({ config, onChange, nodeType, deptName }: ButtonTabProps) {
         <tbody>
           {BUTTON_ACTIONS.map(action => (
             <tr key={action} className="border-b border-slate-50 hover:bg-slate-50/40">
-              <td className="px-3 py-2 text-xs text-slate-700 font-medium">{action}</td>
+              <td className="px-3 py-2 text-xs text-slate-700 font-medium">{lang === 'en' ? BUTTON_ACTIONS_EN[action] ?? action : action}</td>
               {BUTTON_TAB_MODULES.map(mod => {
                 const rawVal = config.buttons[mod]?.[action] ?? false
                 const val = !allowInherit && rawVal === 'inherit' ? false : rawVal
@@ -600,11 +615,13 @@ interface PreviewPanelProps {
 }
 
 function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
+  const { lang } = useLang()
+
   if (mode === 'role') {
     return (
       <div className="p-4 flex flex-col items-center justify-center h-full text-slate-400">
-        <span className="text-sm">权限预览</span>
-        <span className="text-xs mt-1">{roleName ? `当前角色：${roleName}` : '请先选择角色'}</span>
+        <span className="text-sm">{lang === 'en' ? 'Permission Preview' : '权限预览'}</span>
+        <span className="text-xs mt-1">{roleName ? (lang === 'en' ? `Role: ${roleName}` : `当前角色：${roleName}`) : (lang === 'en' ? 'Select a role first' : '请先选择角色')}</span>
       </div>
     )
   }
@@ -613,8 +630,8 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
     return (
       <div className="p-4 flex flex-col items-center justify-center h-full text-slate-400">
         <span className="text-2xl mb-2 opacity-30">⚙</span>
-        <span className="text-sm font-medium">权限预览</span>
-        <span className="text-xs mt-1">请从左侧选择人员或部门</span>
+        <span className="text-sm font-medium">{lang === 'en' ? 'Permission Preview' : '权限预览'}</span>
+        <span className="text-xs mt-1">{lang === 'en' ? 'Select a person or dept from the left' : '请从左侧选择人员或部门'}</span>
       </div>
     )
   }
@@ -630,18 +647,11 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
   // Feature stats
   let totalFeatures = 0
   let enabledFeatures = 0
-  const inheritedCount = { features: 0 }
-  const overriddenCount = { features: 0 }
 
   for (const modKey of Object.keys(MODULE_FEATURES)) {
     for (const featKey of Object.keys(MODULE_FEATURES[modKey].features)) {
       totalFeatures++
       if (effective.feature[modKey]?.[featKey] === true) enabledFeatures++
-      if (node.type === 'user') {
-        const userVal = configs[nodeId]?.feature[modKey]?.[featKey] ?? 'inherit'
-        if (userVal !== 'inherit') overriddenCount.features++
-        else inheritedCount.features++
-      }
     }
   }
 
@@ -659,13 +669,17 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
   }
 
   // Node type display
-  const nodeTypeLabel = node.type === 'company' ? '公司' : node.type === 'department' ? '部门' : null
+  const nodeTypeLabel = node.type === 'company'
+    ? (lang === 'en' ? 'Company' : '公司')
+    : node.type === 'department'
+      ? (lang === 'en' ? 'Department' : '部门')
+      : null
 
   return (
     <div className="overflow-y-auto h-full flex flex-col">
       {/* Header */}
       <div className="px-4 pt-4 pb-3 border-b border-slate-100">
-        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">权限预览</p>
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">{lang === 'en' ? 'Permission Preview' : '权限预览'}</p>
         {/* Node identity */}
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-slate-500">
@@ -686,25 +700,20 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-800 truncate">{node.name}</p>
             <p className="text-xs text-slate-400 truncate">
-              {node.type === 'user' ? (node.role ?? '成员') + (deptName ? ` · ${deptName}` : '') : nodeTypeLabel}
+              {node.type === 'user' ? (node.role ?? (lang === 'en' ? 'Member' : '成员')) + (deptName ? ` · ${deptName}` : '') : nodeTypeLabel}
             </p>
           </div>
-          {node.type === 'user' && node.hasCustomConfig && (
-            <span className="flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 border border-orange-200 leading-none ml-auto">
-              定制权限
-            </span>
-          )}
         </div>
 
         {/* Summary stats */}
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="bg-slate-50 rounded-lg px-2.5 py-2 text-center">
             <p className="text-base font-bold text-slate-800 leading-none">{enabledFeatures}<span className="text-xs font-normal text-slate-400">/{totalFeatures}</span></p>
-            <p className="text-[10px] text-slate-500 mt-0.5">功能已开启</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">{lang === 'en' ? 'features on' : '功能已开启'}</p>
           </div>
           <div className="bg-slate-50 rounded-lg px-2.5 py-2 text-center">
             <p className="text-base font-bold text-slate-800 leading-none">{enabledMenus.length}<span className="text-xs font-normal text-slate-400">/{totalMenus}</span></p>
-            <p className="text-[10px] text-slate-500 mt-0.5">菜单可访问</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">{lang === 'en' ? 'menus accessible' : '菜单可访问'}</p>
           </div>
         </div>
       </div>
@@ -712,7 +721,7 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
       <div className="px-4 py-3 space-y-4 flex-1">
         {/* Feature modules */}
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">功能权限</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">{lang === 'en' ? 'Features' : '功能权限'}</p>
           <div className="space-y-3">
             {Object.entries(MODULE_FEATURES).map(([modKey, mod]) => {
               const modEnabled = Object.keys(mod.features).filter(
@@ -722,7 +731,7 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
               return (
                 <div key={modKey}>
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-[10px] font-medium text-slate-500">{mod.label}</p>
+                    <p className="text-[10px] font-medium text-slate-500">{lang === 'en' ? mod.labelEn : mod.label}</p>
                     <span className={`text-[10px] font-medium ${modEnabled > 0 ? 'text-green-600' : 'text-slate-400'}`}>
                       {modEnabled}/{modTotal}
                     </span>
@@ -733,7 +742,7 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
                       return (
                         <div key={featKey} className="flex items-center gap-2">
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${hasIt ? 'bg-green-500' : 'bg-slate-200'}`} />
-                          <span className={`text-xs ${hasIt ? 'text-slate-700' : 'text-slate-400'}`}>{featLabel}</span>
+                          <span className={`text-xs ${hasIt ? 'text-slate-700' : 'text-slate-400'}`}>{lang === 'en' ? (mod.featuresEn?.[featKey] ?? featLabel) : featLabel}</span>
                         </div>
                       )
                     })}
@@ -746,7 +755,7 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
 
         {/* Menu access */}
         <div className="pt-3 border-t border-slate-100">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">菜单访问</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">{lang === 'en' ? 'Menu Access' : '菜单访问'}</p>
           <div className="flex flex-wrap gap-1">
             {MENU_ITEMS.map(m => {
               const canAccess = effective.menu[m.id] === true
@@ -759,7 +768,7 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
                       : 'bg-slate-100 text-slate-400'
                   }`}
                 >
-                  {m.label}
+                  {lang === 'en' ? m.labelEn : m.label}
                 </span>
               )
             })}
@@ -768,53 +777,17 @@ function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
 
         {/* Data scope */}
         <div className="pt-3 border-t border-slate-100">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">数据权限</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">{lang === 'en' ? 'Data Access' : '数据权限'}</p>
           <div className="flex items-center gap-2">
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${scopeColors[effective.dataScope] ?? 'bg-slate-100 text-slate-600'}`}>
-              {scopeOption?.label ?? effective.dataScope}
+              {lang === 'en' ? (scopeOption?.labelEn ?? effective.dataScope) : (scopeOption?.label ?? effective.dataScope)}
             </span>
           </div>
           {scopeOption && (
-            <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">{scopeOption.desc}</p>
+            <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">{lang === 'en' ? scopeOption.descEn : scopeOption.desc}</p>
           )}
         </div>
 
-        {/* Source analysis (users only) */}
-        {node.type === 'user' && (
-          <div className="pt-3 border-t border-slate-100">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">权限来源</p>
-            <div className="space-y-1.5">
-              {deptName && inheritedCount.features > 0 && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
-                    <span className="text-[10px] text-slate-500">继承自{deptName}</span>
-                  </div>
-                  <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full">
-                    {inheritedCount.features} 项
-                  </span>
-                </div>
-              )}
-              {overriddenCount.features > 0 && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
-                    <span className="text-[10px] text-slate-500">个人定制覆盖</span>
-                  </div>
-                  <span className="text-[10px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full">
-                    {overriddenCount.features} 项
-                  </span>
-                </div>
-              )}
-              {overriddenCount.features === 0 && (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-slate-300 flex-shrink-0" />
-                  <span className="text-[10px] text-slate-400">全部继承自部门</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
@@ -839,6 +812,7 @@ function ConfirmDialog({
   onCancel: () => void
   onConfirm: () => void
 }) {
+  const { lang } = useLang()
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -851,7 +825,7 @@ function ConfirmDialog({
             onClick={onCancel}
             className="px-4 py-1.5 rounded-lg text-xs text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
           >
-            取消
+            {lang === 'en' ? 'Cancel' : '取消'}
           </button>
           <button
             onClick={onConfirm}
@@ -888,13 +862,14 @@ function CopyToDeptModal({
     )
   }
 
+  const { lang } = useLang()
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/20" onClick={onCancel} />
       <div className="relative bg-white rounded-2xl shadow-xl border border-slate-200 w-80 p-6">
-        <h3 className="text-sm font-semibold text-slate-900 mb-1">复制权限到其他部门</h3>
-        <p className="text-xs text-slate-500 mb-4">请选择要复制到的目标部门</p>
+        <h3 className="text-sm font-semibold text-slate-900 mb-1">{lang === 'en' ? 'Copy Permissions to Other Depts' : '复制权限到其他部门'}</h3>
+        <p className="text-xs text-slate-500 mb-4">{lang === 'en' ? 'Select target departments' : '请选择要复制到的目标部门'}</p>
         <div className="space-y-2 mb-5">
           {depts.map(dept => (
             <label key={dept.id} className="flex items-center gap-2.5 cursor-pointer">
@@ -918,14 +893,14 @@ function CopyToDeptModal({
             onClick={() => { onCancel(); setSelected([]) }}
             className="px-4 py-1.5 rounded-lg text-xs text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
           >
-            取消
+            {lang === 'en' ? 'Cancel' : '取消'}
           </button>
           <button
             onClick={() => { onConfirm(selected); setSelected([]) }}
             disabled={selected.length === 0}
             className="px-4 py-1.5 rounded-lg text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            确认复制
+            {lang === 'en' ? 'Confirm' : '确认复制'}
           </button>
         </div>
       </div>
@@ -969,11 +944,16 @@ function buildRoleConfigs(roles: RoleItem[]) {
   }, {})
 }
 
-const ORG_TABS = ['角色权限', '菜单权限', '功能模块权限', '按钮权限']
-const ROLE_TABS = ['菜单权限', '功能模块权限', '按钮权限']
+const ORG_TABS_ZH = ['角色权限', '菜单权限', '功能模块权限', '按钮权限']
+const ORG_TABS_EN = ['Roles', 'Menus', 'Features', 'Buttons']
+const USER_TABS_ZH = ['角色权限']
+const USER_TABS_EN = ['Roles']
+const ROLE_TABS_ZH = ['菜单权限', '功能模块权限', '按钮权限']
+const ROLE_TABS_EN = ['Menus', 'Features', 'Buttons']
 
 export default function SettingsPage() {
   const { navigate } = useNavigation()
+  const { lang } = useLang()
   const [leftMode, setLeftMode] = useState<'org' | 'role'>('org')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null)
@@ -987,7 +967,6 @@ export default function SettingsPage() {
   const [savedRoleConfigs, setSavedRoleConfigs] = useState<Record<string, NodePermConfig>>(() => buildRoleConfigs(INITIAL_ROLES))
   const [pendingTarget, setPendingTarget] = useState<{ mode: 'org' | 'role'; id: string } | null>(null)
   const [showUnsaved, setShowUnsaved] = useState(false)
-  const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showCopyModal, setShowCopyModal] = useState(false)
   const [showDeleteRoleConfirm, setShowDeleteRoleConfirm] = useState(false)
   const [pendingDeleteRoleId, setPendingDeleteRoleId] = useState<string | null>(null)
@@ -1085,42 +1064,7 @@ export default function SettingsPage() {
       if (!selectedRoleId) return
       setSavedRoleConfigs(prev => ({ ...prev, [selectedRoleId]: deepClone(roleConfigs[selectedRoleId]) }))
     }
-    showToast('权限已保存')
-  }
-
-  const handleReset = () => {
-    if (!selectedId) return
-    const node = findNode(selectedId)
-    if (!node) return
-    const deptId = node.departmentId
-    // Reset user config to all inherit
-    const resetConfig: NodePermConfig = {
-      feature: {},
-      menu: {},
-      dataScope: 'inherit',
-      buttons: {},
-    }
-    // Initialize all features to 'inherit'
-    for (const mod of Object.keys(MODULE_FEATURES)) {
-      resetConfig.feature[mod] = {}
-      for (const feat of Object.keys(MODULE_FEATURES[mod].features)) {
-        resetConfig.feature[mod][feat] = 'inherit'
-      }
-    }
-    for (const menuId of Object.keys(savedConfigs[selectedId]?.menu ?? {})) {
-      resetConfig.menu[menuId] = 'inherit'
-    }
-    for (const mod of BUTTON_MODULES) {
-      resetConfig.buttons[mod] = {}
-      for (const action of BUTTON_ACTIONS) {
-        resetConfig.buttons[mod][action] = 'inherit'
-      }
-    }
-    setConfigs(prev => ({ ...prev, [selectedId]: resetConfig }))
-    setSavedConfigs(prev => ({ ...prev, [selectedId]: resetConfig }))
-    setShowResetConfirm(false)
-    showToast('已重置为部门默认权限')
-    void deptId // suppress unused warning
+    showToast(lang === 'en' ? 'Permissions saved' : '权限已保存')
   }
 
   const handleCopyToDept = (targetDeptIds: string[]) => {
@@ -1137,7 +1081,7 @@ export default function SettingsPage() {
       return next
     })
     setShowCopyModal(false)
-    showToast(`已复制到 ${targetDeptIds.length} 个部门`)
+    showToast(lang === 'en' ? `Copied to ${targetDeptIds.length} department(s)` : `已复制到 ${targetDeptIds.length} 个部门`)
   }
 
   const handleConfigChange = (newConfig: NodePermConfig) => {
@@ -1176,7 +1120,7 @@ export default function SettingsPage() {
     const name = roleFormName.trim()
     const description = roleFormDescription.trim()
     if (!name) {
-      showToast('角色名称不能为空')
+      showToast(lang === 'en' ? 'Role name cannot be empty' : '角色名称不能为空')
       return
     }
 
@@ -1185,7 +1129,7 @@ export default function SettingsPage() {
       const newRole: RoleItem = {
         id,
         name,
-        description: description || '未设置描述',
+        description: description || (lang === 'en' ? 'No description' : '未设置描述'),
         memberCount: 0,
       }
       setRoles(prev => [...prev, newRole])
@@ -1199,21 +1143,21 @@ export default function SettingsPage() {
       setSelectedId(null)
       setSelectedRoleId(id)
       setActiveTab(0)
-      showToast('角色已创建')
+      showToast(lang === 'en' ? 'Role created' : '角色已创建')
       return
     }
 
     if (roleFormMode === 'edit' && editingRoleId) {
       setRoles(prev => prev.map(role =>
         role.id === editingRoleId
-          ? { ...role, name, description: description || '未设置描述' }
+          ? { ...role, name, description: description || (lang === 'en' ? 'No description' : '未设置描述') }
           : role
       ))
       setRoleFormMode(null)
       setEditingRoleId(null)
       setRoleFormName('')
       setRoleFormDescription('')
-      showToast('角色已更新')
+      showToast(lang === 'en' ? 'Role updated' : '角色已更新')
     }
   }
 
@@ -1257,7 +1201,7 @@ export default function SettingsPage() {
 
     setShowDeleteRoleConfirm(false)
     setPendingDeleteRoleId(null)
-    showToast('角色已删除')
+    showToast(lang === 'en' ? 'Role deleted' : '角色已删除')
   }
 
   const currentConfig = leftMode === 'org'
@@ -1266,7 +1210,11 @@ export default function SettingsPage() {
   const deptId = selectedNode?.type === 'user' ? selectedNode.departmentId : null
   const deptName = deptId ? getDeptName(deptId) : undefined
   const filteredRoles = roles.filter(role => role.name.toLowerCase().includes(searchText.toLowerCase()))
-  const tabs = leftMode === 'org' ? ORG_TABS : ROLE_TABS
+  const tabs = leftMode === 'org'
+    ? (selectedNode?.type === 'user'
+        ? (lang === 'en' ? USER_TABS_EN : USER_TABS_ZH)
+        : (lang === 'en' ? ORG_TABS_EN : ORG_TABS_ZH))
+    : (lang === 'en' ? ROLE_TABS_EN : ROLE_TABS_ZH)
 
   // Count members for depts
   const memberCount = selectedNode?.children?.filter(c => c.type === 'user').length ?? 0
@@ -1288,7 +1236,7 @@ export default function SettingsPage() {
             <p className="text-xs text-slate-400">
               <button onClick={() => navigate('settings')} className="hover:text-slate-600 transition-colors">Settings</button>
               <span className="mx-1.5">›</span>
-              <span className="text-slate-600 font-medium">权限管理</span>
+              <span className="text-slate-600 font-medium">{lang === 'en' ? 'Permission Management' : '权限管理'}</span>
             </p>
           </div>
 
@@ -1303,24 +1251,24 @@ export default function SettingsPage() {
                 onClick={() => handleSwitchLeftMode('org')}
                 className={`text-xs py-1 rounded-md transition-colors ${leftMode === 'org' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
               >
-                组织架构
+                {lang === 'en' ? 'Org Structure' : '组织架构'}
               </button>
               <button
                 onClick={() => handleSwitchLeftMode('role')}
                 className={`text-xs py-1 rounded-md transition-colors ${leftMode === 'role' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
               >
-                角色管理
+                {lang === 'en' ? 'Roles' : '角色管理'}
               </button>
             </div>
 
             <div className="flex items-center justify-between px-1 mb-2">
-              <p className="text-xs font-semibold text-slate-700">{leftMode === 'org' ? '组织架构' : '角色管理'}</p>
+              <p className="text-xs font-semibold text-slate-700">{leftMode === 'org' ? (lang === 'en' ? 'Org Structure' : '组织架构') : (lang === 'en' ? 'Roles' : '角色管理')}</p>
               {leftMode === 'role' && (
                 <button
                   onClick={openCreateRoleForm}
                   className="text-[11px] text-blue-600 hover:text-blue-700"
                 >
-                  + 新增角色
+                  {lang === 'en' ? '+ New Role' : '+ 新增角色'}
                 </button>
               )}
             </div>
@@ -1332,7 +1280,7 @@ export default function SettingsPage() {
               </span>
               <input
                 type="text"
-                placeholder={leftMode === 'org' ? '搜索成员...' : '搜索角色...'}
+                placeholder={leftMode === 'org' ? (lang === 'en' ? 'Search members...' : '搜索成员...') : (lang === 'en' ? 'Search roles...' : '搜索角色...')}
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg
@@ -1346,13 +1294,13 @@ export default function SettingsPage() {
                 <input
                   value={roleFormName}
                   onChange={e => setRoleFormName(e.target.value)}
-                  placeholder="角色名称"
+                  placeholder={lang === 'en' ? 'Role name' : '角色名称'}
                   className="w-full px-2 py-1 text-xs border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
                 <input
                   value={roleFormDescription}
                   onChange={e => setRoleFormDescription(e.target.value)}
-                  placeholder="角色描述"
+                  placeholder={lang === 'en' ? 'Role description' : '角色描述'}
                   className="w-full px-2 py-1 text-xs border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
                 <div className="flex justify-end gap-1">
@@ -1365,13 +1313,13 @@ export default function SettingsPage() {
                     }}
                     className="px-2 py-1 text-[11px] text-slate-600 border border-slate-200 rounded-md hover:bg-white"
                   >
-                    取消
+                    {lang === 'en' ? 'Cancel' : '取消'}
                   </button>
                   <button
                     onClick={handleSubmitRoleForm}
                     className="px-2 py-1 text-[11px] text-white bg-blue-600 hover:bg-blue-700 rounded-md"
                   >
-                    {roleFormMode === 'create' ? '创建' : '保存'}
+                    {roleFormMode === 'create' ? (lang === 'en' ? 'Create' : '创建') : (lang === 'en' ? 'Save' : '保存')}
                   </button>
                 </div>
               </div>
@@ -1405,20 +1353,20 @@ export default function SettingsPage() {
                         {hasCustomConfig && <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />}
                       </div>
                       <p className="text-[11px] text-slate-500 mt-0.5 truncate">{role.description}</p>
-                      <p className="text-[10px] text-slate-400 mt-1">{role.memberCount} 人</p>
+                      <p className="text-[10px] text-slate-400 mt-1">{role.memberCount} {lang === 'en' ? 'members' : '人'}</p>
                     </button>
                     <div className="flex gap-2 mt-2 justify-end">
                       <button
                         onClick={() => openEditRoleForm(role)}
                         className="text-[11px] text-slate-500 hover:text-blue-600"
                       >
-                        编辑
+                        {lang === 'en' ? 'Edit' : '编辑'}
                       </button>
                       <button
                         onClick={() => handleDeleteRole(role.id)}
                         className="text-[11px] text-slate-500 hover:text-red-600"
                       >
-                        删除
+                        {lang === 'en' ? 'Delete' : '删除'}
                       </button>
                     </div>
                   </div>
@@ -1435,8 +1383,8 @@ export default function SettingsPage() {
               <svg className="w-10 h-10 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <p className="text-sm text-slate-500">← 请从左侧选择{leftMode === 'org' ? '部门或人员' : '角色'}</p>
-              <p className="text-xs text-slate-400 mt-1">选中后可在此配置权限</p>
+              <p className="text-sm text-slate-500">← {lang === 'en' ? `Select a ${leftMode === 'org' ? 'department or member' : 'role'} from the left` : `请从左侧选择${leftMode === 'org' ? '部门或人员' : '角色'}`}</p>
+              <p className="text-xs text-slate-400 mt-1">{lang === 'en' ? 'Permissions can be configured here' : '选中后可在此配置权限'}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -1450,9 +1398,9 @@ export default function SettingsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-slate-900">{selectedRole.name}</span>
-                        <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">角色</span>
+                        <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{lang === 'en' ? 'Role' : '角色'}</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">{selectedRole.description} · {selectedRole.memberCount} 人</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{selectedRole.description} · {selectedRole.memberCount} {lang === 'en' ? 'members' : '人'}</p>
                     </div>
                     <span className="text-slate-300">
                       <IconInfo />
@@ -1469,11 +1417,6 @@ export default function SettingsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-slate-900">{selectedNode.name}</span>
-                        {selectedNode.hasCustomConfig && (
-                          <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                            定制权限
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
                         {selectedNode.role} · {deptName}
@@ -1495,12 +1438,12 @@ export default function SettingsPage() {
                         <span className="text-sm font-semibold text-slate-900">{selectedNode?.name}</span>
                         {selectedNode?.hasCustomConfig && (
                           <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                            定制权限
+                            {lang === 'en' ? 'Custom Perms' : '定制权限'}
                           </span>
                         )}
                       </div>
                       {selectedNode?.type === 'department' && (
-                        <p className="text-xs text-slate-500 mt-0.5">{memberCount} 名成员</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{memberCount} {lang === 'en' ? 'members' : '名成员'}</p>
                       )}
                     </div>
                     <span className="text-slate-300">
@@ -1572,26 +1515,18 @@ export default function SettingsPage() {
                   onClick={handleSave}
                   className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
                 >
-                  保存
+                  {lang === 'en' ? 'Save' : '保存'}
                 </button>
-                {leftMode === 'org' && selectedNode?.type === 'user' && (
-                  <button
-                    onClick={() => setShowResetConfirm(true)}
-                    className="px-5 py-2 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
-                  >
-                    重置权限
-                  </button>
-                )}
                 {leftMode === 'org' && selectedNode?.type === 'department' && (
                   <button
                     onClick={() => setShowCopyModal(true)}
                     className="px-5 py-2 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
                   >
-                    复制权限到其他部门
+                    {lang === 'en' ? 'Copy to Other Depts' : '复制权限到其他部门'}
                   </button>
                 )}
                 {isDirty && (
-                  <span className="text-xs text-orange-500 ml-auto">有未保存的修改</span>
+                  <span className="text-xs text-orange-500 ml-auto">{lang === 'en' ? 'Unsaved changes' : '有未保存的修改'}</span>
                 )}
               </div>
             </div>
@@ -1614,22 +1549,12 @@ export default function SettingsPage() {
       {/* Dialogs */}
       <ConfirmDialog
         open={showUnsaved}
-        title="是否放弃当前修改？"
-        message="当前页有未保存的权限修改，切换后将会丢失这些更改。"
-        confirmLabel="放弃修改"
+        title={lang === 'en' ? 'Discard unsaved changes?' : '是否放弃当前修改？'}
+        message={lang === 'en' ? 'You have unsaved permission changes. Switching will discard them.' : '当前页有未保存的权限修改，切换后将会丢失这些更改。'}
+        confirmLabel={lang === 'en' ? 'Discard' : '放弃修改'}
         confirmClass="bg-red-500 hover:bg-red-600"
         onCancel={() => { setShowUnsaved(false); setPendingTarget(null) }}
         onConfirm={handleDiscardAndSwitch}
-      />
-
-      <ConfirmDialog
-        open={showResetConfirm}
-        title="确认重置？"
-        message="将清除个人自定义配置，恢复为部门权限。此操作不可撤销。"
-        confirmLabel="确认重置"
-        confirmClass="bg-red-500 hover:bg-red-600"
-        onCancel={() => setShowResetConfirm(false)}
-        onConfirm={handleReset}
       />
 
       <CopyToDeptModal
@@ -1641,9 +1566,9 @@ export default function SettingsPage() {
 
       <ConfirmDialog
         open={showDeleteRoleConfirm}
-        title="确认删除角色？"
-        message="删除后将移除该角色及其权限配置。此操作不可撤销。"
-        confirmLabel="确认删除"
+        title={lang === 'en' ? 'Delete Role?' : '确认删除角色？'}
+        message={lang === 'en' ? 'This will permanently remove the role and its permission config.' : '删除后将移除该角色及其权限配置。此操作不可撤销。'}
+        confirmLabel={lang === 'en' ? 'Delete' : '确认删除'}
         confirmClass="bg-red-500 hover:bg-red-600"
         onCancel={() => {
           setShowDeleteRoleConfirm(false)

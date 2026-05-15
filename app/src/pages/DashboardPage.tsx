@@ -144,14 +144,6 @@ const BRANDS = [
   { name: 'YAY HOORAY!™',    logo: 'https://www.paramontgroup.com/assets/images/logo-yay-hooray.png',      bg: '#f0fdfa' },
 ]
 
-// Mock view counts for hot products
-const HOT_VIEWS: Record<string, number> = {
-  'p-01': 2841, 'p-07': 2103, 'p-12': 1876,
-  'p-02': 1542, 'p-11': 1389, 'p-08': 1204,
-  'p-10': 987,  'p-04': 876,  'p-05': 743,
-  'p-03': 621,  'p-09': 534,  'p-06': 412,
-}
-
 // Mock favorites
 const FAVORITE_IDS = ['p-01', 'p-07', 'p-04', 'p-12', 'p-02', 'p-08', 'p-11', 'p-05']
 
@@ -289,7 +281,7 @@ function BrandCard({ name, logo, bg }: { name: string; logo: string; bg: string 
   )
 }
 
-// ── Hot product row ───────────────────────────────────────────────────────
+// ── Status colour map (used by RecentRow) ────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
   'Concept':        'bg-blue-50 text-blue-700 border border-blue-200',
@@ -298,41 +290,6 @@ const STATUS_COLOR: Record<string, string> = {
   'Initial Sampled':'bg-orange-50 text-orange-700 border border-orange-200',
   'Final':          'bg-emerald-50 text-emerald-700 border border-emerald-200',
   'Dropped':        'bg-slate-100 text-slate-500 border border-slate-200',
-}
-
-function HotProductRow({ rank, product, views, viewsLabel, onClick }: {
-  rank: number
-  product: typeof MOCK_PRODUCTS[0]
-  views: number
-  viewsLabel: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50
-                 transition-colors text-left group"
-    >
-      <span className={`w-6 text-center text-sm font-bold flex-shrink-0
-        ${rank === 1 ? 'text-amber-500' : rank === 2 ? 'text-slate-400' : rank === 3 ? 'text-orange-400' : 'text-slate-300'}`}>
-        {rank}
-      </span>
-      <img src={product.image} alt={product.name}
-        className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-800 truncate group-hover:text-blue-700 transition-colors">
-          {product.name}
-        </p>
-        <p className="text-xs text-slate-400 mt-0.5">{product.category} · {product.subcategory}</p>
-      </div>
-      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[product.status] ?? 'bg-slate-100 text-slate-500'}`}>
-        {product.status}
-      </span>
-      <span className="flex-shrink-0 text-xs text-slate-400 font-medium whitespace-nowrap">
-        <span className="text-slate-700 font-semibold">{views.toLocaleString()}</span> {viewsLabel}
-      </span>
-    </button>
-  )
 }
 
 // ── Mini product row (workspace) ──────────────────────────────────────────
@@ -344,18 +301,18 @@ function MiniProductRow({ product, onClick }: {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-2.5 hover:bg-slate-50 rounded-lg px-2 py-1.5
+      className="w-full flex items-center gap-3 hover:bg-slate-50 rounded-xl px-3 py-2.5
                  transition-colors text-left group"
     >
       <img src={product.image} alt={product.name}
-        className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+        className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-slate-700 truncate group-hover:text-blue-700 transition-colors">
+        <p className="text-sm font-medium text-slate-800 truncate group-hover:text-blue-700 transition-colors">
           {product.name}
         </p>
-        <p className="text-[11px] text-slate-400 truncate">{product.subcategory}</p>
+        <p className="text-xs text-slate-400 truncate mt-0.5">{product.subcategory}</p>
       </div>
-      <span className="text-xs font-medium text-slate-700 flex-shrink-0">
+      <span className="text-sm font-medium text-slate-800 flex-shrink-0">
         {product.retail !== null ? `$${product.retail.toFixed(2)}` : '—'}
       </span>
     </button>
@@ -376,13 +333,13 @@ function RecentRow({ product, updatedLabel, onClick }: {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50
-                 transition-colors text-left group border border-transparent hover:border-slate-200"
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50
+                 transition-colors text-left group"
     >
       <img src={product.image} alt={product.name}
-        className="w-11 h-11 rounded-xl object-cover flex-shrink-0" />
+        className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-blue-700 transition-colors">
+        <p className="text-sm font-medium text-slate-800 truncate group-hover:text-blue-700 transition-colors">
           {product.name}
         </p>
         <p className="text-xs text-slate-400 mt-0.5 font-mono">#{product.itemNo}</p>
@@ -393,7 +350,7 @@ function RecentRow({ product, updatedLabel, onClick }: {
         </span>
       </div>
       <div className="text-right flex-shrink-0">
-        <p className="text-sm font-semibold text-slate-800">
+        <p className="text-sm font-medium text-slate-800">
           {product.retail !== null ? `$${product.retail.toFixed(2)}` : '—'}
         </p>
         <p className="text-xs text-slate-400 mt-0.5">{updatedLabel} {date}</p>
@@ -408,18 +365,6 @@ export default function DashboardPage() {
   const { navigate } = useNavigation()
   const { lang } = useLang()
   const t = COPY[lang]
-
-  const hotProducts = useMemo(() =>
-    MOCK_PRODUCTS
-      .filter(p => HOT_VIEWS[p.id])
-      .sort((a, b) => (HOT_VIEWS[b.id] ?? 0) - (HOT_VIEWS[a.id] ?? 0)),
-    []
-  )
-
-  const recentlyViewed = useMemo(() =>
-    MOCK_PRODUCTS.slice(0, 8),
-    []
-  )
 
   const favorites = useMemo(() =>
     MOCK_PRODUCTS.filter(p => FAVORITE_IDS.includes(p.id)).slice(0, 8),
@@ -574,46 +519,8 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            {/* ── 2×2 Grid: Hot / Viewed / Favorites / Updated ──── */}
+            {/* ── 2-col: Favorites + Recently Updated ─────────── */}
             <div className="grid grid-cols-2 gap-5">
-
-              {/* Hot Products */}
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-                <SectionHeader
-                  title={t.hot_products}
-                  cta={t.view_all}
-                  onCta={() => navigate('products')}
-                />
-                <div className="space-y-0.5">
-                  {hotProducts.slice(0, 8).map((p, i) => (
-                    <HotProductRow
-                      key={p.id}
-                      rank={i + 1}
-                      product={p}
-                      views={HOT_VIEWS[p.id] ?? 0}
-                      viewsLabel={t.views}
-                      onClick={() => navigate('product-detail')}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Recently Viewed */}
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-                <SectionHeader
-                  title={t.recently_viewed}
-                  cta={t.view_all}
-                  onCta={() => navigate('products')}
-                />
-                <div className="space-y-0.5">
-                  {recentlyViewed.map(p => (
-                    <MiniProductRow
-                      key={p.id} product={p}
-                      onClick={() => navigate('product-detail')}
-                    />
-                  ))}
-                </div>
-              </div>
 
               {/* My Favorites */}
               <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">

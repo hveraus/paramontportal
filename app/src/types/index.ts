@@ -209,4 +209,38 @@ export interface ProductDetail {
 
   // ── Iteration records ────────────────────────────────────────────
   iterationRecords: IterationRecord[]
+
+  // ── Committed projects ───────────────────────────────────────────
+  committedRecords: CommittedRecord[]
+}
+
+export interface CommittedRecord {
+  id: string
+  committedDate: string       // ISO date string  入选日期
+  projectName: string         // 入选项目名称
+  programCode: string         // Program code
+  projectId: string           // for deep-link to project page
+  customer: string            // 客户名称 (sourced from external system)
+  clientPending?: boolean     // true = pending fetch from external system
+}
+
+// ── Archive files ────────────────────────────────────────────────────────────
+
+export type ArchiveFileType = 'pdf' | 'ppt' | 'pptx'
+
+export interface ArchiveUploader {
+  id: string
+  name: string
+  avatar: string
+}
+
+export interface ArchiveFile {
+  id: string
+  name: string
+  type: ArchiveFileType
+  sizeBytes: number          // raw bytes for sorting
+  sizeLabel: string          // e.g. "2.4 MB"
+  uploadedAt: string         // ISO date string (YYYY-MM-DD)
+  uploadedBy: ArchiveUploader
+  url: string                // preview / download href
 }
