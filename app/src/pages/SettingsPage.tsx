@@ -721,7 +721,7 @@ function PreviewPanel({ mode, nodeId, roleName }: PreviewPanelProps) {
         <div>
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">{lang === 'en' ? 'Features' : '功能权限'}</p>
           <div className="space-y-3">
-            {Object.entries(MODULE_FEATURES).map(([modKey, mod]) => {
+            {(Object.entries(MODULE_FEATURES) as [string, typeof MODULE_FEATURES[string]][]).map(([modKey, mod]) => {
               const modEnabled = Object.keys(mod.features).filter(
                 fk => effective.feature[modKey]?.[fk] === true
               ).length

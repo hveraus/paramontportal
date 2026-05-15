@@ -13,18 +13,26 @@ export interface OrgNode {
   hasCustomConfig?: boolean
 }
 
-export const MODULE_FEATURES: Record<string, { label: string; features: Record<string, string> }> = {
+export const MODULE_FEATURES: Record<string, { label: string; labelEn: string; features: Record<string, string>; featuresEn: Record<string, string> }> = {
   portal: {
     label: '门户应用',
+    labelEn: 'Portal',
     features: {
       home: '首页展示',
       category: '品类索引',
       preview: '产品预览',
       dashboard: '仪表盘',
     },
+    featuresEn: {
+      home: 'Homepage',
+      category: 'Category Index',
+      preview: 'Product Preview',
+      dashboard: 'Dashboard',
+    },
   },
   pdm: {
     label: '产品信息管理',
+    labelEn: 'Product Info',
     features: {
       basic: '基础信息',
       quality: '质量信息',
@@ -32,43 +40,65 @@ export const MODULE_FEATURES: Record<string, { label: string; features: Record<s
       patent: '专利信息',
       cert: '认证信息',
     },
+    featuresEn: {
+      basic: 'Basic Info',
+      quality: 'Quality',
+      cost: 'Cost',
+      patent: 'Patents',
+      cert: 'Certifications',
+    },
   },
   sample: {
     label: '样品管理',
+    labelEn: 'Samples',
     features: {
       search: '样品检索',
       location: '样品间位置管理',
     },
+    featuresEn: {
+      search: 'Sample Search',
+      location: 'Sample Room Location',
+    },
   },
 }
 
-export const MENU_ITEMS = [
-  { id: 'home', label: '首页', children: [] },
+export interface MenuItem {
+  id: string
+  label: string
+  labelEn: string
+  children: MenuItem[]
+}
+
+export const MENU_ITEMS: MenuItem[] = [
+  { id: 'home', label: '首页', labelEn: 'Home', children: [] },
   {
     id: 'products',
     label: '产品',
+    labelEn: 'Products',
     children: [
-      { id: 'products.list', label: '产品列表', children: [] },
-      { id: 'products.detail', label: '产品详情', children: [] },
-      { id: 'products.create', label: '新建产品', children: [] },
+      { id: 'products.list', label: '产品列表', labelEn: 'Product List', children: [] },
+      { id: 'products.detail', label: '产品详情', labelEn: 'Product Detail', children: [] },
+      { id: 'products.create', label: '新建产品', labelEn: 'Create Product', children: [] },
     ],
   },
   {
     id: 'projects',
     label: '项目',
+    labelEn: 'Projects',
     children: [
-      { id: 'projects.list', label: '项目列表', children: [] },
-      { id: 'projects.detail', label: '项目详情', children: [] },
+      { id: 'projects.list', label: '项目列表', labelEn: 'Project List', children: [] },
+      { id: 'projects.detail', label: '项目详情', labelEn: 'Project Detail', children: [] },
     ],
   },
-  { id: 'clients', label: '客户', children: [] },
+  { id: 'clients', label: '客户', labelEn: 'Clients', children: [] },
   {
     id: 'settings',
     label: '设置',
+    labelEn: 'Settings',
     children: [
-      { id: 'settings.permissions', label: '权限配置', children: [] },
-      { id: 'settings.users', label: '用户管理', children: [] },
-      { id: 'settings.system', label: '系统配置', children: [] },
+      { id: 'settings.permissions', label: '权限配置', labelEn: 'Permissions', children: [] },
+      { id: 'settings.users', label: '用户管理', labelEn: 'User Management', children: [] },
+      { id: 'settings.system', label: '系统配置', labelEn: 'System Config', children: [] },
     ],
   },
 ]
