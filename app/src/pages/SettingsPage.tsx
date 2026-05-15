@@ -10,7 +10,6 @@ import {
   MODULE_FEATURES,
   MENU_ITEMS,
   BUTTON_ACTIONS,
-  BUTTON_MODULES,
   findNode,
   getDeptName,
   computeEffective,
@@ -147,7 +146,6 @@ interface OrgTreeNodeProps {
 }
 
 function OrgTreeNode({ node, selectedId, onSelect, searchText, defaultExpanded }: OrgTreeNodeProps) {
-  const { lang } = useLang()
   const [expanded, setExpanded] = useState(defaultExpanded ?? node.type === 'department')
 
   const matchesSearch = !searchText || node.name.toLowerCase().includes(searchText.toLowerCase())
@@ -614,7 +612,7 @@ interface PreviewPanelProps {
   roleName?: string
 }
 
-function PreviewPanel({ mode, nodeId, configs, roleName }: PreviewPanelProps) {
+function PreviewPanel({ mode, nodeId, roleName }: PreviewPanelProps) {
   const { lang } = useLang()
 
   if (mode === 'role') {
