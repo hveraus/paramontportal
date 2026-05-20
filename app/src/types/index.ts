@@ -1,4 +1,4 @@
-export type ProductStatus = 'Concept' | 'Proposed' | 'Pre-selected' | 'Initial Sampled' | 'Final' | 'Dropped'
+export type ProductStatus = 'Concept' | 'Proposed' | 'Pre-selected' | 'Initial Sampled' | 'Production' | 'Dropped'
 export type ParentOrBaby  = 'Parent' | 'Baby'
 export type AgeGrade      = '3+' | '6+' | '8+' | '14+'
 export type FobPoint      = 'Ningbo' | 'Shenzhen' | 'Huzhiming' | 'Haiphong' | 'Shanghai'
@@ -73,6 +73,14 @@ export interface ProductImage {
   url: string
   type: 'Product Render' | 'Packaging Render' | 'Reference Images'
   alt: string
+}
+
+export interface SourceFile {
+  id: string
+  name: string
+  size: string          // e.g. "4.2 MB"
+  uploadedAt: string    // ISO date
+  uploadedBy: string
 }
 
 export interface QualityAttachment {
@@ -200,6 +208,7 @@ export interface ProductDetail {
 
   // ── Images ──────────────────────────────────────────────────────
   images: ProductImage[]
+  sourceFiles: SourceFile[]
 
   // ── Certifications ───────────────────────────────────────────────
   certifications: CertificationRecord[]
@@ -212,6 +221,10 @@ export interface ProductDetail {
 
   // ── Committed projects ───────────────────────────────────────────
   committedRecords: CommittedRecord[]
+
+  // ── PD Notes ─────────────────────────────────────────────────────
+  pdComments: string | null
+  nbPdComments: string | null
 }
 
 export interface CommittedRecord {

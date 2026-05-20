@@ -13,7 +13,7 @@ const STATUS_VARIANT: Record<string, 'blue' | 'green' | 'red' | 'purple' | 'yell
   'Proposed':       'purple',
   'Pre-selected':   'yellow',
   'Initial Sampled':'orange',
-  'Final':          'green',
+  'Production':     'green',
   'Dropped':        'gray',
 }
 

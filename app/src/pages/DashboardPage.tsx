@@ -288,7 +288,7 @@ const STATUS_COLOR: Record<string, string> = {
   'Proposed':       'bg-violet-50 text-violet-700 border border-violet-200',
   'Pre-selected':   'bg-amber-50 text-amber-700 border border-amber-200',
   'Initial Sampled':'bg-orange-50 text-orange-700 border border-orange-200',
-  'Final':          'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  'Production':     'bg-emerald-50 text-emerald-700 border border-emerald-200',
   'Dropped':        'bg-slate-100 text-slate-500 border border-slate-200',
 }
 

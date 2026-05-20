@@ -127,7 +127,7 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
               <option value="Proposed">Proposed</option>
               <option value="Pre-selected">Pre-selected</option>
               <option value="Initial Sampled">Initial Sampled</option>
-              <option value="Final">Final</option>
+              <option value="Production">Production</option>
               <option value="Dropped">Dropped</option>
             </select>
           : val(product.status)
@@ -264,24 +264,6 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
               className="text-sm text-slate-700 leading-relaxed prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ __html: product.itemDescription }}
             />
-        }
-      </Field>
-
-      <Field label="Product Spec" span2>
-        {isEditing
-          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.productSpec ?? ''} onChange={e => onChange({ productSpec: e.target.value || null })} />
-          : product.productSpec
-            ? <p className="text-slate-700 leading-relaxed">{product.productSpec}</p>
-            : <span className="text-slate-300">—</span>
-        }
-      </Field>
-
-      <Field label="Item Packaging Spec" span2>
-        {isEditing
-          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.itemPackagingSpec ?? ''} onChange={e => onChange({ itemPackagingSpec: e.target.value || null })} />
-          : product.itemPackagingSpec
-            ? <p className="text-slate-700 leading-relaxed">{product.itemPackagingSpec}</p>
-            : <span className="text-slate-300">—</span>
         }
       </Field>
 

@@ -55,9 +55,10 @@ src/
     Breadcrumb.tsx              ← Breadcrumb trail
     StatusTag.tsx               ← Reusable colored badge
     ImageGallery.tsx            ← Product image viewer (zoom, fullscreen)
-    ActivityPanel.tsx           ← Comments + Change History (two sub-tabs)
+    ActivityPanel.tsx           ← Comments + Change History + PD Notes (three sub-tabs)
     CommentsThread.tsx          ← Live comment thread with edit/delete
     Timeline.tsx                ← Change history list
+    PDNotesPanel.tsx            ← PD Notes panel: two plain-text sections (PD Comments / NB PD Comments)
     tabs/                       ← One file per PDP tab:
       BasicInfoTab.tsx
       SpecsTab.tsx
@@ -68,6 +69,9 @@ src/
       CertificationsTab.tsx
       PatentsTab.tsx
       CommittedTab.tsx          ← Project commitment history table
+      SourceFilesTab.tsx        ← Source file list (.ai etc.) with share + download actions
+  pages/
+    ArchivesPage.tsx            ← Archives file library; file rows have Preview / Share / Download / Delete
 ```
 
 ## Language System
@@ -99,23 +103,35 @@ To add a new permission-gated tab:
 
 `TabId` union and `TABS` array live at the top of `ProductDetailPage.tsx`. Current tabs:
 
-| Tab ID | Label | Guard |
-|---|---|---|
-| `basic` | Basic Info | — |
-| `specs` | Specifications | — |
-| `packaging` | Packaging | — |
-| `quality` | Quality | — |
-| `cost` | Costings | `costOnly` |
-| `customs` | Customs | — |
-| `certifications` | Certifications | — |
-| `patents` | Patents | `patentOnly` |
-| `committed` | Committed | — |
+| Tab ID | Label | Guard | Edit mode |
+|---|---|---|---|
+| `basic` | Basic Info | — | ✓ |
+| `specs` | Specifications | — | ✓ |
+| `packaging` | Packaging | — | ✓ |
+| `quality` | Quality | — | ✓ CRUD |
+| `cost` | Costings | `costOnly` | ✓ |
+| `customs` | Customs | — | ✓ |
+| `certifications` | Certifications | — | ✓ CRUD |
+| `patents` | Patents | `patentOnly` | ✓ CRUD |
+| `committed` | Program | — | read-only |
+| `source` | Source Files | — | upload only |
+
+### Edit mode architecture
+Each tab has its own Edit/Save/Cancel controls in the action bar above the content. Only one tab can be in edit mode at a time (`editingTab: TabId | null`). A `draft: ProductDetail` is deep-cloned on edit start; Save merges it back to `product` state and appends an `IterationRecord`.
+
+- **Action bar** renders above every tab: left side shows contextual info (cost warning, cert/patent counts, CRM tip, "Editing…" label); right side shows Edit / Save+Cancel or Upload button
+- **Unsaved changes guard**: switching tabs while editing shows an amber inline banner — "Discard and switch?" / "Stay"
+- **Program tab**: no edit button — read-only by design
+- **Source Files tab**: Upload button instead of Edit; share + download per file row
+
+### Status dropdown
+The product status badge in the header is clickable — opens a dropdown of all 6 statuses. Selecting a different status shows a confirmation modal before applying. Statuses: `Concept | Proposed | Pre-selected | Initial Sampled | Production | Dropped`
 
 `CommittedTab` shows project commitment history: date, project name, client (may be `clientPending: true` when sourced from external CRM), and a project deep-link.
 
 ## Data Model
 
-All types live in `src/types/index.ts`. `ProductDetail` is the central interface. Key one-to-many fields:
+All types live in `src/types/index.ts`. `ProductDetail` is the central interface. Key fields:
 
 - `qualityRecords: QualityRecord[]` — table + expandable detail panel
 - `certifications: CertificationRecord[]` — card list with expiry badge
@@ -123,6 +139,9 @@ All types live in `src/types/index.ts`. `ProductDetail` is the central interface
 - `committedRecords: CommittedRecord[]` — project commitment table; `clientPending?: boolean` flags entries awaiting external CRM sync
 - `iterationRecords: IterationRecord[]` — change history timeline
 - `comments: ProductComment[]` — live comment thread
+- `sourceFiles: SourceFile[]` — design source files (.ai etc.); each has `id`, `name`, `size`, `uploadedAt`, `uploadedBy`
+- `pdComments: string | null` — free-text PD notes (US team); displayed in Activity Panel → PD Notes tab
+- `nbPdComments: string | null` — free-text NB PD notes (Ningbo team); same tab
 
 **Computed/formula fields** (derived in tab component, never stored):
 - Specs: Item Weight (lbs), Master H/W/D (cm), G.W./N.W. (lbs), CBM, Cu.Ft
@@ -164,3 +183,12 @@ Always update mock data in the same session as type changes to keep TypeScript c
 - `src/mock/productDetail.ts` — single `mockProduct` object (all PDP data)
 - `src/mock/products.ts` — `MOCK_PRODUCTS[]` + `CATEGORY_TREE`
 - `src/mock/orgTree.ts` — `ORG_TREE`, `PERM_CONFIGS`, `COMPANY_DEFAULTS`, `MODULE_FEATURES`, `MENU_ITEMS`, `BUTTON_ACTIONS`, `BUTTON_MODULES`
+- `src/mock/archives.ts` — `MOCK_ARCHIVES: ArchiveFile[]`
+- `src/mock/sampleRoom.ts` — sample room slots and products
+
+## CI / Build notes
+
+- Local `npx tsc --noEmit` uses incremental cache — may miss errors caught by CI.
+- CI runs `npm run build` (= `tsc -b` + Vite), which enforces `noUnusedLocals`.
+- When in doubt, run `npm run build` locally before pushing.
+- TypeScript 6.0 strict inference: always annotate exported `const` arrays/objects with an explicit type if they have optional fields (e.g. `labelEn`), or use `as const`. `Object.entries()` on a `Record` with extra fields needs an explicit cast.

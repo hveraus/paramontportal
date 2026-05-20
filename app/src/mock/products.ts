@@ -1,4 +1,4 @@
-export type ProductStatus = 'Concept' | 'Proposed' | 'Pre-selected' | 'Initial Sampled' | 'Final' | 'Dropped'
+export type ProductStatus = 'Concept' | 'Proposed' | 'Pre-selected' | 'Initial Sampled' | 'Production' | 'Dropped'
 
 export interface ProductListItem {
   id: string
@@ -30,7 +30,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     id: 'p-02', itemNo: '1008791',
     name: 'Watercolor Paint Set – 36 Vibrant Colors',
     brand: 'WM - Hello Hobby', category: 'Art Supplies', subcategory: 'Paints',
-    status: 'Final', retail: 2.50, moq: 24000,
+    status: 'Production', retail: 2.50, moq: 24000,
     hasPatent: false, committed: true, country: 'China', updatedAt: '2024-10-28',
     image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
@@ -46,7 +46,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     id: 'p-04', itemNo: '1008812',
     name: 'Premium Sketch Pad A4 – 120gsm 50 Sheets',
     brand: 'WM - Hello Hobby', category: 'Art Supplies', subcategory: 'Canvas & Paper',
-    status: 'Final', retail: 3.00, moq: 36000,
+    status: 'Production', retail: 3.00, moq: 36000,
     hasPatent: false, committed: true, country: 'US', updatedAt: '2024-10-20',
     image: `${import.meta.env.BASE_URL}Turtle.jpg`,
   },
@@ -102,7 +102,7 @@ export const MOCK_PRODUCTS: ProductListItem[] = [
     id: 'p-11', itemNo: '1008817',
     name: 'Spiral Notebook 5-Pack – A5 Ruled',
     brand: 'WM - DeskMate', category: 'Stationery', subcategory: 'Notebooks',
-    status: 'Final', retail: 2.25, moq: 48000,
+    status: 'Production', retail: 2.25, moq: 48000,
     hasPatent: false, committed: true, country: 'US', updatedAt: '2024-10-08',
     image: `${import.meta.env.BASE_URL}box.webp`,
   },

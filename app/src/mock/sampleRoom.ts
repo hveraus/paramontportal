@@ -31,7 +31,7 @@ export const SAMPLE_SLOTS: SampleSlot[] = [
     product: {
       itemNo: 'PM-YN-024', productName: 'WMT Chunky Yarn Pack 3-colour',
       thumbnail: 'https://placehold.co/80x80/e879f9/ffffff?text=YN',
-      status: 'Final',
+      status: 'Production',
       brand: 'Paramont Basics', category: 'Crafts / Yarn',
       responsiblePerson: 'Xiaomei Li', initialSelection: '2024-09-15',
       itemDescription: '3-colour chunky yarn pack, 100g per ball. Suitable for beginners and advanced knitters. Machine washable.',
@@ -78,7 +78,7 @@ export const SAMPLE_SLOTS: SampleSlot[] = [
     product: {
       itemNo: 'PM-AP-112', productName: 'WMT Acrylic Paint Set 24ct',
       thumbnail: 'https://placehold.co/80x80/fb923c/ffffff?text=AP',
-      status: 'Final',
+      status: 'Production',
       brand: 'ColorPro', category: 'Art Supplies / Paints',
       responsiblePerson: 'Sarah Thompson', initialSelection: '2024-08-10',
       itemDescription: '24-colour acrylic paint set, 12ml tubes. Heavy body, lightfast pigments. Suitable for canvas, wood, and fabric. ASTM certified.',
@@ -125,7 +125,7 @@ export const SAMPLE_SLOTS: SampleSlot[] = [
     product: {
       itemNo: 'PM-NB-023', productName: 'WMT Linen Hardcover Notebook A5',
       thumbnail: 'https://placehold.co/80x80/818cf8/ffffff?text=NB',
-      status: 'Final',
+      status: 'Production',
       brand: 'Paramont Basics', category: 'Stationery / Notebooks',
       responsiblePerson: 'Sarah Thompson', initialSelection: '2024-07-20',
       itemDescription: 'A5 hardcover notebook with linen cover, 192 ruled pages. Elastic closure, ribbon bookmark, and expandable pocket.',
@@ -231,7 +231,7 @@ export const SAMPLE_SLOTS: SampleSlot[] = [
     product: {
       itemNo: 'PM-ST-012', productName: 'DT Spring Stamp Set',
       thumbnail: 'https://placehold.co/80x80/34d399/ffffff?text=ST',
-      status: 'Final',
+      status: 'Production',
       brand: 'Sparkle Studio', category: 'Crafts / Paper Craft',
       responsiblePerson: 'Wei Zhang', initialSelection: '2024-11-30',
       itemDescription: 'Spring-themed foam stamp set with 12 designs, 2 ink pads (red and blue), and stamp positioning tray. Washable ink.',
@@ -244,7 +244,7 @@ export const SAMPLE_SLOTS: SampleSlot[] = [
     product: {
       itemNo: 'PM-PC-044', productName: 'WMT Paper Craft Bundle',
       thumbnail: 'https://placehold.co/80x80/38bdf8/ffffff?text=PC',
-      status: 'Final',
+      status: 'Production',
       brand: 'Paramont Basics', category: 'Crafts / Paper Craft',
       responsiblePerson: 'Sarah Thompson', initialSelection: '2024-10-05',
       itemDescription: 'All-in-one paper craft bundle: 120-sheet origami pack, 20 card stock sheets, 2 scissors, bone folder, and adhesive roller.',

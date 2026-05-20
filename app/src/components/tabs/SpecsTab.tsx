@@ -1,6 +1,7 @@
 import type { ProductDetail } from '../../types'
 
 const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
+const TEXTAREA_CLS = "w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 resize-none transition-colors"
 
 const IN_TO_CM = 2.54
 const G_TO_LBS = 1 / 453.592
@@ -114,6 +115,28 @@ export default function SpecsTab({ product, isEditing, onChange }: Props) {
           <EditCell label="G.W. (kg)" value={grossWeightKg} onChange={v => onChange({ grossWeightKg: v })} />
           <EditCell label="N.W. (kg)" value={netWeightKg}   onChange={v => onChange({ netWeightKg: v })} />
         </div>
+
+        <SectionDivider title="Product Specs" />
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Product Spec</p>
+            <textarea
+              className={TEXTAREA_CLS}
+              rows={5}
+              value={product.productSpec ?? ''}
+              onChange={e => onChange({ productSpec: e.target.value || null })}
+            />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Packaging Spec</p>
+            <textarea
+              className={TEXTAREA_CLS}
+              rows={5}
+              value={product.itemPackagingSpec ?? ''}
+              onChange={e => onChange({ itemPackagingSpec: e.target.value || null })}
+            />
+          </div>
+        </div>
       </div>
     )
   }
@@ -177,6 +200,24 @@ export default function SpecsTab({ product, isEditing, onChange }: Props) {
           primary={cbm !== null ? cbm.toFixed(4) : null}
           secondary={cuFt !== null ? `${cuFt.toFixed(3)} cu ft` : undefined}
         />
+      </div>
+
+      <SectionDivider title="Product Specs" />
+      <div className="space-y-4">
+        <div>
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Product Spec</p>
+          {product.productSpec
+            ? <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{product.productSpec}</p>
+            : <span className="text-sm text-slate-300">—</span>
+          }
+        </div>
+        <div>
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Packaging Spec</p>
+          {product.itemPackagingSpec
+            ? <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{product.itemPackagingSpec}</p>
+            : <span className="text-sm text-slate-300">—</span>
+          }
+        </div>
       </div>
 
     </div>

@@ -90,7 +90,6 @@ export default function ImageGallery({ images }: Props) {
 
           {/* Top-right actions */}
           <div className="absolute top-3 right-3 flex gap-1.5">
-            {/* Reset zoom */}
             {zoom > 1 && (
               <button
                 onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }) }}
@@ -105,7 +104,6 @@ export default function ImageGallery({ images }: Props) {
                 </svg>
               </button>
             )}
-            {/* Fullscreen */}
             <button
               onClick={() => setFullscreen(true)}
               className="bg-white/90 hover:bg-white border border-slate-200 text-slate-600
@@ -118,7 +116,6 @@ export default function ImageGallery({ images }: Props) {
                      5l-5-5m5 5v-4m0 4h-4" />
               </svg>
             </button>
-            {/* Video (reserved) */}
             <button
               disabled
               className="bg-white/90 border border-slate-200 text-slate-400 rounded-lg p-1.5

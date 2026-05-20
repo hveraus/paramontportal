@@ -43,9 +43,9 @@ export const mockProduct: ProductDetail = {
   solComments:
     'Color assortment TBD pending buyer confirmation. Insert card artwork to be supplied by US team by Nov 15.',
   productSpec:
-    '12 colors × 15g yarn skeins; large pom-pom maker (6cm); small pom-pom maker (3.5cm); multilingual instruction card.',
+    'x7 4CP Chipboard Pieces\n(#1: approx. 9.06" x 6.89", #2: 14.7" x 4.7", #3: 9.31" x 7.4", #4: 9.18" x 5.16", #5: 1.96" x 2.8", #6: 1.44" x 1.86", #7: 2.65" x 4.26")\nx1 pick & stick tool\nx1 gem tray\nx2 wax cube\n13 colors of round gems 3mm, 5mm, sizes (cream, light pink, pink, hot pink, red, yellow, olive green, green, dark green, brown, light purple, purple, white)\nInstruction Sheet',
   itemPackagingSpec:
-    'Hang card: 22.5 × 18cm, 350gsm recycled paperboard, full-color front / black ink back. OPP bag sealed.',
+    '4CP Printed Box\nVellum Belly Band + Foil\nPrinted Tag with Striped Butcher\'s Twine\nFolded Box Dimensions: 10" x 10" x 3" (Depth TBD by contents)',
   materialBreakdown:
     '85% Acrylic yarn, 10% Polypropylene (pom-pom maker), 5% Recycled paperboard (card).',
   assortmentBreakdown:
@@ -212,6 +212,37 @@ export const mockProduct: ProductDetail = {
       id: 'img-05',
       url: `${import.meta.env.BASE_URL}Turtle.jpg`,
       type: 'Reference Images', alt: 'Color swatch reference',
+    },
+  ],
+
+  sourceFiles: [
+    {
+      id: 'sf-01',
+      name: 'Diamond_Art_Kit_Packaging_v3.ai',
+      size: '18.4 MB',
+      uploadedAt: '2025-03-22',
+      uploadedBy: 'Sarah Chen',
+    },
+    {
+      id: 'sf-02',
+      name: 'Diamond_Art_Kit_Dieline_v2.ai',
+      size: '6.1 MB',
+      uploadedAt: '2025-03-18',
+      uploadedBy: 'Sarah Chen',
+    },
+    {
+      id: 'sf-03',
+      name: 'Instruction_Sheet_FR_ES_v1.ai',
+      size: '3.7 MB',
+      uploadedAt: '2025-04-21',
+      uploadedBy: 'Mike Torres',
+    },
+    {
+      id: 'sf-04',
+      name: 'Gem_Color_Reference_Chart.ai',
+      size: '2.2 MB',
+      uploadedAt: '2025-02-14',
+      uploadedBy: 'Linda Wu',
     },
   ],
 
@@ -408,4 +439,30 @@ export const mockProduct: ProductDetail = {
       clientPending: true,
     },
   ],
+
+  pdComments: `2025-03-04 Sarah: Confirmed with factory that chipboard thickness will be 1.5mm — sufficient for the pick & stick tool pressure. No structural changes needed.
+
+2025-03-11 Mike: Walmart buyer requested the gem count be printed on front panel. Updated dieline sent to vendor. Awaiting revised sample.
+
+2025-03-19 Sarah: Sample #2 received. Gem colors look slightly off on olive green — requesting pantone swatch confirmation from factory.
+
+2025-04-02 James: Pantone confirmed: olive green gem is PMS 7498 C. Factory confirmed no MOQ issue for this color. Good to proceed.
+
+2025-04-14 Mike: Final sample approved by buyer. Instruction sheet translation (French/Spanish) in progress — ETA April 21.
+
+2025-04-22 Sarah: Translated instruction sheets reviewed and approved. Sent to pre-press. Production start confirmed for May 5.`,
+
+  nbPdComments: `2025-02-28 Linda: 与工厂沟通纸板克重，确认使用350gsm白卡纸，双面过哑膜，符合美国玩具安全标准。
+
+2025-03-07 Kevin: 宝石颜色色卡已寄出，共13色。工厂反馈深绿色3mm规格库存紧张，建议US团队确认备选方案。
+
+2025-03-15 Linda: 收到US确认，深绿色可用现有库存，无需备选。已通知工厂按原规格排产。
+
+2025-03-25 Amy: 包装盒打样已完成，尺寸10"×10"×3"，折叠结构OK，底部卡扣强度需二次确认，已发样品至US。
+
+2025-04-08 Kevin: Vellum腰封打样完成，烫金效果符合要求。工厂报价较上版本增加 $0.03/pcs，已邮件知会Sarah。
+
+2025-04-17 Linda: US团队批准包装盒样。生产排期已排入5月第一周，预计5月12日出货检验。
+
+2025-04-29 Amy: 出口报关资料准备中，HS Code已确认为9503.00，关税税率核对无误。文件将于5月3日提交货代。`,
 }

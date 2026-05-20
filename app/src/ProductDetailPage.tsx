@@ -15,11 +15,12 @@ import CustomsTab from './components/tabs/CustomsTab'
 import PatentsTab from './components/tabs/PatentsTab'
 import CertificationsTab from './components/tabs/CertificationsTab'
 import CommittedTab from './components/tabs/CommittedTab'
+import SourceFilesTab from './components/tabs/SourceFilesTab'
 import ActivityPanel from './components/ActivityPanel'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 
-type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'certifications' | 'patents' | 'committed'
+type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'certifications' | 'patents' | 'committed' | 'source'
 
 const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean }[] = [
   { id: 'basic',           label: 'Basic Info' },
@@ -31,6 +32,7 @@ const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean
   { id: 'certifications',  label: 'Certifications' },
   { id: 'patents',         label: 'Patents',        patentOnly: true },
   { id: 'committed',       label: 'Program' },
+  { id: 'source',          label: 'Source Files' },
 ]
 
 const STATUS_VARIANT: Record<string, 'blue' | 'green' | 'red' | 'purple' | 'yellow' | 'orange' | 'gray'> = {
@@ -38,9 +40,11 @@ const STATUS_VARIANT: Record<string, 'blue' | 'green' | 'red' | 'purple' | 'yell
   'Proposed':       'purple',
   'Pre-selected':   'yellow',
   'Initial Sampled':'orange',
-  'Final':          'green',
+  'Production':     'green',
   'Dropped':        'gray',
 }
+
+const ALL_STATUSES = ['Concept', 'Proposed', 'Pre-selected', 'Initial Sampled', 'Production', 'Dropped'] as const
 
 function deepClone<T>(val: T): T {
   return JSON.parse(JSON.stringify(val)) as T
@@ -313,6 +317,18 @@ export default function ProductDetailPage() {
   const [editingTab, setEditingTab] = useState<TabId | null>(null)
   const [draft, setDraft]           = useState<ProductDetail>(() => deepClone(mockProduct))
   const [pendingTab, setPendingTab] = useState<TabId | null>(null)
+  const [statusOpen, setStatusOpen] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null)
+  const statusRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!statusOpen) return
+    const handler = (e: MouseEvent) => {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [statusOpen])
 
   const startEdit = (tab: TabId) => { setDraft(deepClone(product)); setEditingTab(tab) }
   const cancelEdit = () => setEditingTab(null)
@@ -354,7 +370,90 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-mono text-slate-400">{product.itemNo}</span>
               <span className="text-slate-200">·</span>
-              <StatusTag label={product.status} variant={statusVariant} />
+              {/* Status — clickable dropdown */}
+              <div ref={statusRef} className="relative">
+                <button
+                  onClick={() => setStatusOpen(o => !o)}
+                  title="Change status"
+                  className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1
+                    rounded-full border transition-colors hover:brightness-95
+                    ${STATUS_VARIANT[product.status]
+                      ? {
+                          blue:   'bg-blue-100 text-blue-700 border-blue-200',
+                          purple: 'bg-violet-100 text-violet-700 border-violet-200',
+                          yellow: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                          orange: 'bg-orange-100 text-orange-700 border-orange-200',
+                          green:  'bg-emerald-100 text-emerald-700 border-emerald-200',
+                          gray:   'bg-slate-100 text-slate-600 border-slate-200',
+                          red:    'bg-red-100 text-red-700 border-red-200',
+                        }[STATUS_VARIANT[product.status]]
+                      : 'bg-slate-100 text-slate-600 border-slate-200'
+                    }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
+                  {product.status}
+                  <svg className="w-3 h-3 opacity-60 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {statusOpen && (
+                  <div className="absolute left-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[220px]">
+                    {ALL_STATUSES.map(s => {
+                      const v = STATUS_VARIANT[s] ?? 'gray'
+                      const isActive = product.status === s
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => { if (!isActive) { setPendingStatus(s); setStatusOpen(false) } }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors
+                            ${isActive ? 'bg-slate-50 cursor-default' : 'hover:bg-slate-50'}`}
+                        >
+                          <StatusTag label={s} variant={v} />
+                          {isActive && (
+                            <svg className="w-3.5 h-3.5 text-blue-500 ml-auto flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Status change confirmation dialog */}
+              {pendingStatus && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setPendingStatus(null)} />
+                  <div className="relative bg-white rounded-2xl shadow-xl p-6 w-[360px] mx-4">
+                    <h3 className="text-base font-semibold text-slate-900 mb-1">Change status?</h3>
+                    <p className="text-sm text-slate-500 mb-5">
+                      Update this product from{' '}
+                      <StatusTag label={product.status} variant={STATUS_VARIANT[product.status] ?? 'gray'} />{' '}
+                      to{' '}
+                      <StatusTag label={pendingStatus} variant={STATUS_VARIANT[pendingStatus] ?? 'gray'} />
+                    </p>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setPendingStatus(null)}
+                        className="px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          setProduct(p => ({ ...p, status: pendingStatus as ProductDetail['status'] }))
+                          setPendingStatus(null)
+                        }}
+                        className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               <span className="text-slate-200">·</span>
 
               {/* Sample Room location — inline with status */}
@@ -530,8 +629,35 @@ export default function ProductDetailPage() {
                       </span>
                     )}
 
+                    {/* Source Files tab: Upload button */}
+                    {resolvedTab === 'source' && (
+                      <>
+                        <input
+                          type="file"
+                          id="source-file-upload"
+                          className="hidden"
+                          accept=".ai,.psd,.pdf,.eps,.svg,.zip"
+                          multiple
+                          onChange={e => {
+                            // Mock: just clear the input for now
+                            if (e.target) e.target.value = ''
+                          }}
+                        />
+                        <label
+                          htmlFor="source-file-upload"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-md
+                            bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors cursor-pointer"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                          </svg>
+                          Upload
+                        </label>
+                      </>
+                    )}
+
                     {/* Other tabs: Edit / Save / Cancel */}
-                    {resolvedTab !== 'committed' && (
+                    {resolvedTab !== 'committed' && resolvedTab !== 'source' && (
                       <div className="flex items-center gap-2">
                         {editingTab === resolvedTab ? (
                           <>
@@ -594,6 +720,7 @@ export default function ProductDetailPage() {
                   {resolvedTab === 'certifications' && <CertificationsTab certifications={editingTab === 'certifications' ? draft.certifications : product.certifications} isEditing={editingTab === 'certifications'} onChange={onChange} />}
                   {resolvedTab === 'patents'        && <PatentsTab        patents={editingTab === 'patents' ? draft.patents : product.patents} isEditing={editingTab === 'patents'} onChange={onChange} />}
                   {resolvedTab === 'committed'      && <CommittedTab      committedRecords={product.committedRecords} />}
+                  {resolvedTab === 'source'         && <SourceFilesTab    sourceFiles={product.sourceFiles} />}
                 </div>
               </div>
             </div>
@@ -604,6 +731,8 @@ export default function ProductDetailPage() {
         <ActivityPanel
           comments={product.comments}
           records={product.iterationRecords}
+          pdComments={product.pdComments}
+          nbPdComments={product.nbPdComments}
         />
 
         <div className="h-8" />
