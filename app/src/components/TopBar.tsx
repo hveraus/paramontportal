@@ -28,9 +28,17 @@ export default function TopBar() {
   return (
     <header className="sticky top-0 z-40 h-14 bg-white border-b border-slate-200 grid grid-cols-3 items-center px-5">
 
-      {/* Col 1 — Logo */}
-      <div className="w-56 flex-shrink-0 flex items-center">
-        <img src={`${import.meta.env.BASE_URL}paramontlogo.svg`} alt="Paramont" className="h-8 w-auto object-contain" />
+      {/* Col 1 — Logo + system name */}
+      <div className="w-56 flex-shrink-0 flex items-center gap-2.5">
+        <img
+          src={`${import.meta.env.BASE_URL}logo-paramont-global.png`}
+          alt="Paramont Global"
+          className="h-11 w-auto object-contain flex-shrink-0"
+        />
+        <div className="flex flex-col leading-none">
+          <span className="text-xs font-semibold tracking-widest text-slate-400 uppercase">PDM</span>
+          <span className="text-base font-bold text-slate-800 tracking-tight -mt-1">Portal</span>
+        </div>
       </div>
 
       {/* Col 2 — Search */}

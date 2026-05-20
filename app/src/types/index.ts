@@ -256,4 +256,8 @@ export interface ArchiveFile {
   uploadedAt: string         // ISO date string (YYYY-MM-DD)
   uploadedBy: ArchiveUploader
   url: string                // preview / download href
+  customer: string           // L1 folder — e.g. "Walmart"
+  year: number               // L2 folder — e.g. 2026
+  department: string         // L3 folder — e.g. "D92"
+  event: string              // L4 folder — e.g. "Q1 Valentines Baking"
 }

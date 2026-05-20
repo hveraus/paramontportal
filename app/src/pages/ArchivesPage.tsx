@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import TopBar from '../components/TopBar'
 import Sidebar from '../components/Sidebar'
 import Breadcrumb from '../components/Breadcrumb'
@@ -104,6 +104,307 @@ function IconCheck() {
   )
 }
 
+function IconFolder({ open }: { open?: boolean }) {
+  return open ? (
+    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+    </svg>
+  ) : (
+    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+    </svg>
+  )
+}
+
+function IconChevron({ down }: { down?: boolean }) {
+  return (
+    <svg
+      className={`w-3 h-3 flex-shrink-0 text-slate-400 transition-transform duration-150 ${down ? 'rotate-90' : ''}`}
+      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
+function IconFolderPlus() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M9 21h6a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 002 2z" />
+    </svg>
+  )
+}
+
+function IconPencil() {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    </svg>
+  )
+}
+
+// ── Folder tree types & helpers ────────────────────────────────────────────
+
+export interface FolderPath {
+  customer?: string
+  year?: number
+  department?: string
+  event?: string
+}
+
+interface CustomFolder {
+  customer: string
+  year?: number
+  department?: string
+  event?: string
+}
+
+type FolderTree = Record<string, Record<number, Record<string, string[]>>>
+
+function buildFolderTree(files: ArchiveFile[], customFolders: CustomFolder[] = []): FolderTree {
+  const tree: FolderTree = {}
+  for (const f of files) {
+    if (!tree[f.customer]) tree[f.customer] = {}
+    if (!tree[f.customer][f.year]) tree[f.customer][f.year] = {}
+    if (!tree[f.customer][f.year][f.department]) tree[f.customer][f.year][f.department] = []
+    if (!tree[f.customer][f.year][f.department].includes(f.event)) {
+      tree[f.customer][f.year][f.department].push(f.event)
+    }
+  }
+  for (const c of customFolders) {
+    if (!tree[c.customer]) tree[c.customer] = {}
+    if (c.year !== undefined) {
+      if (!tree[c.customer][c.year]) tree[c.customer][c.year] = {}
+      if (c.department) {
+        if (!tree[c.customer][c.year][c.department]) tree[c.customer][c.year][c.department] = []
+        if (c.event && !tree[c.customer][c.year][c.department].includes(c.event)) {
+          tree[c.customer][c.year][c.department].push(c.event)
+        }
+      }
+    }
+  }
+  return tree
+}
+
+function countByPath(
+  files: ArchiveFile[],
+  customer?: string,
+  year?: number,
+  dept?: string,
+  event?: string,
+): number {
+  return files.filter(f =>
+    (!customer || f.customer === customer) &&
+    (!year    || f.year === year) &&
+    (!dept    || f.department === dept) &&
+    (!event   || f.event === event)
+  ).length
+}
+
+function pathsEqual(a: FolderPath | null, b: FolderPath): boolean {
+  if (!a) return false
+  return a.customer === b.customer && a.year === b.year &&
+    a.department === b.department && a.event === b.event
+}
+
+// ── Folder tree panel ──────────────────────────────────────────────────────
+
+function FolderTreePanel({
+  files,
+  customFolders = [],
+  selected,
+  onSelect,
+}: {
+  files: ArchiveFile[]
+  customFolders?: CustomFolder[]
+  selected: FolderPath | null
+  onSelect: (path: FolderPath | null) => void
+}) {
+  const tree = useMemo(() => buildFolderTree(files, customFolders), [files, customFolders])
+  const [openCustomers, setOpenCustomers] = useState<Set<string>>(() => new Set(Object.keys(tree)))
+
+  useEffect(() => {
+    setOpenCustomers(prev => {
+      const next = new Set(prev)
+      let changed = false
+      for (const k of Object.keys(tree)) {
+        if (!next.has(k)) { next.add(k); changed = true }
+      }
+      return changed ? next : prev
+    })
+  }, [tree])
+  const [openYears,     setOpenYears]     = useState<Set<string>>(new Set())
+  const [openDepts,     setOpenDepts]     = useState<Set<string>>(new Set())
+
+  const toggleCustomer = (c: string) =>
+    setOpenCustomers(s => { const n = new Set(s); n.has(c) ? n.delete(c) : n.add(c); return n })
+  const toggleYear = (key: string) =>
+    setOpenYears(s => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n })
+  const toggleDept = (key: string) =>
+    setOpenDepts(s => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n })
+
+  const selectOrToggle = (path: FolderPath) => {
+    if (pathsEqual(selected, path)) {
+      onSelect(null)
+    } else {
+      onSelect(path)
+    }
+  }
+
+  const rowBase = 'w-full flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors text-left'
+  const rowActive = 'bg-blue-50 text-blue-700 font-medium'
+  const rowIdle   = 'text-slate-600 hover:bg-slate-100'
+
+  const badge = (n: number) => (
+    <span className="ml-auto text-[11px] font-medium text-slate-400 tabular-nums">{n}</span>
+  )
+
+  return (
+    <div className="w-52 flex-shrink-0 border-r border-slate-200 bg-white overflow-y-auto"
+      style={{ minHeight: 'calc(100vh - 56px)' }}>
+      <div className="px-2 pt-4 pb-6 space-y-0.5">
+
+        {/* All Files */}
+        <button
+          className={`${rowBase} ${!selected ? rowActive : rowIdle}`}
+          onClick={() => onSelect(null)}
+        >
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round"
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span>All Files</span>
+          {badge(files.length)}
+        </button>
+
+        <div className="pt-2 pb-1 px-3">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Customers</p>
+        </div>
+
+        {/* Customer level */}
+        {Object.keys(tree).sort().map(customer => {
+          const isCustomerOpen = openCustomers.has(customer)
+          const customerPath: FolderPath = { customer }
+          const isCustomerSelected = pathsEqual(selected, customerPath)
+          const customerCount = countByPath(files, customer)
+
+          return (
+            <div key={customer}>
+              <div className="flex items-center">
+                <button
+                  className={`flex-1 ${rowBase} ${isCustomerSelected ? rowActive : rowIdle}`}
+                  onClick={() => selectOrToggle(customerPath)}
+                >
+                  <IconFolder open={isCustomerOpen} />
+                  <span className="truncate">{customer}</span>
+                  {badge(customerCount)}
+                </button>
+                <button
+                  onClick={() => toggleCustomer(customer)}
+                  className="px-1 py-1.5 text-slate-400 hover:text-slate-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  <IconChevron down={isCustomerOpen} />
+                </button>
+              </div>
+
+              {/* Year level */}
+              {isCustomerOpen && Object.keys(tree[customer]).map(Number).sort((a, b) => b - a).map(year => {
+                const yearKey = `${customer}|${year}`
+                const isYearOpen = openYears.has(yearKey)
+                const yearPath: FolderPath = { customer, year }
+                const isYearSelected = pathsEqual(selected, yearPath)
+                const yearCount = countByPath(files, customer, year)
+
+                return (
+                  <div key={year} className="pl-4">
+                    <div className="flex items-center">
+                      <button
+                        className={`flex-1 ${rowBase} ${isYearSelected ? rowActive : rowIdle}`}
+                        onClick={() => selectOrToggle(yearPath)}
+                      >
+                        <IconFolder open={isYearOpen} />
+                        <span className="truncate">{year}</span>
+                        {badge(yearCount)}
+                      </button>
+                      <button
+                        onClick={() => toggleYear(yearKey)}
+                        className="px-1 py-1.5 text-slate-400 hover:text-slate-600 transition-colors"
+                        tabIndex={-1}
+                      >
+                        <IconChevron down={isYearOpen} />
+                      </button>
+                    </div>
+
+                    {/* Department level */}
+                    {isYearOpen && Object.keys(tree[customer][year]).sort().map(dept => {
+                      const deptKey = `${customer}|${year}|${dept}`
+                      const isDeptOpen = openDepts.has(deptKey)
+                      const deptPath: FolderPath = { customer, year, department: dept }
+                      const isDeptSelected = pathsEqual(selected, deptPath)
+                      const deptCount = countByPath(files, customer, year, dept)
+
+                      return (
+                        <div key={dept} className="pl-4">
+                          <div className="flex items-center">
+                            <button
+                              className={`flex-1 ${rowBase} ${isDeptSelected ? rowActive : rowIdle}`}
+                              onClick={() => selectOrToggle(deptPath)}
+                            >
+                              <IconFolder open={isDeptOpen} />
+                              <span className="truncate">{dept}</span>
+                              {badge(deptCount)}
+                            </button>
+                            <button
+                              onClick={() => toggleDept(deptKey)}
+                              className="px-1 py-1.5 text-slate-400 hover:text-slate-600 transition-colors"
+                              tabIndex={-1}
+                            >
+                              <IconChevron down={isDeptOpen} />
+                            </button>
+                          </div>
+
+                          {/* Event level (leaf) */}
+                          {isDeptOpen && tree[customer][year][dept].sort().map(event => {
+                            const eventPath: FolderPath = { customer, year, department: dept, event }
+                            const isEventSelected = pathsEqual(selected, eventPath)
+                            const eventCount = countByPath(files, customer, year, dept, event)
+
+                            return (
+                              <div key={event} className="pl-4">
+                                <button
+                                  className={`${rowBase} ${isEventSelected ? rowActive : rowIdle}`}
+                                  onClick={() => selectOrToggle(eventPath)}
+                                >
+                                  <svg className="w-3.5 h-3.5 flex-shrink-0 text-slate-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                    <path strokeLinecap="round" strokeLinejoin="round"
+                                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                  </svg>
+                                  <span className="truncate">{event}</span>
+                                  {badge(eventCount)}
+                                </button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── File type icon ─────────────────────────────────────────────────────────
 
 function FileTypeIcon({ type, size = 'lg' }: { type: ArchiveFileType; size?: 'lg' | 'sm' }) {
@@ -183,9 +484,10 @@ function UploadFileRow({ item, onRemove }: { item: UploadItem; onRemove: (id: st
 interface UploadModalProps {
   onClose: () => void
   onSuccess: (newFiles: ArchiveFile[]) => void
+  defaultFolder?: FolderPath | null
 }
 
-function UploadModal({ onClose, onSuccess }: UploadModalProps) {
+function UploadModal({ onClose, onSuccess, defaultFolder }: UploadModalProps) {
   const [items, setItems]   = useState<UploadItem[]>([])
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -230,6 +532,7 @@ function UploadModal({ onClose, onSuccess }: UploadModalProps) {
 
   const handleConfirm = () => {
     const doneItems = items.filter(i => i.status === 'done')
+    const folder = defaultFolder ?? {}
     const newFiles: ArchiveFile[] = doneItems.map(item => ({
       id: `af-new-${item.id}`,
       name: item.file.name,
@@ -243,6 +546,10 @@ function UploadModal({ onClose, onSuccess }: UploadModalProps) {
         avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=f59e0b&fontColor=ffffff',
       },
       url: URL.createObjectURL(item.file),
+      customer:   folder.customer   ?? 'Internal',
+      year:       folder.year       ?? new Date().getFullYear(),
+      department: folder.department ?? 'Operations',
+      event:      folder.event      ?? 'General',
     }))
     onSuccess(newFiles)
     onClose()
@@ -887,32 +1194,261 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (k: SortK
   )
 }
 
+// ── Folder browser helpers ─────────────────────────────────────────────────
+
+function getCurrentLevel(path: FolderPath | null): 0 | 1 | 2 | 3 | 4 {
+  if (!path?.customer)         return 0
+  if (path.year === undefined) return 1
+  if (!path.department)        return 2
+  if (!path.event)             return 3
+  return 4
+}
+
+const LEVEL_META = [
+  { folderType: 'Customer',     placeholder: 'e.g. Costco',            countUnit: 'years'  },
+  { folderType: 'Year',         placeholder: 'e.g. 2027',              countUnit: 'depts'  },
+  { folderType: 'Department',   placeholder: 'e.g. D94',               countUnit: 'events' },
+  { folderType: 'Event/Season', placeholder: 'e.g. Q3 Back to School', countUnit: 'files'  },
+]
+
+const FOLDER_COLORS = ['bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-orange-500']
+
+function getSubfolderNames(
+  files: ArchiveFile[],
+  customFolders: CustomFolder[],
+  path: FolderPath | null,
+): string[] {
+  const set = new Set<string>()
+  const level = getCurrentLevel(path)
+  if (level === 0) {
+    files.forEach(f => set.add(f.customer))
+    customFolders.forEach(c => set.add(c.customer))
+  } else if (level === 1) {
+    files.filter(f => f.customer === path!.customer).forEach(f => set.add(String(f.year)))
+    customFolders.filter(c => c.customer === path!.customer && c.year !== undefined).forEach(c => set.add(String(c.year!)))
+  } else if (level === 2) {
+    files.filter(f => f.customer === path!.customer && f.year === path!.year).forEach(f => set.add(f.department))
+    customFolders.filter(c => c.customer === path!.customer && c.year === path!.year && c.department).forEach(c => set.add(c.department!))
+  } else if (level === 3) {
+    files.filter(f => f.customer === path!.customer && f.year === path!.year && f.department === path!.department).forEach(f => set.add(f.event))
+    customFolders.filter(c => c.customer === path!.customer && c.year === path!.year && c.department === path!.department && c.event).forEach(c => set.add(c.event!))
+  }
+  return [...set].sort()
+}
+
+function navigateInto(path: FolderPath | null, childName: string): FolderPath {
+  const level = getCurrentLevel(path)
+  if (level === 0) return { customer: childName }
+  if (level === 1) return { ...path!, year: Number(childName) }
+  if (level === 2) return { ...path!, department: childName }
+  if (level === 3) return { ...path!, event: childName }
+  return path ?? {}
+}
+
+function getChildCount(
+  files: ArchiveFile[],
+  customFolders: CustomFolder[],
+  path: FolderPath | null,
+  childName: string,
+): number {
+  const level = getCurrentLevel(path)
+  if (level === 3) {
+    return files.filter(f =>
+      f.customer === path!.customer && f.year === path!.year &&
+      f.department === path!.department && f.event === childName
+    ).length
+  }
+  const childPath = navigateInto(path, childName)
+  return getSubfolderNames(files, customFolders, childPath).length
+}
+
+// ── Folder path breadcrumb ─────────────────────────────────────────────────
+
+function FolderPathCrumb({
+  path,
+  onNavigate,
+}: {
+  path: FolderPath | null
+  onNavigate: (p: FolderPath | null) => void
+}) {
+  const segments: { label: string; target: FolderPath | null }[] = [
+    { label: 'All Files', target: null },
+  ]
+  if (path?.customer) {
+    segments.push({ label: path.customer, target: { customer: path.customer } })
+    if (path.year !== undefined) {
+      segments.push({ label: String(path.year), target: { customer: path.customer, year: path.year } })
+      if (path.department) {
+        const deptTarget = { customer: path.customer, year: path.year, department: path.department }
+        segments.push({ label: path.department, target: deptTarget })
+        if (path.event) segments.push({ label: path.event, target: path })
+      }
+    }
+  }
+  return (
+    <nav className="flex items-center gap-1 flex-wrap mt-0.5">
+      {segments.map((seg, i) => (
+        <span key={i} className="flex items-center gap-1">
+          {i > 0 && <span className="text-slate-300 text-sm select-none">›</span>}
+          <button
+            onClick={() => onNavigate(seg.target)}
+            disabled={i === segments.length - 1}
+            className={`text-sm transition-colors ${
+              i === segments.length - 1
+                ? 'text-slate-600 font-medium cursor-default'
+                : 'text-blue-600 hover:text-blue-700 hover:underline'
+            }`}
+          >
+            {seg.label}
+          </button>
+        </span>
+      ))}
+    </nav>
+  )
+}
+
+
 // ── Main page ─────────────────────────────────────────────────────────────
 
 export default function ArchivesPage() {
   const { role } = useRole()
   const canDelete = role === 'admin' || role === 'product_manager'
 
-  const [files, setFiles]         = useState<ArchiveFile[]>(MOCK_ARCHIVES)
-  const [search, setSearch]       = useState('')
-  const [sort, setSort]           = useState<SortKey>('date-desc')
-  const [showUpload, setShowUpload] = useState(false)
+  const [files, setFiles]                 = useState<ArchiveFile[]>(MOCK_ARCHIVES)
+  const [customFolders, setCustomFolders]  = useState<CustomFolder[]>([])
+  const [search, setSearch]               = useState('')
+  const [sort, setSort]                   = useState<SortKey>('date-desc')
+  const [showUpload, setShowUpload]        = useState(false)
+  const [folderPath, setFolderPath]        = useState<FolderPath | null>(null)
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false)
+  const [newFolderName, setNewFolderName]        = useState('')
+  const [renamingFolder, setRenamingFolder]      = useState<string | null>(null)
+  const [renameValue, setRenameValue]            = useState('')
+  const [deletingFolder, setDeletingFolder]      = useState<string | null>(null)
+  const newFolderInputRef  = useRef<HTMLInputElement>(null)
+  const renameInputRef     = useRef<HTMLInputElement>(null)
 
-  const handleUploadSuccess = (newFiles: ArchiveFile[]) => {
-    setFiles(prev => [...newFiles, ...prev])
+  const level = getCurrentLevel(folderPath)
+
+  // Reset transient UI state on navigation
+  useEffect(() => {
+    setIsCreatingFolder(false)
+    setNewFolderName('')
+    setRenamingFolder(null)
+    setRenameValue('')
+    setDeletingFolder(null)
+  }, [folderPath])
+
+  const handleUploadSuccess = (newFiles: ArchiveFile[]) => setFiles(prev => [...newFiles, ...prev])
+  const handleDelete = (id: string) => setFiles(prev => prev.filter(f => f.id !== id))
+
+  const handleNewFolder = (name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    if (level === 0) {
+      setCustomFolders(prev => [...prev, { customer: trimmed }])
+    } else if (level === 1) {
+      setCustomFolders(prev => [...prev, { customer: folderPath!.customer!, year: Number(trimmed) }])
+    } else if (level === 2) {
+      setCustomFolders(prev => [...prev, {
+        customer: folderPath!.customer!, year: folderPath!.year!, department: trimmed,
+      }])
+    } else if (level === 3) {
+      setCustomFolders(prev => [...prev, {
+        customer: folderPath!.customer!, year: folderPath!.year!,
+        department: folderPath!.department!, event: trimmed,
+      }])
+    }
   }
 
-  const handleDelete = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id))
+  const renameFolder = (oldName: string, newName: string) => {
+    const n = newName.trim()
+    if (!n || n === oldName) return
+    if (level === 0) {
+      setFiles(prev => prev.map(f => f.customer === oldName ? { ...f, customer: n } : f))
+      setCustomFolders(prev => prev.map(c => c.customer === oldName ? { ...c, customer: n } : c))
+    } else if (level === 1) {
+      setFiles(prev => prev.map(f =>
+        f.customer === folderPath!.customer && String(f.year) === oldName ? { ...f, year: Number(n) } : f))
+      setCustomFolders(prev => prev.map(c =>
+        c.customer === folderPath!.customer && String(c.year) === oldName ? { ...c, year: Number(n) } : c))
+    } else if (level === 2) {
+      setFiles(prev => prev.map(f =>
+        f.customer === folderPath!.customer && f.year === folderPath!.year && f.department === oldName
+          ? { ...f, department: n } : f))
+      setCustomFolders(prev => prev.map(c =>
+        c.customer === folderPath!.customer && c.year === folderPath!.year && c.department === oldName
+          ? { ...c, department: n } : c))
+    } else if (level === 3) {
+      setFiles(prev => prev.map(f =>
+        f.customer === folderPath!.customer && f.year === folderPath!.year &&
+        f.department === folderPath!.department && f.event === oldName
+          ? { ...f, event: n } : f))
+      setCustomFolders(prev => prev.map(c =>
+        c.customer === folderPath!.customer && c.year === folderPath!.year &&
+        c.department === folderPath!.department && c.event === oldName
+          ? { ...c, event: n } : c))
+    }
   }
 
-  const filtered = sortFiles(
-    files.filter(f =>
-      f.name.toLowerCase().includes(search.toLowerCase()) ||
-      f.uploadedBy.name.toLowerCase().includes(search.toLowerCase())
-    ),
-    sort,
-  )
+  const deleteFolder = (name: string) => {
+    if (level === 0) {
+      setFiles(prev => prev.filter(f => f.customer !== name))
+      setCustomFolders(prev => prev.filter(c => c.customer !== name))
+    } else if (level === 1) {
+      const yr = Number(name)
+      setFiles(prev => prev.filter(f => !(f.customer === folderPath!.customer && f.year === yr)))
+      setCustomFolders(prev => prev.filter(c => !(c.customer === folderPath!.customer && c.year === yr)))
+    } else if (level === 2) {
+      setFiles(prev => prev.filter(f =>
+        !(f.customer === folderPath!.customer && f.year === folderPath!.year && f.department === name)))
+      setCustomFolders(prev => prev.filter(c =>
+        !(c.customer === folderPath!.customer && c.year === folderPath!.year && c.department === name)))
+    } else if (level === 3) {
+      setFiles(prev => prev.filter(f =>
+        !(f.customer === folderPath!.customer && f.year === folderPath!.year &&
+          f.department === folderPath!.department && f.event === name)))
+      setCustomFolders(prev => prev.filter(c =>
+        !(c.customer === folderPath!.customer && c.year === folderPath!.year &&
+          c.department === folderPath!.department && c.event === name)))
+    }
+  }
+
+  const confirmNewFolder = () => {
+    handleNewFolder(newFolderName)
+    setNewFolderName('')
+    setIsCreatingFolder(false)
+  }
+  const cancelNewFolder = () => {
+    setNewFolderName('')
+    setIsCreatingFolder(false)
+  }
+  const startCreatingFolder = () => {
+    setIsCreatingFolder(true)
+    setTimeout(() => newFolderInputRef.current?.focus(), 30)
+  }
+
+  const subfolders = level < 4 ? getSubfolderNames(files, customFolders, folderPath) : []
+
+  const levelFiles = level === 4
+    ? sortFiles(
+        files
+          .filter(f =>
+            f.customer   === folderPath?.customer &&
+            f.year       === folderPath?.year &&
+            f.department === folderPath?.department &&
+            f.event      === folderPath?.event
+          )
+          .filter(f =>
+            f.name.toLowerCase().includes(search.toLowerCase()) ||
+            f.uploadedBy.name.toLowerCase().includes(search.toLowerCase())
+          ),
+        sort,
+      )
+    : []
+
+  const meta = LEVEL_META[level] ?? LEVEL_META[0]
+  const folderColor = FOLDER_COLORS[level] ?? 'bg-slate-500'
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -921,113 +1457,306 @@ export default function ArchivesPage() {
       <div className="flex">
         <Sidebar topOffset={56} />
 
-        <div className="flex-1 min-w-0 px-6 py-5 space-y-4">
+        <div className="flex-1 flex min-w-0">
 
-          {/* Breadcrumb */}
-          <Breadcrumb crumbs={[
-            { label: 'Home', href: '#' },
-            { label: 'Products', href: '#' },
-            { label: 'Archives' },
-          ]} />
+          {/* Folder tree sidebar */}
+          <FolderTreePanel
+            files={files}
+            customFolders={customFolders}
+            selected={folderPath}
+            onSelect={setFolderPath}
+          />
 
-          {/* Page header */}
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Archives</h1>
-              <p className="text-sm text-slate-500 mt-0.5">
-                {files.length} file{files.length !== 1 ? 's' : ''} · PDFs and presentations
-              </p>
-            </div>
+          {/* Main content */}
+          <div className="flex-1 min-w-0 px-6 py-5 space-y-5">
 
-            <button
-              onClick={() => setShowUpload(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg
-                bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <IconUpload />
-              Upload File
-            </button>
-          </div>
+            <Breadcrumb crumbs={[
+              { label: 'Home', href: '#' },
+              { label: 'Products', href: '#' },
+              { label: 'Archives' },
+            ]} />
 
-          {/* Toolbar: search + sort */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-48 max-w-sm">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <IconSearch />
-              </span>
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search files or uploader…"
-                className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 bg-white
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                  placeholder:text-slate-400"
-              />
-            </div>
-            <SortDropdown value={sort} onChange={setSort} />
-          </div>
-
-          {/* File table */}
-          {filtered.length > 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-8">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      File name
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-44">
-                      Uploaded by
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">
-                      Date
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-24">
-                      Size
-                    </th>
-                    <th className="px-4 py-3 w-48" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filtered.map(file => (
-                    <FileRow
-                      key={file.id}
-                      file={file}
-                      canDelete={canDelete}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-              <svg className="w-12 h-12 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-sm">
-                {search ? `No files match "${search}"` : 'No files uploaded yet'}
-              </p>
-              {!search && (
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">Archives</h1>
+                <FolderPathCrumb path={folderPath} onNavigate={setFolderPath} />
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {level < 4 && (
+                  <button
+                    onClick={startCreatingFolder}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg
+                      border border-slate-200 bg-white text-slate-600 font-medium
+                      hover:bg-slate-50 transition-colors"
+                  >
+                    <IconFolderPlus />
+                    New Folder
+                  </button>
+                )}
                 <button
                   onClick={() => setShowUpload(true)}
-                  className="mt-3 text-sm text-blue-600 hover:underline font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg
+                    bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
                 >
-                  Upload the first file
+                  <IconUpload />
+                  Upload File
                 </button>
-              )}
+              </div>
             </div>
-          )}
+
+            {/* ── Folder list (levels 0–3) ──────────────────────────────── */}
+            {level < 4 && (
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-8">
+                {subfolders.length === 0 && !isCreatingFolder ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                    <svg className="w-10 h-10 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor" strokeWidth={1.2}>
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                    </svg>
+                    <p className="text-sm">No {meta.folderType.toLowerCase()} folders yet</p>
+                    <button
+                      onClick={startCreatingFolder}
+                      className="mt-3 text-sm text-blue-600 hover:underline font-medium"
+                    >
+                      Create the first one
+                    </button>
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <tbody className="divide-y divide-slate-100">
+                      {subfolders.map(name => {
+                        const isRenaming = renamingFolder === name
+                        const isDeleting = deletingFolder === name
+                        return (
+                          <tr
+                            key={name}
+                            onClick={isRenaming || isDeleting ? undefined
+                              : () => setFolderPath(navigateInto(folderPath, name))}
+                            className={`group transition-colors ${isRenaming || isDeleting
+                              ? 'bg-slate-50'
+                              : 'hover:bg-slate-50/70 cursor-pointer'}`}
+                          >
+                            {/* Name / rename input */}
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 ${folderColor} rounded-lg flex items-center
+                                  justify-center flex-shrink-0 shadow-sm`}>
+                                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                                  </svg>
+                                </div>
+                                {isRenaming ? (
+                                  <input
+                                    ref={renameInputRef}
+                                    type={level === 1 ? 'number' : 'text'}
+                                    value={renameValue}
+                                    onChange={e => setRenameValue(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') { renameFolder(name, renameValue); setRenamingFolder(null) }
+                                      if (e.key === 'Escape') setRenamingFolder(null)
+                                    }}
+                                    onClick={e => e.stopPropagation()}
+                                    autoFocus
+                                    className="flex-1 text-sm font-medium text-slate-800 bg-transparent
+                                      border-b border-blue-400 outline-none pb-0.5 max-w-xs"
+                                  />
+                                ) : (
+                                  <span className="font-medium text-slate-800">{name}</span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              {isRenaming ? (
+                                <div className="flex items-center gap-1.5 justify-end">
+                                  <button
+                                    onClick={e => { e.stopPropagation(); renameFolder(name, renameValue); setRenamingFolder(null) }}
+                                    className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                  >Save</button>
+                                  <button
+                                    onClick={e => { e.stopPropagation(); setRenamingFolder(null) }}
+                                    className="text-xs px-3 py-1.5 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors"
+                                  >Cancel</button>
+                                </div>
+                              ) : isDeleting ? (
+                                <div className="flex items-center gap-2 justify-end">
+                                  <span className="text-xs text-slate-500">Delete this folder?</span>
+                                  <button
+                                    onClick={e => { e.stopPropagation(); deleteFolder(name); setDeletingFolder(null) }}
+                                    className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                  >Delete</button>
+                                  <button
+                                    onClick={e => { e.stopPropagation(); setDeletingFolder(null) }}
+                                    className="text-xs px-3 py-1.5 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors"
+                                  >Cancel</button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={e => {
+                                      e.stopPropagation()
+                                      setRenamingFolder(name)
+                                      setRenameValue(name)
+                                      setDeletingFolder(null)
+                                      setTimeout(() => renameInputRef.current?.focus(), 30)
+                                    }}
+                                    title="Rename"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
+                                      text-slate-500 hover:bg-slate-200 transition-colors"
+                                  >
+                                    <IconPencil />
+                                    Rename
+                                  </button>
+                                  <button
+                                    onClick={e => { e.stopPropagation(); setDeletingFolder(name); setRenamingFolder(null) }}
+                                    title="Delete"
+                                    className="inline-flex items-center justify-center w-7 h-7 rounded-lg
+                                      text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                  >
+                                    <IconTrash />
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Chevron */}
+                            <td className="px-4 py-3 w-10 text-right">
+                              {!isRenaming && !isDeleting && (
+                                <svg className="w-4 h-4 text-slate-300 inline" fill="none" viewBox="0 0 24 24"
+                                  stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+
+                      {/* Inline new folder row */}
+                      {isCreatingFolder && (
+                        <tr>
+                          <td className="px-4 py-2.5" colSpan={2}>
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center
+                                justify-center flex-shrink-0">
+                                <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                                </svg>
+                              </div>
+                              <input
+                                ref={newFolderInputRef}
+                                type={level === 1 ? 'number' : 'text'}
+                                value={newFolderName}
+                                onChange={e => setNewFolderName(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') confirmNewFolder()
+                                  if (e.key === 'Escape') cancelNewFolder()
+                                }}
+                                placeholder={meta.placeholder}
+                                className="flex-1 text-sm text-slate-800 bg-transparent border-b border-blue-400
+                                  outline-none placeholder:text-slate-300 pb-0.5 max-w-xs"
+                              />
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <button
+                                  onClick={confirmNewFolder}
+                                  className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg
+                                    hover:bg-blue-700 transition-colors"
+                                >
+                                  Add
+                                </button>
+                                <button
+                                  onClick={cancelNewFolder}
+                                  className="text-xs px-3 py-1.5 text-slate-500 hover:bg-slate-100
+                                    rounded-lg transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="w-10" />
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {/* ── File list (level 4 — inside an event folder) ─────────── */}
+            {level === 4 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="relative flex-1 min-w-48 max-w-sm">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <IconSearch />
+                    </span>
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      placeholder="Search files or uploader…"
+                      className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 bg-white
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                        placeholder:text-slate-400"
+                    />
+                  </div>
+                  <SortDropdown value={sort} onChange={setSort} />
+                </div>
+
+                {levelFiles.length > 0 ? (
+                  <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-8">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">File name</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-44">Uploaded by</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">Date</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-24">Size</th>
+                          <th className="px-4 py-3 w-48" />
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {levelFiles.map(file => (
+                          <FileRow key={file.id} file={file} canDelete={canDelete} onDelete={handleDelete} />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-24 text-slate-400">
+                    <svg className="w-12 h-12 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor" strokeWidth={1.2}>
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-sm">
+                      {search ? `No files match "${search}"` : 'No files in this folder yet'}
+                    </p>
+                    {!search && (
+                      <button
+                        onClick={() => setShowUpload(true)}
+                        className="mt-3 text-sm text-blue-600 hover:underline font-medium"
+                      >
+                        Upload the first file
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Upload modal */}
       {showUpload && (
         <UploadModal
           onClose={() => setShowUpload(false)}
           onSuccess={handleUploadSuccess}
+          defaultFolder={folderPath}
         />
       )}
     </div>
