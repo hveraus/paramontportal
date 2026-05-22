@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigation } from '../context/NavigationContext'
 
 // ── Icons ──────────────────────────────────────────────────────────────────
@@ -39,13 +38,7 @@ function IconSettings() {
     </svg>
   )
 }
-function IconChevron({ open }: { open: boolean }) {
-  return (
-    <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
-  )
-}
+
 function IconArchive() {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -61,39 +54,9 @@ function IconSampleRoom() {
   )
 }
 
-// ── Category data ──────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  {
-    name: 'Crafts',
-    active: true,
-    children: ['Yarn', 'Paper Craft', 'Drawing & Painting', 'Sewing & Needlework'],
-  },
-  {
-    name: 'Toys & Games',
-    active: false,
-    children: ['Outdoor Toys', 'Board Games', 'Educational', 'Puzzles'],
-  },
-  {
-    name: 'Art Supplies',
-    active: false,
-    children: ['Brushes & Tools', 'Canvas & Paper', 'Paints'],
-  },
-  {
-    name: 'Party & Seasonal',
-    active: false,
-    children: ['Holiday Décor', 'Party Supplies', 'Gift Wrap'],
-  },
-  {
-    name: 'Stationery',
-    active: false,
-    children: ['Notebooks', 'Writing Instruments', 'Accessories'],
-  },
-]
-
 // ── Nav items ──────────────────────────────────────────────────────────────
 
-type NavPage = 'dashboard' | 'products' | 'archives' | 'sample-room'
+type NavPage = 'dashboard' | 'products' | 'archives' | 'sample-room' | 'program'
 
 const NAV_ITEMS: { label: string; icon: React.ReactNode; page?: NavPage; matchPages?: string[] }[] = [
   { label: 'Home',        icon: <IconHome />,       page: 'dashboard' },
@@ -107,7 +70,6 @@ const NAV_ITEMS: { label: string; icon: React.ReactNode; page?: NavPage; matchPa
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function Sidebar({ topOffset = 44 }: { topOffset?: number }) {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ Crafts: true })
   const { page, navigate } = useNavigation()
 
   return (

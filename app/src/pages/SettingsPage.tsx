@@ -612,7 +612,7 @@ interface PreviewPanelProps {
   roleName?: string
 }
 
-function PreviewPanel({ mode, nodeId, roleName }: PreviewPanelProps) {
+export function PreviewPanel({ mode, nodeId, roleName }: PreviewPanelProps) {
   const { lang } = useLang()
 
   if (mode === 'role') {

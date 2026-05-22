@@ -1245,7 +1245,7 @@ function navigateInto(path: FolderPath | null, childName: string): FolderPath {
   return path ?? {}
 }
 
-function getChildCount(
+export function getChildCount(
   files: ArchiveFile[],
   customFolders: CustomFolder[],
   path: FolderPath | null,

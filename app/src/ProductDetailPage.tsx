@@ -343,7 +343,6 @@ export default function ProductDetailPage() {
     ? activeTab
     : (visibleTabs[0]?.id ?? 'basic')
 
-  const statusVariant = STATUS_VARIANT[product.status] ?? 'gray'
 
   return (
     <div className="min-h-screen bg-slate-100">
