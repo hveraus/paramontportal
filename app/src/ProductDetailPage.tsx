@@ -4,6 +4,7 @@ import { SAMPLE_SLOTS } from './mock/sampleRoom'
 import { useRole } from './context/RoleContext'
 import type { ProductDetail } from './types'
 import Breadcrumb from './components/Breadcrumb'
+import { useNavigation } from './context/NavigationContext'
 import ImageGallery from './components/ImageGallery'
 import StatusTag from './components/StatusTag'
 import BasicInfoTab from './components/tabs/BasicInfoTab'
@@ -309,6 +310,7 @@ function SampleAssignModal({
 
 export default function ProductDetailPage() {
   const { can } = useRole()
+  const { navigate } = useNavigation()
   const [activeTab, setActiveTab]       = useState<TabId>('basic')
   const [sampleLoc, setSampleLoc]   = useState<SampleLocation | null>(null)
   const [showAssign, setShowAssign] = useState(false)
@@ -353,6 +355,17 @@ export default function ProductDetailPage() {
         <Sidebar topOffset={56} />
 
         <div className="flex-1 min-w-0 px-6 py-5 space-y-4">
+        {/* Back button */}
+        <button
+          onClick={() => navigate('products')}
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 transition-colors group"
+        >
+          <svg className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Products
+        </button>
+
         {/* Breadcrumb */}
         <Breadcrumb crumbs={[
           { label: 'Home', href: '#' },
