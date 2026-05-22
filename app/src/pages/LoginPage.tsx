@@ -135,7 +135,7 @@ export default function LoginPage() {
             <img
               src={`${import.meta.env.BASE_URL}logo-paramont-global.png`}
               alt="Paramont"
-              className="h-14 object-contain"
+              className="h-28 object-contain mx-auto"
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           </div>
