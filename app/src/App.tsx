@@ -10,9 +10,11 @@ import SettingsIndexPage from './pages/SettingsIndexPage'
 import SettingsPage from './pages/SettingsPage'
 import ProgramPage from './pages/ProgramPage'
 import SearchResultsPage from './pages/SearchResultsPage'
+import LoginPage from './pages/LoginPage'
 
 function PageRouter() {
   const { page } = useNavigation()
+  if (page === 'login')               return <LoginPage />
   if (page === 'product-detail')       return <ProductDetailPage />
   if (page === 'products')             return <ProductsPage />
   if (page === 'archives')             return <ArchivesPage />

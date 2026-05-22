@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
-export type Page = 'dashboard' | 'products' | 'product-detail' | 'archives' | 'sample-room' | 'program' | 'settings' | 'settings-permissions' | 'search'
+export type Page = 'login' | 'dashboard' | 'products' | 'product-detail' | 'archives' | 'sample-room' | 'program' | 'settings' | 'settings-permissions' | 'search'
 
 interface NavigationCtx {
   page: Page
@@ -12,7 +12,7 @@ interface NavigationCtx {
 const NavigationContext = createContext<NavigationCtx | null>(null)
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
-  const [page, setPage] = useState<Page>('dashboard')
+  const [page, setPage] = useState<Page>('login')
   const [searchQuery, setSearchQuery] = useState<string>('')
   return (
     <NavigationContext.Provider value={{ page, navigate: setPage, searchQuery, setSearchQuery }}>
