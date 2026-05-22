@@ -138,6 +138,7 @@ export default function LoginPage() {
               className="h-28 object-contain mx-auto"
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
+            <p className="text-sm font-semibold text-slate-500 tracking-widest uppercase mt-2">PDM Portal</p>
           </div>
 
           {/* QR section */}
