@@ -13,14 +13,14 @@ import QualityTab from './components/tabs/QualityTab'
 import CostTab from './components/tabs/CostTab'
 import CustomsTab from './components/tabs/CustomsTab'
 import PatentsTab from './components/tabs/PatentsTab'
-import CertificationsTab from './components/tabs/CertificationsTab'
+
 import CommittedTab from './components/tabs/CommittedTab'
 import SourceFilesTab from './components/tabs/SourceFilesTab'
 import ActivityPanel from './components/ActivityPanel'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 
-type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'certifications' | 'patents' | 'committed' | 'source'
+type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'patents' | 'committed' | 'source'
 
 const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean }[] = [
   { id: 'basic',           label: 'Basic Info' },
@@ -29,10 +29,10 @@ const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean
   { id: 'quality',         label: 'Quality' },
   { id: 'cost',            label: 'Costings',       costOnly: true },
   { id: 'customs',         label: 'Customs' },
-  { id: 'certifications',  label: 'Certifications' },
+
   { id: 'patents',         label: 'Patents',        patentOnly: true },
   { id: 'committed',       label: 'Program' },
-  { id: 'source',          label: 'Source Files' },
+  { id: 'source',          label: 'Art Works' },
 ]
 
 const STATUS_VARIANT: Record<string, 'blue' | 'green' | 'red' | 'purple' | 'yellow' | 'orange' | 'gray'> = {
@@ -556,34 +556,6 @@ export default function ProductDetailPage() {
                           Cost data is confidential. Do not share externally.
                         </span>
                       )}
-                      {/* Certifications: summary counts */}
-                      {resolvedTab === 'certifications' && (() => {
-                        const certs = editingTab === 'certifications' ? draft.certifications : product.certifications
-                        if (certs.length === 0) return null
-                        const counts = certs.reduce<Record<string, number>>((acc, c) => {
-                          acc[c.certType] = (acc[c.certType] ?? 0) + 1
-                          return acc
-                        }, {})
-                        const typeStyle: Record<string, { bg: string; text: string }> = {
-                          CE:    { bg: 'bg-blue-50',    text: 'text-blue-700'    },
-                          FCC:   { bg: 'bg-purple-50',  text: 'text-purple-700'  },
-                          RoHS:  { bg: 'bg-emerald-50', text: 'text-emerald-700' },
-                          Other: { bg: 'bg-slate-100',  text: 'text-slate-600'   },
-                        }
-                        return (
-                          <span className="flex items-center gap-2">
-                            <span className="text-xs text-slate-400">{certs.length} certification{certs.length !== 1 ? 's' : ''}</span>
-                            {Object.entries(counts).map(([type, count]) => {
-                              const s = typeStyle[type] ?? typeStyle.Other
-                              return (
-                                <span key={type} className={`text-xs font-medium px-2 py-0.5 rounded ${s.bg} ${s.text}`}>
-                                  {count} {type}
-                                </span>
-                              )
-                            })}
-                          </span>
-                        )
-                      })()}
                       {/* Patents: summary counts */}
                       {resolvedTab === 'patents' && (() => {
                         const pts = editingTab === 'patents' ? draft.patents : product.patents
@@ -717,8 +689,7 @@ export default function ProductDetailPage() {
                   {resolvedTab === 'quality'   && <QualityTab     qualityRecords={editingTab === 'quality' ? draft.qualityRecords : product.qualityRecords} isEditing={editingTab === 'quality'} onChange={onChange} />}
                   {resolvedTab === 'cost'      && <CostTab        product={editingTab === 'cost' ? draft : product}     isEditing={editingTab === 'cost'}     onChange={onChange} />}
                   {resolvedTab === 'customs'   && <CustomsTab     product={editingTab === 'customs' ? draft : product}  isEditing={editingTab === 'customs'}  onChange={onChange} />}
-                  {resolvedTab === 'certifications' && <CertificationsTab certifications={editingTab === 'certifications' ? draft.certifications : product.certifications} isEditing={editingTab === 'certifications'} onChange={onChange} />}
-                  {resolvedTab === 'patents'        && <PatentsTab        patents={editingTab === 'patents' ? draft.patents : product.patents} isEditing={editingTab === 'patents'} onChange={onChange} />}
+{resolvedTab === 'patents'        && <PatentsTab        patents={editingTab === 'patents' ? draft.patents : product.patents} isEditing={editingTab === 'patents'} onChange={onChange} />}
                   {resolvedTab === 'committed'      && <CommittedTab      committedRecords={product.committedRecords} />}
                   {resolvedTab === 'source'         && <SourceFilesTab    sourceFiles={product.sourceFiles} />}
                 </div>

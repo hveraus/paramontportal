@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRole } from '../context/RoleContext'
 import { useLang } from '../context/LanguageContext'
-import type { UserRole } from '../types'
+import { useNavigation } from '../context/NavigationContext'
+import { MOCK_PRODUCTS } from '../mock/products'
+import type { UserRole, ProductStatus } from '../types'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   admin:           'Admin',
@@ -16,14 +18,103 @@ const LANGUAGES = [
   { code: 'zh' as const, label: '中文', flag: '🇨🇳' },
 ]
 
+const ABBR_MAP: Record<string, string> = {
+  wmt: 'walmart',
+  wm: 'walmart',
+  dt: 'dollar tree',
+  tgt: 'target',
+  fb: 'five below',
+}
+
+const STATUS_COLORS: Record<ProductStatus, string> = {
+  'Concept':        'bg-blue-100 text-blue-700',
+  'Proposed':       'bg-violet-100 text-violet-700',
+  'Pre-selected':   'bg-yellow-100 text-yellow-700',
+  'Initial Sampled':'bg-orange-100 text-orange-700',
+  'Production':     'bg-emerald-100 text-emerald-700',
+  'Dropped':        'bg-slate-100 text-slate-600',
+}
+
+function expandAbbr(q: string): string {
+  const lower = q.trim().toLowerCase()
+  return ABBR_MAP[lower] ?? lower
+}
+
+function Highlight({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>
+  const safe = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const parts = text.split(new RegExp(`(${safe})`, 'gi'))
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} className="bg-yellow-100 text-yellow-900 rounded-sm px-0.5 not-italic">{p}</mark>
+          : p
+      )}
+    </>
+  )
+}
+
 export default function TopBar() {
   const { role, setRole, currentUser } = useRole()
   const { lang, setLang } = useLang()
-  const [langOpen, setLangOpen]   = useState(false)
-  const [roleOpen, setRoleOpen]   = useState(false)
-  const [notifOpen, setNotifOpen] = useState(false)
+  const { navigate, setSearchQuery } = useNavigation()
+  const [langOpen, setLangOpen]       = useState(false)
+  const [roleOpen, setRoleOpen]       = useState(false)
+  const [notifOpen, setNotifOpen]     = useState(false)
+  const [inputValue, setInputValue]   = useState('')
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [recentSearches, setRecentSearches] = useState<string[]>([
+    'Pom-Pom Yarn',
+    'WMT Holiday Craft',
+    'Foam Sticker',
+    'Watercolor Paint',
+    'Embroidery Kit',
+  ])
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const activeLang = LANGUAGES.find(l => l.code === lang) ?? LANGUAGES[0]
+
+  const expandedQuery = expandAbbr(inputValue)
+
+  const liveResults = inputValue.trim()
+    ? MOCK_PRODUCTS.filter(p => {
+        const q = expandedQuery
+        return (
+          p.name.toLowerCase().includes(q) ||
+          p.itemNo.toLowerCase().includes(q) ||
+          p.brand.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q) ||
+          p.subcategory.toLowerCase().includes(q)
+        )
+      }).slice(0, 5)
+    : []
+
+  function handleSearch(q: string) {
+    if (!q.trim()) return
+    setRecentSearches(prev => {
+      const deduped = [q, ...prev.filter(r => r !== q)]
+      return deduped.slice(0, 10)
+    })
+    setSearchQuery(q)
+    navigate('search')
+    setDropdownOpen(false)
+    setInputValue(q)
+  }
+
+  function handleFocus() {
+    if (blurTimer.current) clearTimeout(blurTimer.current)
+    setDropdownOpen(true)
+  }
+
+  function handleBlur() {
+    blurTimer.current = setTimeout(() => setDropdownOpen(false), 150)
+  }
+
+  function dismissRecent(term: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    setRecentSearches(prev => prev.filter(r => r !== term))
+  }
 
   return (
     <header className="sticky top-0 z-40 h-14 bg-white border-b border-slate-200 grid grid-cols-3 items-center px-5">
@@ -49,11 +140,100 @@ export default function TopBar() {
           </svg>
           <input
             type="text"
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            onKeyDown={e => { if (e.key === 'Enter') handleSearch(inputValue) }}
             placeholder={lang === 'en' ? 'Search products, projects, clients…' : '搜索产品、项目、客户…'}
             className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg
                        placeholder-slate-400 text-slate-700 focus:outline-none focus:ring-2
                        focus:ring-blue-500/30 focus:border-blue-400 transition-colors"
           />
+
+          {/* Dropdown */}
+          {dropdownOpen && (
+            <div className="absolute left-0 top-full mt-1 w-full z-50 bg-white rounded-xl shadow-lg border border-slate-200">
+
+              {/* Empty input: recent searches */}
+              {!inputValue.trim() && (
+                <div className="py-2">
+                  <p className="px-3 pt-1 pb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {lang === 'en' ? 'Recent Searches' : '最近搜索'}
+                  </p>
+                  {recentSearches.length === 0 && (
+                    <p className="px-3 py-3 text-sm text-slate-400 text-center">
+                      {lang === 'en' ? 'No recent searches' : '暂无搜索记录'}
+                    </p>
+                  )}
+                  {recentSearches.slice(0, 5).map(term => (
+                    <button
+                      key={term}
+                      onMouseDown={() => handleSearch(term)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 transition-colors text-left"
+                    >
+                      {/* Clock icon */}
+                      <svg className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="flex-1 text-sm text-slate-700">{term}</span>
+                      <span
+                        onMouseDown={e => dismissRecent(term, e)}
+                        className="text-slate-400 hover:text-slate-600 text-xs px-1 cursor-pointer"
+                        role="button"
+                        aria-label="Remove"
+                      >
+                        ×
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Has input: live results */}
+              {inputValue.trim() && (
+                <div className="py-2">
+                  {liveResults.length === 0 && (
+                    <p className="px-3 py-3 text-sm text-slate-400 text-center">
+                      {lang === 'en' ? 'No matches found' : '未找到匹配结果'}
+                    </p>
+                  )}
+                  {liveResults.map(product => (
+                    <button
+                      key={product.id}
+                      onMouseDown={() => handleSearch(product.name)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 transition-colors text-left"
+                    >
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-8 h-8 rounded-md object-cover flex-shrink-0 border border-slate-100"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">
+                          <Highlight text={product.name} query={expandedQuery} />
+                        </p>
+                        <p className="text-xs text-slate-400">#{product.itemNo}</p>
+                      </div>
+                      <span className={`flex-shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${STATUS_COLORS[product.status]}`}>
+                        {product.status}
+                      </span>
+                    </button>
+                  ))}
+                  {/* Search for '{query}' row */}
+                  <button
+                    onMouseDown={() => handleSearch(inputValue)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors border-t border-slate-100 mt-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    {lang === 'en' ? `Search for "${inputValue}"` : `搜索 "${inputValue}"`}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

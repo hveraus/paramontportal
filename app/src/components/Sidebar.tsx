@@ -100,7 +100,7 @@ const NAV_ITEMS: { label: string; icon: React.ReactNode; page?: NavPage; matchPa
   { label: 'Products',    icon: <IconBox />,        page: 'products',     matchPages: ['products', 'product-detail'] },
   { label: 'Archives',    icon: <IconArchive />,    page: 'archives' },
   { label: 'Sample Room', icon: <IconSampleRoom />, page: 'sample-room' },
-  { label: 'Program',     icon: <IconFolder /> },
+  { label: 'Program',     icon: <IconFolder />,    page: 'program' },
   { label: 'Customers',   icon: <IconUsers /> },
 ]
 
@@ -138,54 +138,7 @@ export default function Sidebar({ topOffset = 44 }: { topOffset?: number }) {
         })}
       </nav>
 
-      {/* Divider */}
-      <div className="mx-3 border-t border-slate-100 my-1" />
-
-      {/* Browse by Category */}
-      <div className="px-3 py-3 flex-1 overflow-y-auto">
-        <p className="px-3 mb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-          Browse by Category
-        </p>
-
-        <div className="space-y-0.5">
-          {CATEGORIES.map(cat => (
-            <div key={cat.name}>
-              {/* Parent category */}
-              <button
-                onClick={() => setExpanded(prev => ({ ...prev, [cat.name]: !prev[cat.name] }))}
-                className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors
-                  ${cat.active
-                    ? 'text-blue-700 font-medium'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-              >
-                <span className="truncate">{cat.name}</span>
-                <span className="text-slate-300 flex-shrink-0">
-                  <IconChevron open={!!expanded[cat.name]} />
-                </span>
-              </button>
-
-              {/* Children */}
-              {expanded[cat.name] && (
-                <div className="ml-3 pl-3 border-l border-slate-100 space-y-0.5 mb-1">
-                  {cat.children.map(child => (
-                    <button
-                      key={child}
-                      className={`w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors
-                        ${cat.active && child === 'Yarn'
-                          ? 'text-blue-600 font-medium bg-blue-50'
-                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                        }`}
-                    >
-                      {child}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Browse by Category — hidden */}
 
       {/* Settings — pinned to bottom */}
       <div className="mt-auto px-3 py-3 border-t border-slate-100">

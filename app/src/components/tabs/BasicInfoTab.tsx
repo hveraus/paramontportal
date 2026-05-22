@@ -191,11 +191,42 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
         }
       </Field>
 
-      <Field label="Owner">
-        <div className="flex items-center gap-2">
-          <img src={product.owner.avatar} alt={product.owner.name} className="w-6 h-6 rounded-full" />
-          <span>{product.owner.name}</span>
+      <Field label="Designer">
+        <div className="flex flex-wrap gap-3">
+          {product.designers.map(d => (
+            <div key={d.id} className="flex items-center gap-1.5">
+              <img src={d.avatar} alt={d.name} className="w-6 h-6 rounded-full flex-shrink-0" />
+              <span>{d.name}</span>
+            </div>
+          ))}
         </div>
+      </Field>
+
+      <Field label="Design Due Date">
+        {isEditing
+          ? <input type="date" className={INPUT_CLS} value={product.designDueDate ?? ''} onChange={e => onChange({ designDueDate: e.target.value || null })} />
+          : val(product.designDueDate)
+        }
+      </Field>
+
+      <Field label="NB Sourcing">
+        {product.nbSourcing
+          ? <div className="flex items-center gap-1.5">
+              <img src={product.nbSourcing.avatar} alt={product.nbSourcing.name} className="w-6 h-6 rounded-full flex-shrink-0" />
+              <span>{product.nbSourcing.name}</span>
+            </div>
+          : <span className="text-slate-300">—</span>
+        }
+      </Field>
+
+      <Field label="NB PD">
+        {product.nbPd
+          ? <div className="flex items-center gap-1.5">
+              <img src={product.nbPd.avatar} alt={product.nbPd.name} className="w-6 h-6 rounded-full flex-shrink-0" />
+              <span>{product.nbPd.name}</span>
+            </div>
+          : <span className="text-slate-300">—</span>
+        }
       </Field>
 
       <Field label="Initial Selection">
@@ -285,14 +316,6 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
         }
       </Field>
 
-      <Field label="Comments (SOL)" span2>
-        {isEditing
-          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.solComments ?? ''} onChange={e => onChange({ solComments: e.target.value || null })} />
-          : product.solComments
-            ? <p className="text-slate-700 leading-relaxed">{product.solComments}</p>
-            : <span className="text-slate-300">—</span>
-        }
-      </Field>
 
     </div>
   )

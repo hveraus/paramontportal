@@ -7,7 +7,7 @@ export const mockProduct: ProductDetail = {
   upc:               '12345678905',
   upc12Digit:        '012345678905',
   productName:       'Pom-Pom Yarn Craft Kit – Rainbow 12pc',
-  categoryPath:      ['Crafts', 'Yarn', 'Pom-Pom'],
+  categoryPath:      ['Crafts', 'Yarn & Fiber Arts', 'Pom-Pom Kits'],
   productCategory:   'NB CRAFT CATEGORY',
   brand:             'WM - Hello Hobby',
   status:            'Concept',
@@ -20,10 +20,37 @@ export const mockProduct: ProductDetail = {
   borderDomestic:    'Direct Import',
   createdAt:         '2024-09-18 09:30',
   updatedAt:         '2024-11-05 14:32',
-  owner: {
-    id: 'u01',
-    name: 'Xiaomei Li',
-    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=XL&backgroundColor=3b82f6&fontColor=ffffff',
+  designers: [
+    {
+      id: 'u01',
+      name: 'Xiaomei Li',
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=XL&backgroundColor=3b82f6&fontColor=ffffff',
+      team: 'China',
+    },
+    {
+      id: 'u02',
+      name: 'Wei Zhang',
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=WZ&backgroundColor=10b981&fontColor=ffffff',
+      team: 'China',
+    },
+    {
+      id: 'u03',
+      name: 'Sarah Thompson',
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=f59e0b&fontColor=ffffff',
+      team: 'US',
+    },
+  ],
+  designDueDate:     '2025-03-15',
+  nbSourcing: {
+    id: 'u04',
+    name: 'Wei Zhang',
+    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=WZ&backgroundColor=10b981&fontColor=ffffff',
+    team: 'China',
+  },
+  nbPd: {
+    id: 'u05',
+    name: 'James Park',
+    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=JP&backgroundColor=8b5cf6&fontColor=ffffff',
     team: 'China',
   },
   ageGrade:          '6+',
@@ -158,6 +185,7 @@ export const mockProduct: ProductDetail = {
   ],
 
   // ── Cost ─────────────────────────────────────────────────────────────────
+  costReadyDate:           '2025-02-28',
   retail:                  1.25,
   rmbPurchase:             3.80,
   dollarPurchase:          0.527,
@@ -174,6 +202,23 @@ export const mockProduct: ProductDetail = {
   texasWarehouseCost:      0.012,
   declarationPrice:        0.45,
   dutyCost:                0.034,
+
+  // ── DI Pricing ───────────────────────────────────────────────────────────
+  diNetFirstFobNbWCommission: 0.892,
+  diFirstFobPriceWithC:       0.938,
+  diLandingCost:              1.124,
+  diCustomerImu:              52.3,
+
+  // ── DO Pricing ───────────────────────────────────────────────────────────
+  texasWarehouseCostRatio:    1.8,
+  newDoFirstFobTexas:         1.056,
+  newDoNetFirstCost:          0.998,
+  newDoImu:                   54.1,
+  newDoTexasImu:              50.6,
+
+  // ── Summary ──────────────────────────────────────────────────────────────
+  totalFob:                   42560.00,
+  combinedGpPercent:          51.4,
 
   // ── Customs ──────────────────────────────────────────────────────────────
   htsCategory:        'Textile & Craft Supplies',

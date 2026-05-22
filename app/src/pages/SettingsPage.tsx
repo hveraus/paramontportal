@@ -1531,15 +1531,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* ── Right: Preview Panel ── */}
-        <div className="w-72 flex-shrink-0 bg-white border-l border-slate-200 overflow-hidden flex flex-col">
-          <PreviewPanel
-            mode={leftMode}
-            nodeId={leftMode === 'org' ? selectedId : null}
-            configs={configs}
-            roleName={selectedRole?.name}
-          />
-        </div>
+
           </div>{/* end 3-col layout */}
         </div>{/* end content column */}
       </div>{/* end outer flex */}

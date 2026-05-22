@@ -65,16 +65,7 @@ export default function PackagingTab({ product, isEditing, onChange }: Props) {
           }
         </Field>
 
-        <Field label="Packaging Material">
-          {isEditing
-            ? <input type="text" className={INPUT_CLS} value={product.packagingMaterial ?? ''} onChange={e => onChange({ packagingMaterial: e.target.value })} />
-            : product.packagingMaterial
-              ? <span>{product.packagingMaterial}</span>
-              : <span className="text-slate-300">—</span>
-          }
-        </Field>
-
-        <Field label="Count Per Package">
+<Field label="Count Per Package">
           {isEditing
             ? <input type="number" step="1" className={INPUT_CLS} value={countPerPackage} onChange={e => onChange({ countPerPackage: e.target.value === '' ? 0 : Math.round(Number(e.target.value)) })} />
             : <>{num(countPerPackage)} {countPerPackage !== null && <span className="text-slate-400 text-xs ml-1">pc</span>}</>
@@ -121,46 +112,22 @@ export default function PackagingTab({ product, isEditing, onChange }: Props) {
 
       </div>
 
-      {/* Packing structure diagram */}
-      <div className="h-px bg-slate-100" />
+      {/* Packaging Spec */}
       <div>
-        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Packing Structure</p>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-4 py-3">
-            <span className="text-2xl">📦</span>
-            <div>
-              <p className="text-xs text-slate-400">Retail Unit</p>
-              <p className="text-sm font-semibold text-slate-800">{countPerPackage} pc</p>
-            </div>
-          </div>
-          <span className="text-slate-300 text-xl font-light">×</span>
-          <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-4 py-3">
-            <span className="text-2xl">🗃️</span>
-            <div>
-              <p className="text-xs text-slate-400">Inner Box</p>
-              <p className="text-sm font-semibold text-slate-800">{innerQty} pcs</p>
-            </div>
-          </div>
-          <span className="text-slate-300 text-xl font-light">×</span>
-          <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-4 py-3">
-            <span className="text-2xl">🏭</span>
-            <div>
-              <p className="text-xs text-slate-400">Master Carton</p>
-              <p className="text-sm font-semibold text-slate-800">{masterQty} pcs total</p>
-            </div>
-          </div>
-          {totalMasterCartons !== null && <>
-            <span className="text-slate-300 text-xl font-light">×</span>
-            <div className="flex items-center gap-2 bg-blue-50 rounded-xl px-4 py-3">
-              <span className="text-2xl">🚢</span>
-              <div>
-                <p className="text-xs text-slate-400">Total Cartons</p>
-                <p className="text-sm font-semibold text-blue-700">{totalMasterCartons.toLocaleString()} ctns</p>
-              </div>
-            </div>
-          </>}
-        </div>
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Packaging Spec</p>
+        {isEditing
+          ? <textarea
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 resize-none transition-colors"
+              rows={5}
+              value={product.itemPackagingSpec ?? ''}
+              onChange={e => onChange({ itemPackagingSpec: e.target.value || null })}
+            />
+          : product.itemPackagingSpec
+            ? <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{product.itemPackagingSpec}</p>
+            : <span className="text-sm text-slate-300">—</span>
+        }
       </div>
+
     </div>
   )
 }

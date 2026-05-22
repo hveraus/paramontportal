@@ -12,64 +12,25 @@ const TOTAL_RESULTS = 47 // simulated total
 interface FilterState {
   categories: string[]
   statuses: string[]
-  countries: string[]
-  hasPatent: boolean | null
-  committed: boolean | null
-  priceRange: [number, number]
-  moqRange: [number, number]
+  brands: string[]
+  everydaySeasonal: 'all' | 'Everyday' | 'Seasonal'
+  holidays: string[]
+  hasSample: boolean
+  committed: boolean
 }
 
 const DEFAULT_FILTERS: FilterState = {
   categories: [],
   statuses: [],
-  countries: [],
-  hasPatent: null,
-  committed: null,
-  priceRange: [0, 50],
-  moqRange: [0, 100000],
+  brands: [],
+  everydaySeasonal: 'all',
+  holidays: [],
+  hasSample: false,
+  committed: false,
 }
 
-// ── Dual range slider ─────────────────────────────────────────────────────
-
-function DualSlider({
-  min, max, low, high, step = 1, prefix = '',
-  onChange,
-}: {
-  min: number; max: number; low: number; high: number
-  step?: number; prefix?: string
-  onChange: (low: number, high: number) => void
-}) {
-  const pct = (v: number) => ((v - min) / (max - min)) * 100
-  return (
-    <div className="py-2">
-      <div className="relative h-6">
-        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-slate-200 rounded-full" />
-        <div
-          className="absolute top-1/2 -translate-y-1/2 h-1.5 bg-blue-500 rounded-full"
-          style={{ left: `${pct(low)}%`, right: `${100 - pct(high)}%` }}
-        />
-        <input type="range" min={min} max={max} step={step} value={low}
-          onChange={e => onChange(Math.min(+e.target.value, high - step), high)}
-          className="absolute inset-0 w-full opacity-0 cursor-pointer"
-          style={{ zIndex: low > max * 0.9 ? 5 : 3 }}
-        />
-        <input type="range" min={min} max={max} step={step} value={high}
-          onChange={e => onChange(low, Math.max(+e.target.value, low + step))}
-          className="absolute inset-0 w-full opacity-0 cursor-pointer"
-          style={{ zIndex: 4 }}
-        />
-        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-blue-500 rounded-full shadow-sm pointer-events-none"
-          style={{ left: `${pct(low)}%`, zIndex: 6 }} />
-        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-blue-500 rounded-full shadow-sm pointer-events-none"
-          style={{ left: `${pct(high)}%`, zIndex: 6 }} />
-      </div>
-      <div className="flex justify-between text-xs text-slate-600 mt-2 font-medium">
-        <span className="bg-slate-100 rounded px-2 py-0.5">{prefix}{low.toLocaleString()}</span>
-        <span className="bg-slate-100 rounded px-2 py-0.5">{prefix}{high.toLocaleString()}</span>
-      </div>
-    </div>
-  )
-}
+const ALL_BRANDS = [...new Set(MOCK_PRODUCTS.map(p => p.brand))].sort()
+const ALL_HOLIDAYS = ['Halloween', 'Christmas', 'Easter', 'Thanksgiving', 'Other'] as const
 
 // ── Filter section accordion ──────────────────────────────────────────────
 
@@ -96,25 +57,30 @@ function FilterSection({ title, children, defaultOpen = true }: {
 
 // ── Checkbox helper ───────────────────────────────────────────────────────
 
-function Checkbox({ label, checked, onChange, indeterminate = false, count }: {
-  label: string; checked: boolean; onChange: () => void; indeterminate?: boolean; count?: number
+function Checkbox({ label, checked, onChange, indeterminate = false, count, level = 1 }: {
+  label: string; checked: boolean; onChange: () => void; indeterminate?: boolean; count?: number; level?: 1 | 2 | 3
 }) {
+  const labelCls =
+    level === 1 ? 'text-sm font-medium text-slate-800 group-hover:text-slate-900' :
+    level === 2 ? 'text-sm text-slate-600 group-hover:text-slate-800' :
+                  'text-sm text-slate-500 group-hover:text-slate-700'
+  const boxSz = 'w-4 h-4'
   return (
-    <label className="flex items-center gap-2.5 py-1 cursor-pointer group">
-      <div className={`w-4 h-4 rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors
+    <label className="flex items-center gap-2 py-0.5 cursor-pointer group">
+      <div className={`${boxSz} rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors
         ${checked || indeterminate
           ? 'bg-blue-600 border-blue-600'
           : 'border-slate-300 group-hover:border-blue-400'}`}
         onClick={onChange}
       >
-        {checked && <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="currentColor">
+        {checked && <svg className="w-2 h-2 text-white" viewBox="0 0 10 10" fill="currentColor">
           <path d="M1.5 5.5L4 8l4.5-5" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" />
         </svg>}
-        {indeterminate && <div className="w-2 h-0.5 bg-white rounded" />}
+        {indeterminate && <div className="w-1.5 h-0.5 bg-white rounded" />}
       </div>
-      <span className="flex-1 text-sm text-slate-600 group-hover:text-slate-900 transition-colors select-none">{label}</span>
+      <span className={`flex-1 transition-colors select-none leading-tight ${labelCls}`}>{label}</span>
       {count !== undefined && (
-        <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded-full min-w-[20px] text-center leading-none transition-colors
+        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none transition-colors
           ${checked || indeterminate
             ? 'bg-blue-100 text-blue-600'
             : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
@@ -125,6 +91,22 @@ function Checkbox({ label, checked, onChange, indeterminate = false, count }: {
   )
 }
 
+// ── Toggle switch ─────────────────────────────────────────────────────────
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+  return (
+    <button
+      onClick={onChange}
+      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent
+                  transition-colors duration-200 focus:outline-none
+                  ${checked ? 'bg-blue-600' : 'bg-slate-200'}`}
+    >
+      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200
+                        ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+    </button>
+  )
+}
+
 // ── Filter panel ──────────────────────────────────────────────────────────
 
 function FilterPanel({ filters, onChange, categoryCounts }: {
@@ -132,14 +114,27 @@ function FilterPanel({ filters, onChange, categoryCounts }: {
   onChange: (f: FilterState) => void
   categoryCounts: Record<string, number>
 }) {
-  const toggle = (key: 'categories' | 'statuses' | 'countries', val: string) => {
-    const arr = filters[key]
+  const [expandedL1, setExpandedL1] = useState<Set<string>>(new Set())
+  const [expandedL2, setExpandedL2] = useState<Set<string>>(new Set())
+
+  const toggleExpL1 = (name: string) =>
+    setExpandedL1(prev => { const s = new Set(prev); s.has(name) ? s.delete(name) : s.add(name); return s })
+  const toggleExpL2 = (name: string) =>
+    setExpandedL2(prev => { const s = new Set(prev); s.has(name) ? s.delete(name) : s.add(name); return s })
+
+  const toggleArr = (key: 'categories' | 'statuses' | 'brands' | 'holidays', val: string) => {
+    const arr = filters[key] as string[]
     onChange({ ...filters, [key]: arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val] })
   }
-  const toggleParentCat = (_parent: string, children: string[]) => {
-    const allSelected = children.every(c => filters.categories.includes(c))
-    const without = filters.categories.filter(c => !children.includes(c))
-    onChange({ ...filters, categories: allSelected ? without : [...without, ...children] })
+
+  const allLeaves = (children: (string | { name: string; children: string[] })[]): string[] =>
+    children.flatMap(c => typeof c === 'string' ? [c] : c.children)
+
+  const toggleParentCat = (_parent: string, children: (string | { name: string; children: string[] })[]) => {
+    const leaves = allLeaves(children)
+    const allSelected = leaves.every(c => filters.categories.includes(c))
+    const without = filters.categories.filter(c => !leaves.includes(c))
+    onChange({ ...filters, categories: allSelected ? without : [...without, ...leaves] })
   }
 
   return (
@@ -152,123 +147,150 @@ function FilterPanel({ filters, onChange, categoryCounts }: {
         >Reset all</button>
       </div>
 
-      {/* Category */}
+      {/* ── 1. Category — 3 levels, collapsible ── */}
       <FilterSection title="Category">
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {CATEGORY_TREE.map(cat => {
-            const allSelected = cat.children.every(c => filters.categories.includes(c))
-            const someSelected = cat.children.some(c => filters.categories.includes(c))
-            const parentCount = cat.children.reduce((sum, c) => sum + (categoryCounts[c] ?? 0), 0)
+            const l1Leaves = allLeaves(cat.children)
+            const l1All  = l1Leaves.every(c => filters.categories.includes(c))
+            const l1Some = l1Leaves.some(c => filters.categories.includes(c))
+            const l1Count = l1Leaves.reduce((s, c) => s + (categoryCounts[c] ?? 0), 0)
+            const l1Open = expandedL1.has(cat.name)
             return (
               <div key={cat.name}>
-                <Checkbox
-                  label={cat.name}
-                  checked={allSelected}
-                  indeterminate={!allSelected && someSelected}
-                  onChange={() => toggleParentCat(cat.name, cat.children)}
-                  count={parentCount || undefined}
-                />
-                <div className="ml-5 space-y-0.5">
-                  {cat.children.map(child => (
-                    <Checkbox
-                      key={child} label={child}
-                      checked={filters.categories.includes(child)}
-                      onChange={() => toggle('categories', child)}
-                      count={categoryCounts[child] || undefined}
-                    />
-                  ))}
+                <div className="flex items-center gap-0.5 py-0.5">
+                  <Checkbox
+                    label={cat.name}
+                    checked={l1All}
+                    indeterminate={!l1All && l1Some}
+                    onChange={() => toggleParentCat(cat.name, cat.children)}
+                    count={l1Count || undefined}
+                    level={1}
+                  />
+                  <button onClick={() => toggleExpL1(cat.name)} className="ml-auto p-0.5 text-slate-400 hover:text-slate-600 flex-shrink-0">
+                    <svg className={`w-3 h-3 transition-transform ${l1Open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 </div>
+                {l1Open && (
+                  <div className="ml-3 mt-0.5 mb-1 border-l-2 border-slate-100 pl-3 space-y-0.5">
+                    {cat.children.map(sub => {
+                      const l2All  = sub.children.every(c => filters.categories.includes(c))
+                      const l2Some = sub.children.some(c => filters.categories.includes(c))
+                      const l2Count = sub.children.reduce((s, c) => s + (categoryCounts[c] ?? 0), 0)
+                      const l2Open = expandedL2.has(sub.name)
+                      return (
+                        <div key={sub.name}>
+                          <div className="flex items-center gap-0.5">
+                            <Checkbox
+                              label={sub.name}
+                              checked={l2All}
+                              indeterminate={!l2All && l2Some}
+                              onChange={() => toggleParentCat(sub.name, sub.children)}
+                              count={l2Count || undefined}
+                              level={2}
+                            />
+                            <button onClick={() => toggleExpL2(sub.name)} className="ml-auto p-0.5 text-slate-400 hover:text-slate-600 flex-shrink-0">
+                              <svg className={`w-3 h-3 transition-transform ${l2Open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                          </div>
+                          {l2Open && (
+                            <div className="ml-3 mt-0.5 mb-0.5 border-l border-slate-100 pl-3 space-y-0">
+                              {sub.children.map(leaf => (
+                                <Checkbox
+                                  key={leaf} label={leaf}
+                                  checked={filters.categories.includes(leaf)}
+                                  onChange={() => toggleArr('categories', leaf)}
+                                  count={categoryCounts[leaf] || undefined}
+                                  level={3}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )
           })}
         </div>
       </FilterSection>
 
-      {/* Status */}
+      {/* ── 2. Status ── */}
       <FilterSection title="Status">
-        {(['Concept', 'Proposed', 'Pre-selected', 'Initial Sampled', 'Production', 'Dropped'] as const).map(s => (
-          <Checkbox key={s} label={s}
-            checked={filters.statuses.includes(s)}
-            onChange={() => toggle('statuses', s)}
-          />
-        ))}
+        <div className="space-y-0.5">
+          {(['Concept', 'Proposed', 'Pre-selected', 'Initial Sampled', 'Production', 'Dropped'] as const).map(s => (
+            <Checkbox key={s} label={s}
+              checked={filters.statuses.includes(s)}
+              onChange={() => toggleArr('statuses', s)}
+            />
+          ))}
+        </div>
       </FilterSection>
 
-      {/* Price range */}
-      <FilterSection title="Retail Price (USD)" defaultOpen={false}>
-        <DualSlider min={0} max={50} low={filters.priceRange[0]} high={filters.priceRange[1]}
-          step={0.25} prefix="$"
-          onChange={(l, h) => onChange({ ...filters, priceRange: [l, h] })}
-        />
+      {/* ── 3. Brand ── */}
+      <FilterSection title="Brand">
+        <div className="space-y-0.5">
+          {ALL_BRANDS.map(b => (
+            <Checkbox key={b} label={b}
+              checked={filters.brands.includes(b)}
+              onChange={() => toggleArr('brands', b)}
+            />
+          ))}
+        </div>
       </FilterSection>
 
-      {/* Country */}
-      <FilterSection title="Country of Origin" defaultOpen={false}>
-        {(['China', 'US'] as const).map(c => (
-          <label key={c} className="flex items-center gap-2.5 py-1 cursor-pointer group">
-            <div className={`w-4 h-4 rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors
-              ${filters.countries.includes(c)
-                ? 'bg-blue-600 border-blue-600'
-                : 'border-slate-300 group-hover:border-blue-400'}`}
-              onClick={() => toggle('countries', c)}
+      {/* ── 4. Everyday / Seasonal ── */}
+      <FilterSection title="Everyday / Seasonal">
+        {/* Segmented selector */}
+        <div className="flex rounded-lg border border-slate-200 overflow-hidden mb-2">
+          {(['all', 'Everyday', 'Seasonal'] as const).map((opt, i) => (
+            <button
+              key={opt}
+              onClick={() => onChange({ ...filters, everydaySeasonal: opt, holidays: [] })}
+              className={`flex-1 py-1.5 text-xs font-medium transition-colors
+                ${i > 0 ? 'border-l border-slate-200' : ''}
+                ${filters.everydaySeasonal === opt
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-slate-600 hover:bg-slate-50'}`}
             >
-              {filters.countries.includes(c) && (
-                <svg className="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
-                  <path d="M1.5 5.5L4 8l4.5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              )}
-            </div>
-            <span className="text-sm text-slate-600 select-none">
-              {c === 'China' ? '🇨🇳' : '🇺🇸'} {c}
-            </span>
-          </label>
-        ))}
+              {opt === 'all' ? 'All' : opt}
+            </button>
+          ))}
+        </div>
+        {/* Holiday sub-options — only when Seasonal is selected */}
+        {filters.everydaySeasonal === 'Seasonal' && (
+          <div className="mt-2 ml-1 border-l-2 border-blue-100 pl-3 space-y-0.5">
+            {ALL_HOLIDAYS.map(h => (
+              <Checkbox key={h} label={h}
+                checked={filters.holidays.includes(h)}
+                onChange={() => toggleArr('holidays', h)}
+                level={2}
+              />
+            ))}
+          </div>
+        )}
       </FilterSection>
 
-      {/* Has Patent */}
-      <FilterSection title="Has Patent" defaultOpen={false}>
-        {([null, true, false] as const).map(v => (
-          <label key={String(v)} className="flex items-center gap-2.5 py-1 cursor-pointer">
-            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors
-              ${filters.hasPatent === v
-                ? 'border-blue-600 bg-blue-600'
-                : 'border-slate-300'}`}
-              onClick={() => onChange({ ...filters, hasPatent: v })}
-            >
-              {filters.hasPatent === v && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-            </div>
-            <span className="text-sm text-slate-600 select-none">
-              {v === null ? 'All' : v ? 'Yes' : 'No'}
-            </span>
-          </label>
-        ))}
+      {/* ── 5. Has Sample ── */}
+      <FilterSection title="In Sample Room">
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-slate-600">Has sample on display</span>
+          <Toggle checked={filters.hasSample} onChange={() => onChange({ ...filters, hasSample: !filters.hasSample })} />
+        </div>
       </FilterSection>
 
-      {/* MOQ range */}
-      <FilterSection title="MOQ Range" defaultOpen={false}>
-        <DualSlider min={0} max={100000} low={filters.moqRange[0]} high={filters.moqRange[1]}
-          step={1000}
-          onChange={(l, h) => onChange({ ...filters, moqRange: [l, h] })}
-        />
-      </FilterSection>
-
-      {/* Committed */}
-      <FilterSection title="Committed" defaultOpen={false}>
-        {([null, true, false] as const).map(v => (
-          <label key={String(v)} className="flex items-center gap-2.5 py-1 cursor-pointer">
-            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors
-              ${filters.committed === v
-                ? 'border-blue-600 bg-blue-600'
-                : 'border-slate-300'}`}
-              onClick={() => onChange({ ...filters, committed: v })}
-            >
-              {filters.committed === v && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-            </div>
-            <span className="text-sm text-slate-600 select-none">
-              {v === null ? 'All' : v ? 'Yes' : 'No'}
-            </span>
-          </label>
-        ))}
+      {/* ── 6. Committed ── */}
+      <FilterSection title="Committed">
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-slate-600">Committed only</span>
+          <Toggle checked={filters.committed} onChange={() => onChange({ ...filters, committed: !filters.committed })} />
+        </div>
       </FilterSection>
     </aside>
   )
@@ -356,7 +378,7 @@ function ProductRow({ product, onView }: { product: ProductListItem; onView: () 
         className="w-16 h-12 object-cover rounded-lg flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-slate-900 truncate">{product.name}</p>
-        <p className="text-xs text-slate-400 font-mono mt-0.5">#{product.itemNo} · {product.category} / {product.subcategory}</p>
+        <p className="text-xs text-slate-400 font-mono mt-0.5">#{product.itemNo} · {product.category} / {product.subcategory} / {product.subsubcategory}</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[product.status] ?? 'bg-slate-100 text-slate-500'}`}>
@@ -420,20 +442,20 @@ export default function ProductsPage() {
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     MOCK_PRODUCTS.forEach(p => {
-      counts[p.subcategory] = (counts[p.subcategory] ?? 0) + 1
+      counts[p.subsubcategory] = (counts[p.subsubcategory] ?? 0) + 1
     })
     return counts
   }, [])
 
   const filtered = useMemo(() => {
     let list = [...MOCK_PRODUCTS]
-    if (filters.categories.length) list = list.filter(p => filters.categories.includes(p.subcategory))
-    if (filters.statuses.length)   list = list.filter(p => filters.statuses.includes(p.status))
-    if (filters.countries.length)  list = list.filter(p => filters.countries.includes(p.country))
-    if (filters.hasPatent !== null) list = list.filter(p => p.hasPatent === filters.hasPatent)
-    if (filters.committed !== null) list = list.filter(p => p.committed === filters.committed)
-    list = list.filter(p => p.retail === null || (p.retail >= filters.priceRange[0] && p.retail <= filters.priceRange[1]))
-    list = list.filter(p => p.moq === null || (p.moq >= filters.moqRange[0] && p.moq <= filters.moqRange[1]))
+    if (filters.categories.length)      list = list.filter(p => filters.categories.includes(p.subsubcategory))
+    if (filters.statuses.length)        list = list.filter(p => filters.statuses.includes(p.status))
+    if (filters.brands.length)          list = list.filter(p => filters.brands.includes(p.brand))
+    if (filters.everydaySeasonal !== 'all') list = list.filter(p => p.everydaySeasonal === filters.everydaySeasonal)
+    if (filters.holidays.length)        list = list.filter(p => !!p.holiday && filters.holidays.includes(p.holiday))
+    if (filters.hasSample)              list = list.filter(p => p.hasSample)
+    if (filters.committed)              list = list.filter(p => p.committed)
     return list
   }, [filters])
 
@@ -446,19 +468,22 @@ export default function ProductsPage() {
   }, [filtered, sortBy])
 
   // Simulate larger total for pagination display
-  const displayTotal = filters.categories.length || filters.statuses.length ||
-    filters.countries.length || filters.hasPatent !== null || filters.committed !== null
-    ? sorted.length
-    : TOTAL_RESULTS
+  const hasActiveFilters = filters.categories.length > 0 || filters.statuses.length > 0 ||
+    filters.brands.length > 0 || filters.everydaySeasonal !== 'all' ||
+    filters.holidays.length > 0 || filters.hasSample || filters.committed
+
+  const displayTotal = hasActiveFilters ? sorted.length : TOTAL_RESULTS
 
   const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const activeFilterCount = [
     filters.categories.length,
     filters.statuses.length,
-    filters.countries.length,
-    filters.hasPatent !== null ? 1 : 0,
-    filters.committed !== null ? 1 : 0,
+    filters.brands.length,
+    filters.everydaySeasonal !== 'all' ? 1 : 0,
+    filters.holidays.length,
+    filters.hasSample ? 1 : 0,
+    filters.committed ? 1 : 0,
   ].reduce((a, b) => a + b, 0)
 
   return (

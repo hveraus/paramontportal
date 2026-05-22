@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { QualityRecord, QualityStatus, QualityAttachment, ProductImage, ProductDetail } from '../../types'
+import type { QualityRecord, QualityStatus, QualityAttachment, ProductDetail } from '../../types'
 import StatusTag from '../StatusTag'
 
 const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
@@ -51,25 +51,8 @@ function AttachmentRow({ att }: { att: QualityAttachment }) {
   )
 }
 
-function ImageGrid({ images }: { images: ProductImage[] }) {
-  if (images.length === 0) return <p className="text-xs text-slate-300 italic">No images</p>
-  return (
-    <div className="grid grid-cols-4 gap-2">
-      {images.map(img => (
-        <div key={img.id} className="group relative aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50 cursor-pointer">
-          <img src={img.url} alt={img.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-        </div>
-      ))}
-    </div>
-  )
-}
 
 function DetailPanel({ record }: { record: QualityRecord }) {
-  const productRenders   = record.images.filter(i => i.type === 'Product Render')
-  const packagingRenders = record.images.filter(i => i.type === 'Packaging Render')
-  const referenceImages  = record.images.filter(i => i.type === 'Reference Images')
-
   return (
     <div className="border border-slate-200 rounded-xl p-5 space-y-5 bg-slate-50/50">
       {/* Status row */}
@@ -110,26 +93,6 @@ function DetailPanel({ record }: { record: QualityRecord }) {
           : <p className="text-xs text-slate-300 italic">No test reports uploaded</p>
         }
       </div>
-
-      {/* Images */}
-      {referenceImages.length > 0 && (
-        <div>
-          <SectionLabel title="Reference Images" count={referenceImages.length} />
-          <ImageGrid images={referenceImages} />
-        </div>
-      )}
-      {productRenders.length > 0 && (
-        <div>
-          <SectionLabel title="Product Render" count={productRenders.length} />
-          <ImageGrid images={productRenders} />
-        </div>
-      )}
-      {packagingRenders.length > 0 && (
-        <div>
-          <SectionLabel title="Packaging Render" count={packagingRenders.length} />
-          <ImageGrid images={packagingRenders} />
-        </div>
-      )}
     </div>
   )
 }

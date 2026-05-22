@@ -127,15 +127,6 @@ export default function SpecsTab({ product, isEditing, onChange }: Props) {
               onChange={e => onChange({ productSpec: e.target.value || null })}
             />
           </div>
-          <div>
-            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Packaging Spec</p>
-            <textarea
-              className={TEXTAREA_CLS}
-              rows={5}
-              value={product.itemPackagingSpec ?? ''}
-              onChange={e => onChange({ itemPackagingSpec: e.target.value || null })}
-            />
-          </div>
         </div>
       </div>
     )
@@ -208,13 +199,6 @@ export default function SpecsTab({ product, isEditing, onChange }: Props) {
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Product Spec</p>
           {product.productSpec
             ? <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{product.productSpec}</p>
-            : <span className="text-sm text-slate-300">—</span>
-          }
-        </div>
-        <div>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Packaging Spec</p>
-          {product.itemPackagingSpec
-            ? <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{product.itemPackagingSpec}</p>
             : <span className="text-sm text-slate-300">—</span>
           }
         </div>

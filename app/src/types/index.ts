@@ -136,7 +136,10 @@ export interface ProductDetail {
   borderDomestic: BorderDomestic | null
   createdAt: string
   updatedAt: string
-  owner: TeamMember
+  designers: TeamMember[]
+  designDueDate: string | null
+  nbSourcing: TeamMember | null
+  nbPd: TeamMember | null
   itemDescription: string       // 描述 / Features & Benefits (rich text)
   solComments: string | null    // Comments from SOL
   productSpec: string | null    // Product Spec
@@ -178,6 +181,7 @@ export interface ProductDetail {
   qualityRecords: QualityRecord[]
 
   // ── Cost ────────────────────────────────────────────────────────
+  costReadyDate: string | null
   retail: number | null
   rmbPurchase: number | null
   dollarPurchase: number | null
@@ -194,6 +198,23 @@ export interface ProductDetail {
   texasWarehouseCost: number | null
   declarationPrice: number | null
   dutyCost: number | null
+
+  // ── DI Pricing ───────────────────────────────────────────────────
+  diNetFirstFobNbWCommission: number | null
+  diFirstFobPriceWithC: number | null
+  diLandingCost: number | null
+  diCustomerImu: number | null
+
+  // ── DO Pricing ───────────────────────────────────────────────────
+  texasWarehouseCostRatio: number | null
+  newDoFirstFobTexas: number | null
+  newDoNetFirstCost: number | null
+  newDoImu: number | null
+  newDoTexasImu: number | null
+
+  // ── Summary ──────────────────────────────────────────────────────
+  totalFob: number | null
+  combinedGpPercent: number | null
 
   // ── Customs ─────────────────────────────────────────────────────
   htsCategory: string

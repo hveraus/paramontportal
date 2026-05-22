@@ -66,7 +66,7 @@ const COPY = {
 
 const STATS_DATA = [
   {
-    key: 'total_samples' as const,
+    label: 'Total Products',
     value: '1,284',
     trend: '+12%',
     up: true,
@@ -79,7 +79,7 @@ const STATS_DATA = [
     ),
   },
   {
-    key: 'new_month' as const,
+    label: 'New Products This Month',
     value: '47',
     trend: '+8%',
     up: true,
@@ -92,28 +92,15 @@ const STATS_DATA = [
     ),
   },
   {
-    key: 'active_projects' as const,
-    value: '23',
-    trend: '-2%',
-    up: false,
-    data: [28, 26, 27, 25, 24, 26, 24, 25, 22, 23],
-    color: '#f59e0b',
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-      </svg>
-    ),
-  },
-  {
-    key: 'pending_proposals' as const,
-    value: '8',
-    trend: '+3',
+    label: 'Committed Products',
+    value: '312',
+    trend: '+5%',
     up: true,
-    data: [2, 3, 4, 3, 5, 4, 6, 5, 7, 8],
+    data: [260, 270, 275, 280, 285, 290, 295, 300, 308, 312],
     color: '#8b5cf6',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
   },
@@ -471,11 +458,11 @@ export default function DashboardPage() {
             {/* ── Overview Stats ─────────────────────────────────── */}
             <section>
               <SectionHeader title={t.overview} />
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {STATS_DATA.map(s => (
                   <StatCard
-                    key={s.key}
-                    label={t[s.key]}
+                    key={s.label}
+                    label={s.label}
                     value={s.value}
                     trend={s.trend}
                     up={s.up}

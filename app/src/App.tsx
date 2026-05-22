@@ -8,6 +8,8 @@ import ArchivesPage from './pages/ArchivesPage'
 import SampleRoomPage from './pages/SampleRoomPage'
 import SettingsIndexPage from './pages/SettingsIndexPage'
 import SettingsPage from './pages/SettingsPage'
+import ProgramPage from './pages/ProgramPage'
+import SearchResultsPage from './pages/SearchResultsPage'
 
 function PageRouter() {
   const { page } = useNavigation()
@@ -15,8 +17,10 @@ function PageRouter() {
   if (page === 'products')             return <ProductsPage />
   if (page === 'archives')             return <ArchivesPage />
   if (page === 'sample-room')          return <SampleRoomPage />
+  if (page === 'program')              return <ProgramPage />
   if (page === 'settings')             return <SettingsIndexPage />
   if (page === 'settings-permissions') return <SettingsPage />
+  if (page === 'search')               return <SearchResultsPage />
   return <DashboardPage />
 }
 
