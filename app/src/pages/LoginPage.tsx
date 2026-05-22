@@ -132,15 +132,12 @@ export default function LoginPage() {
 
           {/* Header band */}
           <div className="px-8 pt-8 pb-6 text-center border-b border-slate-100">
-            <div className="flex items-center justify-center gap-2.5 mb-1">
-              <img
-                src={`${import.meta.env.BASE_URL}logo-paramont-global.png`}
-                alt="Paramont"
-                className="h-7 object-contain"
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
-            </div>
-            <p className="text-xs text-slate-400 mt-1 font-medium tracking-wide">PDM System · v5</p>
+            <img
+              src={`${import.meta.env.BASE_URL}logo-paramont-global.png`}
+              alt="Paramont"
+              className="h-14 object-contain"
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
           </div>
 
           {/* QR section */}
