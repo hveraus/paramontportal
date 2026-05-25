@@ -9,7 +9,6 @@ import {
   COMPANY_DEFAULTS,
   MODULE_FEATURES,
   MENU_ITEMS,
-  BUTTON_ACTIONS,
   findNode,
   getDeptName,
   computeEffective,
@@ -230,52 +229,27 @@ interface FeatureTabProps {
   deptName?: string
 }
 
-const FEATURE_MATRIX = [
-  {
-    key: 'portal',
-    label: '门户应用',
-    labelEn: 'Portal',
-    features: [
-      { key: 'overview', label: 'Overview', labelEn: 'Overview' },
-      { key: 'browseByCategory', label: 'Browse by Category', labelEn: 'Browse by Category' },
-      { key: 'ourBrands', label: 'Our Brands', labelEn: 'Our Brands' },
-      { key: 'hotProducts', label: 'Hot Products', labelEn: 'Hot Products' },
-      { key: 'recentlyViewed', label: 'Recently Viewed', labelEn: 'Recently Viewed' },
-      { key: 'myFavorites', label: 'My Favorites', labelEn: 'My Favorites' },
-      { key: 'recentlyUpdated', label: 'Recently Updated', labelEn: 'Recently Updated' },
-    ],
-  },
-  {
-    key: 'pdm',
-    label: '产品信息管理',
-    labelEn: 'Product Info',
-    features: [
-      { key: 'basic', label: '基础信息', labelEn: 'Basic Info' },
-      { key: 'specs', label: 'Specs', labelEn: 'Specs' },
-      { key: 'packaging', label: 'Packaging', labelEn: 'Packaging' },
-      { key: 'quality', label: '质量信息', labelEn: 'Quality' },
-      { key: 'cost', label: '成本信息', labelEn: 'Cost' },
-      { key: 'patent', label: '专利信息', labelEn: 'Patents' },
-      { key: 'cert', label: '认证信息', labelEn: 'Certifications' },
-      { key: 'customs', label: '报关信息', labelEn: 'Customs' },
-      { key: 'gallery', label: 'Gallery', labelEn: 'Gallery' },
-    ],
-  },
-] as const
+const FEATURE_ACTIONS = [
+  { key: 'view'   as const, label: '查看', labelEn: 'View'   },
+  { key: 'edit'   as const, label: '编辑', labelEn: 'Edit'   },
+  { key: 'delete' as const, label: '删除', labelEn: 'Delete' },
+]
 
 function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
   const { lang } = useLang()
   const isRole = nodeType === 'role'
+  const allowInherit = !isRole
   const inheritedFrom = nodeType === 'user'
     ? (deptName ?? (lang === 'en' ? 'Home Dept.' : '所属部门'))
     : nodeType === 'department'
       ? (lang === 'en' ? 'Company' : '公司')
       : undefined
 
-  const handleChange = (mod: string, feat: string, val: PermVal) => {
+  const handleChange = (mod: string, feat: string, action: 'view' | 'edit' | 'delete', val: PermVal) => {
     const next = deepClone(config)
     if (!next.feature[mod]) next.feature[mod] = {}
-    next.feature[mod][feat] = val
+    const existing = next.feature[mod][feat] ?? { view: false, edit: false, delete: false }
+    next.feature[mod][feat] = { ...existing, [action]: val }
     onChange(next)
   }
 
@@ -283,66 +257,50 @@ function FeatureTab({ config, onChange, nodeType, deptName }: FeatureTabProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b border-slate-100">
-            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-28">{lang === 'en' ? 'Module' : '模块'}</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">{lang === 'en' ? 'Feature' : '子功能'}</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-56">{lang === 'en' ? 'Current Config' : '当前配置对象'}</th>
-            {!isRole && (
-              <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 w-36">{lang === 'en' ? 'Inherited From' : '继承自部门'}</th>
-            )}
+          <tr className="border-b border-slate-200 bg-slate-50">
+            <th className="text-left py-2.5 px-3 text-xs font-semibold text-slate-500 w-28">{lang === 'en' ? 'Module' : '模块'}</th>
+            <th className="text-left py-2.5 px-3 text-xs font-semibold text-slate-500">{lang === 'en' ? 'Feature' : '功能'}</th>
+            {FEATURE_ACTIONS.map(a => (
+              <th key={a.key} className="text-center py-2.5 px-4 text-xs font-semibold text-slate-500 w-24">
+                {lang === 'en' ? a.labelEn : a.label}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {FEATURE_MATRIX.map(mod => (
-            <>
-              {mod.features.map((feature, idx) => {
-                const rawVal = config.feature[mod.key]?.[feature.key] ?? false
-                const val = isRole && rawVal === 'inherit' ? false : rawVal
-                const stateLabel = lang === 'en'
-                  ? (val === true ? 'On' : val === false ? 'Off' : 'Inherit')
-                  : (val === true ? '开启' : val === false ? '关闭' : '继承')
-                const stateClass = val === true
-                  ? 'bg-blue-50 text-blue-700'
-                  : val === false
-                    ? 'bg-slate-100 text-slate-600'
-                    : 'bg-green-50 text-green-700'
-
-                return (
-                  <tr key={`${mod.key}-${feature.key}`} className="border-b border-slate-50 hover:bg-slate-50/40">
-                    <td className="px-3 py-2 text-xs text-slate-700 font-medium">
-                      {idx === 0 ? (lang === 'en' ? mod.labelEn : mod.label) : <span className="text-slate-300">—</span>}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-700">{lang === 'en' ? feature.labelEn : feature.label}</td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-[11px] text-slate-500 truncate">feature.{mod.key}.{feature.key}</p>
-                          <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${stateClass}`}>
-                            {stateLabel}
-                          </span>
-                        </div>
+          {(Object.entries(MODULE_FEATURES) as [string, typeof MODULE_FEATURES[string]][]).map(([modKey, mod]) => {
+            const featEntries = Object.entries(mod.features)
+            return featEntries.map(([featKey, featLabel], idx) => {
+              const featPerm = config.feature[modKey]?.[featKey] ?? { view: false, edit: false, delete: false }
+              return (
+                <tr key={`${modKey}-${featKey}`} className="border-b border-slate-50 hover:bg-slate-50/50">
+                  <td className="px-3 py-2 text-xs font-medium text-slate-600">
+                    {idx === 0
+                      ? (lang === 'en' ? mod.labelEn : mod.label)
+                      : <span className="text-slate-200">—</span>}
+                  </td>
+                  <td className="px-3 py-2 text-xs text-slate-700">
+                    {lang === 'en' ? (mod.featuresEn?.[featKey] ?? featLabel) : featLabel}
+                  </td>
+                  {FEATURE_ACTIONS.map(a => {
+                    const raw = featPerm[a.key] ?? false
+                    const val = !allowInherit && raw === 'inherit' ? false : raw
+                    return (
+                      <td key={a.key} className="px-4 py-2 text-center">
                         <TriSwitch
                           value={val}
-                          onChange={v => handleChange(mod.key, feature.key, v)}
+                          onChange={v => handleChange(modKey, featKey, a.key, v)}
                           inheritedFrom={inheritedFrom}
                           inheritedSource={lang === 'en' ? 'Dept. Config' : '上级部门配置'}
-                          allowInherit={!isRole}
+                          allowInherit={allowInherit}
                         />
-                      </div>
-                    </td>
-                    {!isRole && (
-                      <td className="px-3 py-2 text-center">
-                        <span className="text-xs text-slate-400">
-                          {val === 'inherit' ? (inheritedFrom ?? '—') : '—'}
-                        </span>
                       </td>
-                    )}
-                  </tr>
-                )
-              })}
-              <tr className="h-1.5 bg-slate-50/40"><td colSpan={isRole ? 3 : 4} /></tr>
-            </>
-          ))}
+                    )
+                  })}
+                </tr>
+              )
+            })
+          })}
         </tbody>
       </table>
     </div>
@@ -532,69 +490,6 @@ const SCOPE_OPTIONS: { value: DataScope; label: string; labelEn: string; desc: s
   },
 ]
 
-// ── Tab: Button Permissions ───────────────────────────────────────────────────
-
-interface ButtonTabProps {
-  config: NodePermConfig
-  onChange: (config: NodePermConfig) => void
-  nodeType: 'company' | 'department' | 'user' | 'role'
-  deptName?: string
-}
-
-const BUTTON_TAB_MODULES = ['产品管理', '样品管理'] as const
-const BUTTON_TAB_MODULES_EN: Record<string, string> = { '产品管理': 'Product Mgmt', '样品管理': 'Sample Mgmt' }
-const BUTTON_ACTIONS_EN: Record<string, string> = { '查看': 'View', '编辑': 'Edit', '删除': 'Delete', '下载': 'Download', '分享': 'Share', '导出': 'Export' }
-
-function ButtonTab({ config, onChange, nodeType, deptName }: ButtonTabProps) {
-  const { lang } = useLang()
-  const allowInherit = nodeType !== 'role'
-
-  const handleChange = (mod: string, action: string, val: PermVal) => {
-    const next = deepClone(config)
-    if (!next.buttons[mod]) next.buttons[mod] = {}
-    next.buttons[mod][action] = val
-    onChange(next)
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs border-collapse">
-        <thead>
-          <tr className="border-b border-slate-100">
-            <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 w-20">{lang === 'en' ? 'Action' : '操作'}</th>
-            {BUTTON_TAB_MODULES.map(mod => (
-              <th key={mod} className="text-center py-2 px-2 text-xs font-medium text-slate-500 w-24">
-                {lang === 'en' ? BUTTON_TAB_MODULES_EN[mod] : mod}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {BUTTON_ACTIONS.map(action => (
-            <tr key={action} className="border-b border-slate-50 hover:bg-slate-50/40">
-              <td className="px-3 py-2 text-xs text-slate-700 font-medium">{lang === 'en' ? BUTTON_ACTIONS_EN[action] ?? action : action}</td>
-              {BUTTON_TAB_MODULES.map(mod => {
-                const rawVal = config.buttons[mod]?.[action] ?? false
-                const val = !allowInherit && rawVal === 'inherit' ? false : rawVal
-                return (
-                  <td key={mod} className="px-2 py-2 text-center">
-                    <TriSwitch
-                      value={val}
-                      onChange={v => handleChange(mod, action, v)}
-                      inheritedFrom={nodeType === 'user' ? deptName : undefined}
-                      allowInherit={allowInherit}
-                    />
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
 // ── Right: Preview Panel ──────────────────────────────────────────────────────
 
 interface PreviewPanelProps {
@@ -641,7 +536,7 @@ export function PreviewPanel({ mode, nodeId, roleName }: PreviewPanelProps) {
   for (const modKey of Object.keys(MODULE_FEATURES)) {
     for (const featKey of Object.keys(MODULE_FEATURES[modKey].features)) {
       totalFeatures++
-      if (effective.feature[modKey]?.[featKey] === true) enabledFeatures++
+      if (effective.feature[modKey]?.[featKey]?.view === true) enabledFeatures++
     }
   }
 
@@ -715,7 +610,7 @@ export function PreviewPanel({ mode, nodeId, roleName }: PreviewPanelProps) {
           <div className="space-y-3">
             {(Object.entries(MODULE_FEATURES) as [string, typeof MODULE_FEATURES[string]][]).map(([modKey, mod]) => {
               const modEnabled = Object.keys(mod.features).filter(
-                fk => effective.feature[modKey]?.[fk] === true
+                fk => effective.feature[modKey]?.[fk]?.view === true
               ).length
               const modTotal = Object.keys(mod.features).length
               return (
@@ -728,7 +623,7 @@ export function PreviewPanel({ mode, nodeId, roleName }: PreviewPanelProps) {
                   </div>
                   <div className="space-y-1">
                     {Object.entries(mod.features).map(([featKey, featLabel]) => {
-                      const hasIt = effective.feature[modKey]?.[featKey] === true
+                      const hasIt = effective.feature[modKey]?.[featKey]?.view === true
                       return (
                         <div key={featKey} className="flex items-center gap-2">
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${hasIt ? 'bg-green-500' : 'bg-slate-200'}`} />
@@ -934,12 +829,12 @@ function buildRoleConfigs(roles: RoleItem[]) {
   }, {})
 }
 
-const ORG_TABS_ZH = ['角色权限', '菜单权限', '功能模块权限', '按钮权限']
-const ORG_TABS_EN = ['Roles', 'Menus', 'Features', 'Buttons']
+const ORG_TABS_ZH = ['角色权限', '菜单权限', '功能模块权限']
+const ORG_TABS_EN = ['Roles', 'Menus', 'Features']
 const USER_TABS_ZH = ['角色权限']
 const USER_TABS_EN = ['Roles']
-const ROLE_TABS_ZH = ['菜单权限', '功能模块权限', '按钮权限']
-const ROLE_TABS_EN = ['Menus', 'Features', 'Buttons']
+const ROLE_TABS_ZH = ['菜单权限', '功能模块权限']
+const ROLE_TABS_EN = ['Menus', 'Features']
 
 export default function SettingsPage() {
   const { navigate } = useNavigation()
@@ -1490,14 +1385,6 @@ export default function SettingsPage() {
                   )}
                   {((leftMode === 'org' && activeTab === 2) || (leftMode === 'role' && activeTab === 1)) && (
                     <FeatureTab
-                      config={currentConfig}
-                      onChange={handleConfigChange}
-                      nodeType={leftMode === 'org' ? (selectedNode?.type ?? 'department') : 'role'}
-                      deptName={deptName}
-                    />
-                  )}
-                  {((leftMode === 'org' && activeTab === 3) || (leftMode === 'role' && activeTab === 2)) && (
-                    <ButtonTab
                       config={currentConfig}
                       onChange={handleConfigChange}
                       nodeType={leftMode === 'org' ? (selectedNode?.type ?? 'department') : 'role'}

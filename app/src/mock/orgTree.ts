@@ -103,18 +103,14 @@ export const MENU_ITEMS: MenuItem[] = [
   },
 ]
 
-export const BUTTON_ACTIONS = ['查看', '编辑', '删除', '下载', '分享', '导出']
-export const BUTTON_MODULES = ['门户', '产品管理', '样品管理', '数据审计']
-
-export type FeaturePerm = Record<string, Record<string, PermVal>>
+export type FeatureActionPerm = { view: PermVal; edit: PermVal; delete: PermVal }
+export type FeaturePerm = Record<string, Record<string, FeatureActionPerm>>
 export type MenuPerm = Record<string, PermVal>
-export type ButtonPerm = Record<string, Record<string, PermVal>>
 
 export interface NodePermConfig {
   feature: FeaturePerm
   menu: MenuPerm
   dataScope: DataScope
-  buttons: ButtonPerm
 }
 
 // ── Org Tree ─────────────────────────────────────────────────────────────────
@@ -291,7 +287,7 @@ function makeAllTrueFeature(): FeaturePerm {
   for (const mod of Object.keys(MODULE_FEATURES)) {
     result[mod] = {}
     for (const feat of Object.keys(MODULE_FEATURES[mod].features)) {
-      result[mod][feat] = true
+      result[mod][feat] = { view: true, edit: true, delete: true }
     }
   }
   return result
@@ -302,7 +298,7 @@ function makeAllInheritFeature(): FeaturePerm {
   for (const mod of Object.keys(MODULE_FEATURES)) {
     result[mod] = {}
     for (const feat of Object.keys(MODULE_FEATURES[mod].features)) {
-      result[mod][feat] = 'inherit'
+      result[mod][feat] = { view: 'inherit', edit: 'inherit', delete: 'inherit' }
     }
   }
   return result
@@ -326,25 +322,34 @@ function makeMenuPerm(val: PermVal): MenuPerm {
   return result
 }
 
-function makeButtonPerm(val: PermVal): ButtonPerm {
-  const result: ButtonPerm = {}
-  for (const mod of BUTTON_MODULES) {
-    result[mod] = {}
-    for (const action of BUTTON_ACTIONS) {
-      result[mod][action] = val
-    }
-  }
-  return result
-}
-
 // Company defaults — minimal access: portal features on, everything else off
 export const COMPANY_DEFAULTS: NodePermConfig = {
   feature: {
-    portal: { home: true, category: true, preview: true, dashboard: false },
-    pdm:    { basic: false, quality: false, cost: false, patent: false, cert: false },
-    sample: { search: false, location: false },
-    audit:  { archive: false, analytics: false },
-    ai:     { recommend: false, agent: false },
+    portal: {
+      home:     { view: true,  edit: false, delete: false },
+      category: { view: true,  edit: false, delete: false },
+      preview:  { view: true,  edit: false, delete: false },
+      dashboard:{ view: false, edit: false, delete: false },
+    },
+    pdm: {
+      basic:   { view: false, edit: false, delete: false },
+      quality: { view: false, edit: false, delete: false },
+      cost:    { view: false, edit: false, delete: false },
+      patent:  { view: false, edit: false, delete: false },
+      cert:    { view: false, edit: false, delete: false },
+    },
+    sample: {
+      search:   { view: false, edit: false, delete: false },
+      location: { view: false, edit: false, delete: false },
+    },
+    audit: {
+      archive:   { view: false, edit: false, delete: false },
+      analytics: { view: false, edit: false, delete: false },
+    },
+    ai: {
+      recommend: { view: false, edit: false, delete: false },
+      agent:     { view: false, edit: false, delete: false },
+    },
   },
   menu: {
     home: true,
@@ -362,22 +367,36 @@ export const COMPANY_DEFAULTS: NodePermConfig = {
     'settings.system': false,
   },
   dataScope: 'public',
-  buttons: {
-    '门户':   { 查看: true,  编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-    '产品管理': { 查看: true,  编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-    '样品管理': { 查看: false, 编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-    '数据审计': { 查看: false, 编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-  },
 }
 
 // Dept configs
 const deptCnPdConfig: NodePermConfig = {
   feature: {
-    portal: { home: true, category: true, preview: true, dashboard: true },
-    pdm:    { basic: true, quality: true, cost: false, patent: false, cert: true },
-    sample: { search: true, location: false },
-    audit:  { archive: false, analytics: false },
-    ai:     { recommend: true, agent: false },
+    portal: {
+      home:     { view: true,  edit: false, delete: false },
+      category: { view: true,  edit: false, delete: false },
+      preview:  { view: true,  edit: false, delete: false },
+      dashboard:{ view: true,  edit: false, delete: false },
+    },
+    pdm: {
+      basic:   { view: true,  edit: true,  delete: false },
+      quality: { view: true,  edit: true,  delete: false },
+      cost:    { view: false, edit: false, delete: false },
+      patent:  { view: false, edit: false, delete: false },
+      cert:    { view: true,  edit: true,  delete: false },
+    },
+    sample: {
+      search:   { view: true,  edit: false, delete: false },
+      location: { view: false, edit: false, delete: false },
+    },
+    audit: {
+      archive:   { view: false, edit: false, delete: false },
+      analytics: { view: false, edit: false, delete: false },
+    },
+    ai: {
+      recommend: { view: true,  edit: false, delete: false },
+      agent:     { view: false, edit: false, delete: false },
+    },
   },
   menu: {
     home: true,
@@ -395,21 +414,35 @@ const deptCnPdConfig: NodePermConfig = {
     'settings.system': false,
   },
   dataScope: 'department',
-  buttons: {
-    '门户':   { 查看: true, 编辑: false, 删除: false, 下载: true,  分享: true,  导出: false },
-    '产品管理': { 查看: true, 编辑: true,  删除: false, 下载: true,  分享: false, 导出: true  },
-    '样品管理': { 查看: true, 编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-    '数据审计': { 查看: false, 编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-  },
 }
 
 const deptUsPdConfig: NodePermConfig = {
   feature: {
-    portal: { home: true, category: true, preview: true, dashboard: true },
-    pdm:    { basic: true, quality: true, cost: false, patent: true, cert: true },
-    sample: { search: true, location: false },
-    audit:  { archive: false, analytics: false },
-    ai:     { recommend: true, agent: false },
+    portal: {
+      home:     { view: true,  edit: false, delete: false },
+      category: { view: true,  edit: false, delete: false },
+      preview:  { view: true,  edit: false, delete: false },
+      dashboard:{ view: true,  edit: false, delete: false },
+    },
+    pdm: {
+      basic:   { view: true,  edit: true,  delete: false },
+      quality: { view: true,  edit: true,  delete: false },
+      cost:    { view: false, edit: false, delete: false },
+      patent:  { view: true,  edit: false, delete: false },
+      cert:    { view: true,  edit: true,  delete: false },
+    },
+    sample: {
+      search:   { view: true,  edit: false, delete: false },
+      location: { view: false, edit: false, delete: false },
+    },
+    audit: {
+      archive:   { view: false, edit: false, delete: false },
+      analytics: { view: false, edit: false, delete: false },
+    },
+    ai: {
+      recommend: { view: true,  edit: false, delete: false },
+      agent:     { view: false, edit: false, delete: false },
+    },
   },
   menu: {
     home: true,
@@ -427,21 +460,35 @@ const deptUsPdConfig: NodePermConfig = {
     'settings.system': false,
   },
   dataScope: 'department',
-  buttons: {
-    '门户':   { 查看: true, 编辑: false, 删除: false, 下载: true,  分享: true,  导出: false },
-    '产品管理': { 查看: true, 编辑: true,  删除: false, 下载: true,  分享: false, 导出: true  },
-    '样品管理': { 查看: true, 编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-    '数据审计': { 查看: false, 编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-  },
 }
 
 const deptSalesConfig: NodePermConfig = {
   feature: {
-    portal: { home: true, category: true, preview: true, dashboard: false },
-    pdm:    { basic: true, quality: false, cost: false, patent: false, cert: false },
-    sample: { search: false, location: false },
-    audit:  { archive: false, analytics: false },
-    ai:     { recommend: false, agent: false },
+    portal: {
+      home:     { view: true,  edit: false, delete: false },
+      category: { view: true,  edit: false, delete: false },
+      preview:  { view: true,  edit: false, delete: false },
+      dashboard:{ view: false, edit: false, delete: false },
+    },
+    pdm: {
+      basic:   { view: true,  edit: false, delete: false },
+      quality: { view: false, edit: false, delete: false },
+      cost:    { view: false, edit: false, delete: false },
+      patent:  { view: false, edit: false, delete: false },
+      cert:    { view: false, edit: false, delete: false },
+    },
+    sample: {
+      search:   { view: false, edit: false, delete: false },
+      location: { view: false, edit: false, delete: false },
+    },
+    audit: {
+      archive:   { view: false, edit: false, delete: false },
+      analytics: { view: false, edit: false, delete: false },
+    },
+    ai: {
+      recommend: { view: false, edit: false, delete: false },
+      agent:     { view: false, edit: false, delete: false },
+    },
   },
   menu: {
     home: true,
@@ -459,47 +506,56 @@ const deptSalesConfig: NodePermConfig = {
     'settings.system': false,
   },
   dataScope: 'public',
-  buttons: {
-    '门户':   { 查看: true,  编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-    '产品管理': { 查看: true,  编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-    '样品管理': { 查看: false, 编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-    '数据审计': { 查看: false, 编辑: false, 删除: false, 下载: false, 分享: false, 导出: false },
-  },
 }
 
 const deptMgmtConfig: NodePermConfig = {
   feature: makeAllTrueFeature(),
   menu: makeMenuPerm(true),
   dataScope: 'all',
-  buttons: makeButtonPerm(true),
 }
 
 // User configs
 const userSummerConfig: NodePermConfig = {
   feature: {
     ...makeAllInheritFeature(),
-    pdm: { basic: 'inherit', quality: 'inherit', cost: false, patent: 'inherit', cert: 'inherit' },
+    pdm: {
+      basic:   { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+      quality: { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+      cost:    { view: false,     edit: false,     delete: false     },
+      patent:  { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+      cert:    { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+    },
   },
   menu: makeMenuPerm('inherit'),
   dataScope: 'inherit',
-  buttons: makeButtonPerm('inherit'),
 }
 
 const userXiaowangConfig: NodePermConfig = {
   feature: {
     ...makeAllInheritFeature(),
-    pdm: { basic: 'inherit', quality: 'inherit', cost: 'inherit', patent: false, cert: 'inherit' },
-    ai:  { recommend: true, agent: false },
+    pdm: {
+      basic:   { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+      quality: { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+      cost:    { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+      patent:  { view: false,     edit: false,     delete: false     },
+      cert:    { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+    },
+    ai: {
+      recommend: { view: true,  edit: false, delete: false },
+      agent:     { view: false, edit: false, delete: false },
+    },
   },
   menu: makeMenuPerm('inherit'),
   dataScope: 'inherit',
-  buttons: makeButtonPerm('inherit'),
 }
 
 const userSarahConfig: NodePermConfig = {
   feature: {
     ...makeAllTrueFeature(),
-    audit: { archive: false, analytics: true },
+    audit: {
+      archive:   { view: false, edit: false, delete: false },
+      analytics: { view: true,  edit: true,  delete: true  },
+    },
   },
   menu: {
     ...makeMenuPerm(true),
@@ -509,31 +565,32 @@ const userSarahConfig: NodePermConfig = {
     'settings.system': false,
   },
   dataScope: 'all',
-  buttons: makeButtonPerm(true),
 }
 
 const userWangfangConfig: NodePermConfig = {
   feature: {
     ...makeAllInheritFeature(),
-    portal: { home: 'inherit', category: 'inherit', preview: true, dashboard: false },
+    portal: {
+      home:     { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+      category: { view: 'inherit', edit: 'inherit', delete: 'inherit' },
+      preview:  { view: true,      edit: false,     delete: false     },
+      dashboard:{ view: false,     edit: false,     delete: false     },
+    },
   },
   menu: makeMenuPerm('inherit'),
   dataScope: 'inherit',
-  buttons: makeButtonPerm('inherit'),
 }
 
 const userAlexConfig: NodePermConfig = {
   feature: makeAllTrueFeature(),
   menu: makeMenuPerm(true),
   dataScope: 'all',
-  buttons: makeButtonPerm(true),
 }
 
 const userKimiConfig: NodePermConfig = {
   feature: makeAllTrueFeature(),
   menu: makeMenuPerm(true),
   dataScope: 'all',
-  buttons: makeButtonPerm(true),
 }
 
 function makeInheritConfig(): NodePermConfig {
@@ -541,7 +598,6 @@ function makeInheritConfig(): NodePermConfig {
     feature: makeAllInheritFeature(),
     menu: makeMenuPerm('inherit'),
     dataScope: 'inherit',
-    buttons: makeButtonPerm('inherit'),
   }
 }
 
@@ -629,24 +685,21 @@ export function computeEffective(nodeId: string): NodePermConfig {
       feature: {},
       menu: {},
       dataScope: resolveScope(config.dataScope, COMPANY_DEFAULTS.dataScope),
-      buttons: {},
     }
     for (const mod of Object.keys(MODULE_FEATURES)) {
       result.feature[mod] = {}
       for (const feat of Object.keys(MODULE_FEATURES[mod].features)) {
-        const v = config.feature[mod]?.[feat] ?? 'inherit'
-        result.feature[mod][feat] = resolveVal(v, COMPANY_DEFAULTS.feature[mod]?.[feat] as boolean ?? false)
+        const v = config.feature[mod]?.[feat] ?? { view: 'inherit', edit: 'inherit', delete: 'inherit' }
+        const fallback = COMPANY_DEFAULTS.feature[mod]?.[feat] ?? { view: false, edit: false, delete: false }
+        result.feature[mod][feat] = {
+          view:   resolveVal(v.view,   fallback.view   as boolean),
+          edit:   resolveVal(v.edit,   fallback.edit   as boolean),
+          delete: resolveVal(v.delete, fallback.delete as boolean),
+        }
       }
     }
     for (const menuId of Object.keys(config.menu)) {
       result.menu[menuId] = resolveVal(config.menu[menuId], COMPANY_DEFAULTS.menu[menuId] as boolean ?? false)
-    }
-    for (const mod of BUTTON_MODULES) {
-      result.buttons[mod] = {}
-      for (const action of BUTTON_ACTIONS) {
-        const v = config.buttons[mod]?.[action] ?? 'inherit'
-        result.buttons[mod][action] = resolveVal(v, COMPANY_DEFAULTS.buttons[mod]?.[action] as boolean ?? false)
-      }
     }
     return result
   }
@@ -659,24 +712,21 @@ export function computeEffective(nodeId: string): NodePermConfig {
     feature: {},
     menu: {},
     dataScope: resolveScope(userConfig.dataScope, deptEffective.dataScope),
-    buttons: {},
   }
   for (const mod of Object.keys(MODULE_FEATURES)) {
     result.feature[mod] = {}
     for (const feat of Object.keys(MODULE_FEATURES[mod].features)) {
-      const v = userConfig.feature[mod]?.[feat] ?? 'inherit'
-      result.feature[mod][feat] = resolveVal(v, deptEffective.feature[mod]?.[feat] as boolean ?? false)
+      const v = userConfig.feature[mod]?.[feat] ?? { view: 'inherit', edit: 'inherit', delete: 'inherit' }
+      const fallback = deptEffective.feature[mod]?.[feat] ?? { view: false, edit: false, delete: false }
+      result.feature[mod][feat] = {
+        view:   resolveVal(v.view,   fallback.view   as boolean),
+        edit:   resolveVal(v.edit,   fallback.edit   as boolean),
+        delete: resolveVal(v.delete, fallback.delete as boolean),
+      }
     }
   }
   for (const menuId of Object.keys(userConfig.menu)) {
     result.menu[menuId] = resolveVal(userConfig.menu[menuId], deptEffective.menu[menuId] as boolean ?? false)
-  }
-  for (const mod of BUTTON_MODULES) {
-    result.buttons[mod] = {}
-    for (const action of BUTTON_ACTIONS) {
-      const v = userConfig.buttons[mod]?.[action] ?? 'inherit'
-      result.buttons[mod][action] = resolveVal(v, deptEffective.buttons[mod]?.[action] as boolean ?? false)
-    }
   }
   return result
 }
