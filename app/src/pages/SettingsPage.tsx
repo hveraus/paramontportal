@@ -360,14 +360,6 @@ interface RolePermissionTabProps {
 
 function RolePermissionTab({ nodeType, roles, selectedRoleIds, onChange }: RolePermissionTabProps) {
   const { lang } = useLang()
-  if (nodeType === 'company') {
-    return (
-      <div className="px-5 py-6 text-center text-slate-400">
-        <p className="text-sm text-slate-500">{lang === 'en' ? 'Role assignment is not available at the company level' : '公司节点不支持角色勾选'}</p>
-        <p className="text-xs mt-1">{lang === 'en' ? 'Select a department or member to configure roles' : '请选择部门或个人进行角色权限配置'}</p>
-      </div>
-    )
-  }
 
   const toggleRole = (roleId: string) => {
     const next = selectedRoleIds.includes(roleId)
@@ -380,8 +372,8 @@ function RolePermissionTab({ nodeType, roles, selectedRoleIds, onChange }: RoleP
     <div className="px-5 py-4">
       <p className="text-xs text-slate-500 mb-3">
         {lang === 'en'
-          ? `Select one or more roles for this ${nodeType === 'user' ? 'member' : 'department'}`
-          : `可为当前${nodeType === 'user' ? '人员' : '部门'}勾选一个或多个角色`}
+          ? `Select one or more roles for this ${nodeType === 'user' ? 'member' : nodeType === 'company' ? 'company' : 'department'}`
+          : `可为当前${nodeType === 'user' ? '人员' : nodeType === 'company' ? '公司' : '部门'}勾选一个或多个角色`}
       </p>
       <div className="space-y-2">
         {roles.map(role => (
@@ -1376,13 +1368,21 @@ export default function SettingsPage() {
 
         {/* ── Middle: Permission Panel ── */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {!selectedId && !selectedRoleId ? (
+          {(!selectedId && !selectedRoleId) ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
               <svg className="w-10 h-10 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <p className="text-sm text-slate-500">← {lang === 'en' ? `Select a ${leftMode === 'org' ? 'department or member' : 'role'} from the left` : `请从左侧选择${leftMode === 'org' ? '部门或人员' : '角色'}`}</p>
+              <p className="text-sm text-slate-500">← {lang === 'en' ? `Select a ${leftMode === 'org' ? 'member' : 'role'} from the left` : `请从左侧选择${leftMode === 'org' ? '人员' : '角色'}`}</p>
               <p className="text-xs text-slate-400 mt-1">{lang === 'en' ? 'Permissions can be configured here' : '选中后可在此配置权限'}</p>
+            </div>
+          ) : (leftMode === 'org' && (selectedNode?.type === 'company' || selectedNode?.type === 'department')) ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400">
+              <svg className="w-10 h-10 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <p className="text-sm text-slate-500">{lang === 'en' ? 'Select a member to configure permissions' : '请选择人员配置权限'}</p>
+              <p className="text-xs text-slate-400 mt-1">{lang === 'en' ? 'Permissions are configured at the member level' : '权限配置以人员为单位'}</p>
             </div>
           ) : (
             <div className="space-y-4">

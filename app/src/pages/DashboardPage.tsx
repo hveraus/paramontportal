@@ -388,13 +388,13 @@ export default function DashboardPage() {
             <div className="absolute -top-20 -right-20 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 flex items-center justify-between px-10 py-14">
+            <div className="relative z-10 flex items-center justify-between px-10 py-5">
               {/* Left: copy */}
               <div className="flex-1 max-w-xl">
                 <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm
                                 rounded-full px-3.5 py-1.5 text-xs font-semibold text-blue-200 mb-6 border border-white/10">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  PDM System · v5
+                  PDM System · Beta
                 </div>
                 <h1 className="text-5xl font-extrabold leading-tight tracking-tight mb-4">
                   {t.hero_title}
@@ -415,22 +415,6 @@ export default function DashboardPage() {
                   </button>
                 </div>
 
-                {/* Mini stats row */}
-                <div className="flex items-center gap-8 mt-10 pt-8 border-t border-white/10">
-                  {[
-                    { value: '1,284', label: t.hero_samples },
-                    { value: '23', label: t.hero_projects },
-                    { value: '7', label: t.hero_brands },
-                  ].map((s, i) => (
-                    <div key={i} className="flex items-center gap-4">
-                      {i > 0 && <div className="w-px h-8 bg-white/10" />}
-                      <div>
-                        <div className="text-2xl font-extrabold leading-none">{s.value}</div>
-                        <div className="text-xs text-blue-200/60 mt-1">{s.label}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* Right: product mosaic — right-aligned */}

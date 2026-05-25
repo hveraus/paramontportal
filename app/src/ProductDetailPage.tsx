@@ -356,7 +356,7 @@ export default function ProductDetailPage() {
 
         <div className="flex-1 min-w-0 flex flex-col">
         {/* Back button bar — full width, slim */}
-        <div className="bg-slate-50 border-b border-slate-200 px-6 py-2 flex items-center">
+        <div className="bg-slate-50 border-b border-slate-200 px-6 py-2 flex items-center sticky top-14 z-20">
           <button
             onClick={() => navigate('products')}
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 transition-colors group"
