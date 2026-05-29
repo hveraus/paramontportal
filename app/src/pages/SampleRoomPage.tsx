@@ -601,15 +601,15 @@ function ManageTreeNode({
             className="flex-1 min-w-0 px-2 py-0.5 text-sm border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         ) : (
-          <span className="flex-1 min-w-0 text-sm text-slate-700 font-medium truncate">{node.name}</span>
+          <span className="text-sm text-slate-700 font-medium truncate max-w-[280px]">{node.name}</span>
         )}
 
-        {/* Occupancy / leaf status */}
+        {/* Occupancy / leaf status — sits right next to the name */}
         {!node.isLeaf && (
           <span className="text-[11px] font-mono text-slate-400 flex-shrink-0">{occupied}/{total}</span>
         )}
         {node.isLeaf && leafProduct && (
-          <span className="text-[11px] text-emerald-700 truncate max-w-[120px]">{leafProduct.name}</span>
+          <span className="text-[11px] text-emerald-700 truncate max-w-[180px]">{leafProduct.name}</span>
         )}
         {node.isLeaf && !leafProduct && (
           <span className="text-[11px] text-slate-400 italic">Empty</span>
