@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { mockProduct } from './mock/productDetail'
-import { SAMPLE_SLOTS } from './mock/sampleRoom'
+import { LOCATION_NODES } from './mock/sampleRoom'
 import { useRole } from './context/RoleContext'
 import type { ProductDetail } from './types'
 import Breadcrumb from './components/Breadcrumb'
@@ -183,16 +183,19 @@ function SampleAssignModal({
   onAssign: (loc: SampleLocation) => void
   onClose: () => void
 }) {
-  const rooms = useMemo(() => [...new Set(SAMPLE_SLOTS.map(s => s.room))].sort(), [])
+  const rooms = useMemo(() => LOCATION_NODES.filter(n => n.levelIndex === 2).map(n => n.name).sort(), [])
 
   const [room,     setRoom]     = useState(current?.room     ?? '')
   const [shelf,    setShelf]    = useState(current?.shelf    ?? '')
   const [position, setPosition] = useState(current?.position ?? '')
   const [slotId,   setSlotId]   = useState('')
 
-  const shelves = useMemo(() =>
-    room ? [...new Set(SAMPLE_SLOTS.filter(s => s.room === room).map(s => s.shelf))].sort() : [],
-  [room])
+  const shelves = useMemo(() => {
+    if (!room) return []
+    const roomNode = LOCATION_NODES.find(n => n.levelIndex === 2 && n.name === room)
+    if (!roomNode) return []
+    return LOCATION_NODES.filter(n => n.levelIndex === 3 && n.parentId === roomNode.id).map(n => n.name).sort()
+  }, [room])
 
   const selectStyle = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,

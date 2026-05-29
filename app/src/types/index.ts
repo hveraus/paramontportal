@@ -258,6 +258,31 @@ export interface CommittedRecord {
   clientPending?: boolean     // true = pending fetch from external system
 }
 
+// ── Sample Room ───────────────────────────────────────────────────────────────
+
+export interface LocationNode {
+  id: string
+  name: string
+  levelIndex: number   // depth in tree (0 = root level)
+  parentId: string | null
+  order: number
+  isLeaf: boolean      // true when levelIndex === schema.levels.length - 1
+  createdAt: string
+}
+
+export interface SampleAssignment {
+  id: string
+  positionId: string   // LocationNode.id where isLeaf===true
+  productId: string    // matches MOCK_PRODUCTS[n].id
+  assignedAt: string
+  assignedBy: string
+  notes?: string
+}
+
+export interface LocationSchema {
+  levels: Array<{ label: string }>  // user-defined level names; length = number of levels (1-8)
+}
+
 // ── Archive files ────────────────────────────────────────────────────────────
 
 export type ArchiveFileType = 'pdf' | 'ppt' | 'pptx'

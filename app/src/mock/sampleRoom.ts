@@ -1,287 +1,122 @@
-import type { ProductStatus } from '../types'
+import type { LocationNode, SampleAssignment, LocationSchema } from '../types'
 
-// ── Types ─────────────────────────────────────────────────────────────────
+// ── Default Schema ─────────────────────────────────────────────────────────
+// 用户可在管理模式修改，这只是初始默认值
 
-export interface SampleProduct {
-  itemNo: string
-  productName: string
-  thumbnail: string
-  status: ProductStatus
-  brand: string
-  category: string
-  responsiblePerson: string
-  initialSelection: string | null   // ISO date or null
-  itemDescription: string
+export const DEFAULT_SCHEMA: LocationSchema = {
+  levels: [
+    { label: 'Zone'  },   // levelIndex 0
+    { label: 'Shelf' },   // levelIndex 1
+    { label: 'Row'   },   // levelIndex 2
+    { label: 'Slot'  },   // levelIndex 3 → isLeaf
+  ],
 }
 
-export interface SampleSlot {
-  id: string
-  room: string
-  shelf: string
-  position: string
-  product: SampleProduct | null
-}
+// ── Location Nodes ─────────────────────────────────────────────────────────
+// 4-level tree:
+//   2 Zones → 2 Shelves each → 2 Rows each → 4 Slots each
+//   Total leaves: 2×2×2×4 = 32 slots
 
-// ── Data ──────────────────────────────────────────────────────────────────
+export const LOCATION_NODES: LocationNode[] = [
+  // Level 0: Zones
+  { id: 'zone-001', name: 'Zone A', levelIndex: 0, parentId: null,       order: 1, isLeaf: false, createdAt: '2024-01-10' },
+  { id: 'zone-002', name: 'Zone B', levelIndex: 0, parentId: null,       order: 2, isLeaf: false, createdAt: '2024-01-10' },
 
-export const SAMPLE_SLOTS: SampleSlot[] = [
-  // ── Room A · Shelf 1 ─────────────────────────────────────────────────
-  {
-    id: 'sl-001', room: 'Room A', shelf: 'Shelf 1', position: 'A-01-01',
-    product: {
-      itemNo: 'PM-YN-024', productName: 'WMT Chunky Yarn Pack 3-colour',
-      thumbnail: 'https://placehold.co/80x80/e879f9/ffffff?text=YN',
-      status: 'Production',
-      brand: 'Paramont Basics', category: 'Crafts / Yarn',
-      responsiblePerson: 'Xiaomei Li', initialSelection: '2024-09-15',
-      itemDescription: '3-colour chunky yarn pack, 100g per ball. Suitable for beginners and advanced knitters. Machine washable.',
-    },
-  },
-  {
-    id: 'sl-002', room: 'Room A', shelf: 'Shelf 1', position: 'A-01-02',
-    product: {
-      itemNo: 'PM-WC-088', productName: 'TGT Watercolour Set 24-pan',
-      thumbnail: 'https://placehold.co/80x80/60a5fa/ffffff?text=WC',
-      status: 'Pre-selected',
-      brand: 'ArtFlow', category: 'Art Supplies / Paints',
-      responsiblePerson: 'Sarah Thompson', initialSelection: '2025-01-08',
-      itemDescription: '24-pan watercolour set with professional-grade pigments. Includes mixing palette and 2 brushes. AP certified.',
-    },
-  },
-  {
-    id: 'sl-003', room: 'Room A', shelf: 'Shelf 1', position: 'A-01-03',
-    product: {
-      itemNo: 'PM-CK-015', productName: 'DT Mini Craft Kit Assortment',
-      thumbnail: 'https://placehold.co/80x80/4ade80/ffffff?text=CK',
-      status: 'Initial Sampled',
-      brand: 'Kiddocraft', category: 'Crafts / Craft Kits',
-      responsiblePerson: 'Wei Zhang', initialSelection: '2025-02-20',
-      itemDescription: 'All-in-one mini craft kit with foam shapes, googly eyes, glue stick, and construction paper. Age 4+.',
-    },
-  },
-  {
-    id: 'sl-004', room: 'Room A', shelf: 'Shelf 1', position: 'A-01-04',
-    product: {
-      itemNo: 'PM-GG-033', productName: 'FBW Glitter Glue 3pc Set',
-      thumbnail: 'https://placehold.co/80x80/a78bfa/ffffff?text=GG',
-      status: 'Proposed',
-      brand: 'Sparkle Studio', category: 'Crafts / Adhesives',
-      responsiblePerson: 'Wei Zhang', initialSelection: null,
-      itemDescription: 'Set of 3 glitter glue pens in gold, silver, and rainbow. Non-toxic, washable formula. 20ml each.',
-    },
-  },
-  { id: 'sl-005', room: 'Room A', shelf: 'Shelf 1', position: 'A-01-05', product: null },
+  // Level 1: Shelves under Zone A
+  { id: 'shf-001', name: 'Shelf 1', levelIndex: 1, parentId: 'zone-001', order: 1, isLeaf: false, createdAt: '2024-01-15' },
+  { id: 'shf-002', name: 'Shelf 2', levelIndex: 1, parentId: 'zone-001', order: 2, isLeaf: false, createdAt: '2024-01-15' },
+  // Level 1: Shelves under Zone B
+  { id: 'shf-003', name: 'Shelf 1', levelIndex: 1, parentId: 'zone-002', order: 1, isLeaf: false, createdAt: '2024-01-15' },
+  { id: 'shf-004', name: 'Shelf 2', levelIndex: 1, parentId: 'zone-002', order: 2, isLeaf: false, createdAt: '2024-01-15' },
 
-  // ── Room A · Shelf 2 ─────────────────────────────────────────────────
-  {
-    id: 'sl-006', room: 'Room A', shelf: 'Shelf 2', position: 'A-02-01',
-    product: {
-      itemNo: 'PM-AP-112', productName: 'WMT Acrylic Paint Set 24ct',
-      thumbnail: 'https://placehold.co/80x80/fb923c/ffffff?text=AP',
-      status: 'Production',
-      brand: 'ColorPro', category: 'Art Supplies / Paints',
-      responsiblePerson: 'Sarah Thompson', initialSelection: '2024-08-10',
-      itemDescription: '24-colour acrylic paint set, 12ml tubes. Heavy body, lightfast pigments. Suitable for canvas, wood, and fabric. ASTM certified.',
-    },
-  },
-  {
-    id: 'sl-007', room: 'Room A', shelf: 'Shelf 2', position: 'A-02-02',
-    product: {
-      itemNo: 'PM-SK-041', productName: 'TGT Sketchpad A4 50-sheet',
-      thumbnail: 'https://placehold.co/80x80/94a3b8/ffffff?text=SK',
-      status: 'Concept',
-      brand: 'DrawRight', category: 'Art Supplies / Paper',
-      responsiblePerson: 'James Park', initialSelection: null,
-      itemDescription: '50-sheet A4 sketchpad, 160gsm acid-free cartridge paper. Spiral bound. Suitable for pencil, charcoal, and light wash.',
-    },
-  },
-  { id: 'sl-008', room: 'Room A', shelf: 'Shelf 2', position: 'A-02-03', product: null },
-  {
-    id: 'sl-009', room: 'Room A', shelf: 'Shelf 2', position: 'A-02-04',
-    product: {
-      itemNo: 'PM-FB-005', productName: 'DT Foam Brush Set 5pc',
-      thumbnail: 'https://placehold.co/80x80/fbbf24/1f2937?text=FB',
-      status: 'Initial Sampled',
-      brand: 'BrushMate', category: 'Art Supplies / Tools',
-      responsiblePerson: 'Xiaomei Li', initialSelection: '2025-01-25',
-      itemDescription: '5-piece foam brush set in assorted sizes (1", 1.5", 2", 2.5", 3"). Ideal for staining, varnishing, and applying gesso.',
-    },
-  },
-  {
-    id: 'sl-010', room: 'Room A', shelf: 'Shelf 2', position: 'A-02-05',
-    product: {
-      itemNo: 'PM-SA-007', productName: 'FBW Sand Art Kit',
-      thumbnail: 'https://placehold.co/80x80/fde047/1f2937?text=SA',
-      status: 'Pre-selected',
-      brand: 'Kiddocraft', category: 'Crafts / Craft Kits',
-      responsiblePerson: 'Wei Zhang', initialSelection: '2025-02-01',
-      itemDescription: 'Sand art kit with 6 pre-printed boards, 10 colour sand vials, and applicator tool. Age 5+. No-mess design.',
-    },
-  },
+  // Level 2: Rows under shf-001
+  { id: 'row-001', name: 'Row 1', levelIndex: 2, parentId: 'shf-001', order: 1, isLeaf: false, createdAt: '2024-01-20' },
+  { id: 'row-002', name: 'Row 2', levelIndex: 2, parentId: 'shf-001', order: 2, isLeaf: false, createdAt: '2024-01-20' },
+  // Level 2: Rows under shf-002
+  { id: 'row-003', name: 'Row 1', levelIndex: 2, parentId: 'shf-002', order: 1, isLeaf: false, createdAt: '2024-01-20' },
+  { id: 'row-004', name: 'Row 2', levelIndex: 2, parentId: 'shf-002', order: 2, isLeaf: false, createdAt: '2024-01-20' },
+  // Level 2: Rows under shf-003
+  { id: 'row-005', name: 'Row 1', levelIndex: 2, parentId: 'shf-003', order: 1, isLeaf: false, createdAt: '2024-01-20' },
+  { id: 'row-006', name: 'Row 2', levelIndex: 2, parentId: 'shf-003', order: 2, isLeaf: false, createdAt: '2024-01-20' },
+  // Level 2: Rows under shf-004
+  { id: 'row-007', name: 'Row 1', levelIndex: 2, parentId: 'shf-004', order: 1, isLeaf: false, createdAt: '2024-01-20' },
+  { id: 'row-008', name: 'Row 2', levelIndex: 2, parentId: 'shf-004', order: 2, isLeaf: false, createdAt: '2024-01-20' },
 
-  // ── Room A · Shelf 3 ─────────────────────────────────────────────────
-  {
-    id: 'sl-011', room: 'Room A', shelf: 'Shelf 3', position: 'A-03-01',
-    product: {
-      itemNo: 'PM-NB-023', productName: 'WMT Linen Hardcover Notebook A5',
-      thumbnail: 'https://placehold.co/80x80/818cf8/ffffff?text=NB',
-      status: 'Production',
-      brand: 'Paramont Basics', category: 'Stationery / Notebooks',
-      responsiblePerson: 'Sarah Thompson', initialSelection: '2024-07-20',
-      itemDescription: 'A5 hardcover notebook with linen cover, 192 ruled pages. Elastic closure, ribbon bookmark, and expandable pocket.',
-    },
-  },
-  {
-    id: 'sl-012', room: 'Room A', shelf: 'Shelf 3', position: 'A-03-02',
-    product: {
-      itemNo: 'PM-YN-041', productName: 'TGT Chunky Merino Blend 200g',
-      thumbnail: 'https://placehold.co/80x80/f472b6/ffffff?text=YN',
-      status: 'Proposed',
-      brand: 'WoolHouse', category: 'Crafts / Yarn',
-      responsiblePerson: 'Xiaomei Li', initialSelection: null,
-      itemDescription: '200g chunky merino blend yarn, 80m. Machine washable. Available in 12 seasonal colourways for Q3 2025.',
-    },
-  },
-  { id: 'sl-013', room: 'Room A', shelf: 'Shelf 3', position: 'A-03-03', product: null },
-  {
-    id: 'sl-014', room: 'Room A', shelf: 'Shelf 3', position: 'A-03-04',
-    product: {
-      itemNo: 'PM-DW-019', productName: 'DT Kids Drawing Set 18pc',
-      thumbnail: 'https://placehold.co/80x80/fb7185/ffffff?text=DW',
-      status: 'Initial Sampled',
-      brand: 'Kiddocraft', category: 'Art Supplies / Drawing',
-      responsiblePerson: 'James Park', initialSelection: '2025-03-01',
-      itemDescription: '18-piece kids drawing set: 6 crayons, 6 coloured pencils, and 6 washable markers in a zip case. AP certified, age 3+.',
-    },
-  },
+  // Level 3: Slots (isLeaf=true) — 4 per row, 8 rows = 32 total
+  // row-001
+  { id: 'slt-001', name: 'A1-1', levelIndex: 3, parentId: 'row-001', order: 1, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-002', name: 'A1-2', levelIndex: 3, parentId: 'row-001', order: 2, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-003', name: 'A1-3', levelIndex: 3, parentId: 'row-001', order: 3, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-004', name: 'A1-4', levelIndex: 3, parentId: 'row-001', order: 4, isLeaf: true, createdAt: '2024-01-25' },
+  // row-002
+  { id: 'slt-005', name: 'A2-1', levelIndex: 3, parentId: 'row-002', order: 1, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-006', name: 'A2-2', levelIndex: 3, parentId: 'row-002', order: 2, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-007', name: 'A2-3', levelIndex: 3, parentId: 'row-002', order: 3, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-008', name: 'A2-4', levelIndex: 3, parentId: 'row-002', order: 4, isLeaf: true, createdAt: '2024-01-25' },
+  // row-003
+  { id: 'slt-009', name: 'A3-1', levelIndex: 3, parentId: 'row-003', order: 1, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-010', name: 'A3-2', levelIndex: 3, parentId: 'row-003', order: 2, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-011', name: 'A3-3', levelIndex: 3, parentId: 'row-003', order: 3, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-012', name: 'A3-4', levelIndex: 3, parentId: 'row-003', order: 4, isLeaf: true, createdAt: '2024-01-25' },
+  // row-004
+  { id: 'slt-013', name: 'A4-1', levelIndex: 3, parentId: 'row-004', order: 1, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-014', name: 'A4-2', levelIndex: 3, parentId: 'row-004', order: 2, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-015', name: 'A4-3', levelIndex: 3, parentId: 'row-004', order: 3, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-016', name: 'A4-4', levelIndex: 3, parentId: 'row-004', order: 4, isLeaf: true, createdAt: '2024-01-25' },
+  // row-005
+  { id: 'slt-017', name: 'B1-1', levelIndex: 3, parentId: 'row-005', order: 1, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-018', name: 'B1-2', levelIndex: 3, parentId: 'row-005', order: 2, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-019', name: 'B1-3', levelIndex: 3, parentId: 'row-005', order: 3, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-020', name: 'B1-4', levelIndex: 3, parentId: 'row-005', order: 4, isLeaf: true, createdAt: '2024-01-25' },
+  // row-006
+  { id: 'slt-021', name: 'B2-1', levelIndex: 3, parentId: 'row-006', order: 1, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-022', name: 'B2-2', levelIndex: 3, parentId: 'row-006', order: 2, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-023', name: 'B2-3', levelIndex: 3, parentId: 'row-006', order: 3, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-024', name: 'B2-4', levelIndex: 3, parentId: 'row-006', order: 4, isLeaf: true, createdAt: '2024-01-25' },
+  // row-007
+  { id: 'slt-025', name: 'B3-1', levelIndex: 3, parentId: 'row-007', order: 1, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-026', name: 'B3-2', levelIndex: 3, parentId: 'row-007', order: 2, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-027', name: 'B3-3', levelIndex: 3, parentId: 'row-007', order: 3, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-028', name: 'B3-4', levelIndex: 3, parentId: 'row-007', order: 4, isLeaf: true, createdAt: '2024-01-25' },
+  // row-008
+  { id: 'slt-029', name: 'B4-1', levelIndex: 3, parentId: 'row-008', order: 1, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-030', name: 'B4-2', levelIndex: 3, parentId: 'row-008', order: 2, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-031', name: 'B4-3', levelIndex: 3, parentId: 'row-008', order: 3, isLeaf: true, createdAt: '2024-01-25' },
+  { id: 'slt-032', name: 'B4-4', levelIndex: 3, parentId: 'row-008', order: 4, isLeaf: true, createdAt: '2024-01-25' },
+]
 
-  // ── Room B · Shelf 1 ─────────────────────────────────────────────────
-  {
-    id: 'sl-015', room: 'Room B', shelf: 'Shelf 1', position: 'B-01-01',
-    product: {
-      itemNo: 'PM-CB-067', productName: 'WMT Canvas Board 8×10 3pk',
-      thumbnail: 'https://placehold.co/80x80/22d3ee/ffffff?text=CB',
-      status: 'Pre-selected',
-      brand: 'ArtFlow', category: 'Art Supplies / Canvas',
-      responsiblePerson: 'Sarah Thompson', initialSelection: '2025-01-15',
-      itemDescription: 'Pack of 3 primed cotton canvas boards, 8×10 inch. Double-primed for acrylic and oil. Sturdy 3mm MDF backing.',
-    },
-  },
-  {
-    id: 'sl-016', room: 'Room B', shelf: 'Shelf 1', position: 'B-01-02',
-    product: {
-      itemNo: 'PM-SC-014', productName: 'TGT Craft Scissors Value Set',
-      thumbnail: 'https://placehold.co/80x80/f87171/ffffff?text=SC',
-      status: 'Concept',
-      brand: 'SharpEdge', category: 'Crafts / Tools',
-      responsiblePerson: 'James Park', initialSelection: null,
-      itemDescription: 'Set of 5 craft scissors in assorted sizes, including decorative-edge patterns. Stainless steel blades, comfort-grip handles.',
-    },
-  },
-  {
-    id: 'sl-017', room: 'Room B', shelf: 'Shelf 1', position: 'B-01-03',
-    product: {
-      itemNo: 'PM-WT-022', productName: 'FBW Washi Tape Set 10-roll',
-      thumbnail: 'https://placehold.co/80x80/2dd4bf/ffffff?text=WT',
-      status: 'Pre-selected',
-      brand: 'Sparkle Studio', category: 'Crafts / Paper Craft',
-      responsiblePerson: 'Wei Zhang', initialSelection: '2025-02-10',
-      itemDescription: '10-roll washi tape set in assorted seasonal patterns. 15mm wide, 10m per roll. Repositionable, acid-free.',
-    },
-  },
-  { id: 'sl-018', room: 'Room B', shelf: 'Shelf 1', position: 'B-01-04', product: null },
-  {
-    id: 'sl-019', room: 'Room B', shelf: 'Shelf 1', position: 'B-01-05',
-    product: {
-      itemNo: 'PM-BK-091', productName: 'DT Brush Pen Set 12ct',
-      thumbnail: 'https://placehold.co/80x80/c084fc/ffffff?text=BK',
-      status: 'Proposed',
-      brand: 'ColorPro', category: 'Art Supplies / Pens',
-      responsiblePerson: 'Xiaomei Li', initialSelection: null,
-      itemDescription: '12-colour flexible brush pen set. Water-based, blendable ink. Dual tip: brush and fine 0.4mm. Ideal for lettering and illustration.',
-    },
-  },
-
-  // ── Room B · Shelf 2 ─────────────────────────────────────────────────
-  {
-    id: 'sl-020', room: 'Room B', shelf: 'Shelf 2', position: 'B-02-01',
-    product: {
-      itemNo: 'PM-CK-088', productName: 'WMT Holiday Craft Kit Deluxe',
-      thumbnail: 'https://placehold.co/80x80/ef4444/ffffff?text=HK',
-      status: 'Initial Sampled',
-      brand: 'Kiddocraft', category: 'Party & Seasonal / Holiday',
-      responsiblePerson: 'Sarah Thompson', initialSelection: '2025-03-12',
-      itemDescription: 'Deluxe holiday craft kit with 50+ pieces: foam ornaments, glitter, pipe cleaners, ribbon, and adhesive gems. Age 5+.',
-    },
-  },
-  { id: 'sl-021', room: 'Room B', shelf: 'Shelf 2', position: 'B-02-02', product: null },
-  {
-    id: 'sl-022', room: 'Room B', shelf: 'Shelf 2', position: 'B-02-03',
-    product: {
-      itemNo: 'PM-PS-036', productName: 'TGT Oil Pastel Set 36ct',
-      thumbnail: 'https://placehold.co/80x80/a3e635/1f2937?text=PS',
-      status: 'Proposed',
-      brand: 'ColorPro', category: 'Art Supplies / Paints',
-      responsiblePerson: 'James Park', initialSelection: null,
-      itemDescription: '36-colour oil pastel set in a hinged tin case. Smooth, richly pigmented. Suitable for artists and students. Conforms to EN71.',
-    },
-  },
-  {
-    id: 'sl-023', room: 'Room B', shelf: 'Shelf 2', position: 'B-02-04',
-    product: {
-      itemNo: 'PM-ST-012', productName: 'DT Spring Stamp Set',
-      thumbnail: 'https://placehold.co/80x80/34d399/ffffff?text=ST',
-      status: 'Production',
-      brand: 'Sparkle Studio', category: 'Crafts / Paper Craft',
-      responsiblePerson: 'Wei Zhang', initialSelection: '2024-11-30',
-      itemDescription: 'Spring-themed foam stamp set with 12 designs, 2 ink pads (red and blue), and stamp positioning tray. Washable ink.',
-    },
-  },
-
-  // ── Room B · Shelf 3 ─────────────────────────────────────────────────
-  {
-    id: 'sl-024', room: 'Room B', shelf: 'Shelf 3', position: 'B-03-01',
-    product: {
-      itemNo: 'PM-PC-044', productName: 'WMT Paper Craft Bundle',
-      thumbnail: 'https://placehold.co/80x80/38bdf8/ffffff?text=PC',
-      status: 'Production',
-      brand: 'Paramont Basics', category: 'Crafts / Paper Craft',
-      responsiblePerson: 'Sarah Thompson', initialSelection: '2024-10-05',
-      itemDescription: 'All-in-one paper craft bundle: 120-sheet origami pack, 20 card stock sheets, 2 scissors, bone folder, and adhesive roller.',
-    },
-  },
-  {
-    id: 'sl-025', room: 'Room B', shelf: 'Shelf 3', position: 'B-03-02',
-    product: {
-      itemNo: 'PM-BP-018', productName: 'TGT Brush Pen Calligraphy Set',
-      thumbnail: 'https://placehold.co/80x80/e879f9/ffffff?text=BP',
-      status: 'Pre-selected',
-      brand: 'DrawRight', category: 'Stationery / Writing',
-      responsiblePerson: 'James Park', initialSelection: '2025-01-20',
-      itemDescription: 'Calligraphy brush pen set with 6 ink colours, practice pad, and beginner guide booklet. Water-based, blendable inks.',
-    },
-  },
-  { id: 'sl-026', room: 'Room B', shelf: 'Shelf 3', position: 'B-03-03', product: null },
-  {
-    id: 'sl-027', room: 'Room B', shelf: 'Shelf 3', position: 'B-03-04',
-    product: {
-      itemNo: 'PM-FP-029', productName: 'DT Fabric Paint Set 6pc',
-      thumbnail: 'https://placehold.co/80x80/f97316/ffffff?text=FP',
-      status: 'Concept',
-      brand: 'ColorPro', category: 'Art Supplies / Paints',
-      responsiblePerson: 'Xiaomei Li', initialSelection: null,
-      itemDescription: '6-colour fabric paint set, 30ml bottles. Permanent when heat-set. Suitable for cotton and mixed fibres. Machine washable after curing.',
-    },
-  },
-  {
-    id: 'sl-028', room: 'Room B', shelf: 'Shelf 3', position: 'B-03-05',
-    product: {
-      itemNo: 'PM-OP-011', productName: 'FBW Origami Paper 100-sheet',
-      thumbnail: 'https://placehold.co/80x80/f472b6/ffffff?text=OP',
-      status: 'Initial Sampled',
-      brand: 'Paramont Basics', category: 'Crafts / Paper Craft',
-      responsiblePerson: 'Wei Zhang', initialSelection: '2025-02-28',
-      itemDescription: '100-sheet origami paper pack in 20 vibrant colours, 15×15cm. Double-sided colour option available. Includes beginner instruction leaflet.',
-    },
-  },
+// ── Assignments (~20 of 32 slots occupied) ─────────────────────────────────
+export const MOCK_ASSIGNMENTS: SampleAssignment[] = [
+  // Zone A / Shelf 1 / Row 1
+  { id: 'asgn-001', positionId: 'slt-001', productId: 'p-01', assignedAt: '2024-09-10', assignedBy: 'Sarah Thompson', notes: 'Q4 range review' },
+  { id: 'asgn-002', positionId: 'slt-002', productId: 'p-02', assignedAt: '2024-10-05', assignedBy: 'Summer Li' },
+  { id: 'asgn-003', positionId: 'slt-003', productId: 'p-03', assignedAt: '2024-10-18', assignedBy: 'Sarah Thompson' },
+  // slt-004 empty
+  // Zone A / Shelf 1 / Row 2
+  { id: 'asgn-004', positionId: 'slt-005', productId: 'p-04', assignedAt: '2024-11-01', assignedBy: 'Summer Li', notes: 'Pending QC sign-off' },
+  { id: 'asgn-005', positionId: 'slt-006', productId: 'p-05', assignedAt: '2024-11-15', assignedBy: 'Sarah Thompson' },
+  // slt-007, slt-008 empty
+  // Zone A / Shelf 2 / Row 1
+  { id: 'asgn-006', positionId: 'slt-009', productId: 'p-06', assignedAt: '2024-08-20', assignedBy: 'Summer Li' },
+  { id: 'asgn-007', positionId: 'slt-010', productId: 'p-07', assignedAt: '2024-09-30', assignedBy: 'Sarah Thompson', notes: 'WMT buyer preview' },
+  { id: 'asgn-008', positionId: 'slt-011', productId: 'p-08', assignedAt: '2024-10-12', assignedBy: 'Summer Li' },
+  // slt-012 empty
+  // Zone A / Shelf 2 / Row 2
+  { id: 'asgn-009', positionId: 'slt-013', productId: 'p-09', assignedAt: '2024-09-22', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-010', positionId: 'slt-014', productId: 'p-10', assignedAt: '2024-11-03', assignedBy: 'Summer Li' },
+  // slt-015, slt-016 empty
+  // Zone B / Shelf 1 / Row 1
+  { id: 'asgn-011', positionId: 'slt-017', productId: 'p-11', assignedAt: '2024-10-08', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-012', positionId: 'slt-018', productId: 'p-12', assignedAt: '2024-10-25', assignedBy: 'Summer Li', notes: 'Strategy game prototype' },
+  // slt-019, slt-020 empty
+  // Zone B / Shelf 1 / Row 2
+  { id: 'asgn-013', positionId: 'slt-021', productId: 'p-01', assignedAt: '2025-01-08', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-014', positionId: 'slt-022', productId: 'p-02', assignedAt: '2025-01-20', assignedBy: 'Summer Li' },
+  // slt-023, slt-024 empty
+  // Zone B / Shelf 2 / Row 1
+  { id: 'asgn-015', positionId: 'slt-025', productId: 'p-03', assignedAt: '2025-02-05', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-016', positionId: 'slt-026', productId: 'p-04', assignedAt: '2025-02-14', assignedBy: 'Summer Li', notes: 'TGT line review' },
+  { id: 'asgn-017', positionId: 'slt-027', productId: 'p-05', assignedAt: '2025-02-28', assignedBy: 'Sarah Thompson' },
+  // slt-028 empty
+  // Zone B / Shelf 2 / Row 2 — all empty (slt-029 through slt-032)
 ]
