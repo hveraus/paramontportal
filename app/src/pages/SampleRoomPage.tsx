@@ -89,23 +89,6 @@ function buildPath(nodeId: string, allNodes: LocationNode[]): LocationNode[] {
 let _counter = 100
 function genId(prefix: string) { return `${prefix}-${++_counter}` }
 
-// ── OccupancyBar ──────────────────────────────────────────────────────────
-
-function OccupancyBar({ occupied, total }: { occupied: number; total: number }) {
-  const pct = total === 0 ? 0 : Math.round((occupied / total) * 100)
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-emerald-400 rounded-full transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-[11px] text-slate-500 font-mono tabular-nums">{occupied}/{total}</span>
-    </div>
-  )
-}
-
 // ── AssignDialog ──────────────────────────────────────────────────────────
 
 function AssignDialog({
@@ -442,17 +425,6 @@ function LocationTreeNode({
   const isExpanded = expandedIds.has(node.id)
   const isSelected = selectedNodeId === node.id
 
-  // Compute occupancy
-  function subtreeLeaves(nid: string): string[] {
-    const n = nodes.find(x => x.id === nid)
-    if (!n) return []
-    if (n.isLeaf) return [nid]
-    return nodes.filter(x => x.parentId === nid).flatMap(c => subtreeLeaves(c.id))
-  }
-  const leaves = subtreeLeaves(node.id)
-  const occupied = leaves.filter(lid => assignments.some(a => a.positionId === lid)).length
-  const total = leaves.length
-
   const indent = node.levelIndex * 12
 
   if (node.isLeaf) {
@@ -481,11 +453,6 @@ function LocationTreeNode({
       >
         <IcoChevron open={isExpanded} className={isSelected ? 'text-blue-500' : 'text-slate-400'} />
         <span className="font-medium truncate flex-1">{node.name}</span>
-        {occupied > 0 ? (
-          <span className="text-[10px] font-mono text-emerald-600 font-semibold flex-shrink-0">{occupied}/{total}</span>
-        ) : (
-          <span className="text-[10px] font-mono text-slate-400 flex-shrink-0">{occupied}/{total}</span>
-        )}
       </button>
       {isExpanded && (
         <div>
@@ -553,18 +520,7 @@ function ManageTreeNode({
     if (isEditing) inputRef.current?.focus()
   }, [isEditing])
 
-  // Occupancy
-  function subtreeLeaves(nid: string): string[] {
-    const n = nodes.find(x => x.id === nid)
-    if (!n) return []
-    if (n.isLeaf) return [nid]
-    return nodes.filter(x => x.parentId === nid).flatMap(c => subtreeLeaves(c.id))
-  }
-  const leaves = subtreeLeaves(node.id)
-  const occupied = node.isLeaf
-    ? (assignments.some(a => a.positionId === node.id) ? 1 : 0)
-    : leaves.filter(lid => assignments.some(a => a.positionId === lid)).length
-  const total = node.isLeaf ? 1 : leaves.length
+  const isOccupied = node.isLeaf && assignments.some(a => a.positionId === node.id)
 
   const indent = node.levelIndex * 20
   const childLevelLabel = node.levelIndex < rootSchema.levels.length - 1
@@ -587,7 +543,7 @@ function ManageTreeNode({
             <IcoChevron open={isExpanded} />
           </button>
         ) : (
-          <span className={`w-2 h-2 rounded-full flex-shrink-0 ml-0.5 ${occupied ? 'bg-emerald-400' : 'bg-slate-300'}`} />
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ml-0.5 ${isOccupied ? 'bg-emerald-400' : 'bg-slate-300'}`} />
         )}
 
         {/* Name / Edit input */}
@@ -604,10 +560,7 @@ function ManageTreeNode({
           <span className="text-sm text-slate-700 font-medium truncate max-w-[280px]">{node.name}</span>
         )}
 
-        {/* Occupancy / leaf status — sits right next to the name */}
-        {!node.isLeaf && (
-          <span className="text-[11px] font-mono text-slate-400 flex-shrink-0">{occupied}/{total}</span>
-        )}
+        {/* Leaf status — sits right next to the name */}
         {node.isLeaf && leafProduct && (
           <span className="text-[11px] text-emerald-700 truncate max-w-[180px]">{leafProduct.name}</span>
         )}
@@ -832,8 +785,6 @@ function NodeGrid({
     return nodes.filter(x => x.parentId === nid).sort((a, b) => a.order - b.order).flatMap(c => subtreeLeaves(c.id))
   }
   const leaves = subtreeLeaves(node.id)
-
-  const occupied = leaves.filter(l => assignments.some(a => a.positionId === l.id)).length
   const path = buildPath(node.id, nodes)
 
   return (
@@ -848,8 +799,7 @@ function NodeGrid({
             </span>
           ))}
         </div>
-        <h2 className="text-lg font-bold text-slate-900 mb-2">{node.name}</h2>
-        <OccupancyBar occupied={occupied} total={leaves.length} />
+        <h2 className="text-lg font-bold text-slate-900">{node.name}</h2>
       </div>
 
       {/* Grid */}
@@ -871,11 +821,18 @@ function NodeGrid({
                 onClick={() => onSelectPosition(leaf.id)}
                 className="bg-white rounded-xl border border-emerald-200 p-3 text-left shadow-sm hover:shadow-md hover:border-emerald-300 transition-all group"
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <StatusTag label={product.status} variant={STATUS_VARIANT[product.status] ?? 'gray'} dot={false} />
+                <div className="flex items-start gap-2.5 mb-2">
+                  <div className="w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden">
+                    <img src={product.image} alt={product.name}
+                      className="w-full h-full object-cover"
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <StatusTag label={product.status} variant={STATUS_VARIANT[product.status] ?? 'gray'} dot={false} />
+                    <p className="font-mono text-[10px] text-slate-400 mt-1.5">{product.itemNo}</p>
+                  </div>
                 </div>
                 <p className="text-xs font-semibold text-slate-800 leading-tight line-clamp-2 mb-1.5">{product.name}</p>
-                <p className="font-mono text-[10px] text-slate-400 mb-1">{product.itemNo}</p>
                 <p className="text-[10px] text-slate-400 truncate">{pathLabel}</p>
               </button>
             )
@@ -1032,11 +989,6 @@ export default function SampleRoomPage() {
   // ── Derived values ─────────────────────────────────────────────────────
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId) ?? null
-
-  // Global stats
-  const allLeaves = nodes.filter(n => n.isLeaf)
-  const totalOccupied = allLeaves.filter(l => assignments.some(a => a.positionId === l.id)).length
-  const totalEmpty = allLeaves.length - totalOccupied
 
   // ── Rename handlers ────────────────────────────────────────────────────
 
@@ -1238,13 +1190,6 @@ export default function SampleRoomPage() {
             >
               Manage Locations
             </button>
-          </div>
-
-          {/* Stats bar */}
-          <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex gap-4 text-xs flex-shrink-0">
-            <span className="text-slate-500">Total <strong className="text-slate-700">{allLeaves.length}</strong></span>
-            <span className="text-emerald-600">Occupied <strong>{totalOccupied}</strong></span>
-            <span className="text-slate-400">Empty <strong>{totalEmpty}</strong></span>
           </div>
 
           {/* Tree */}
