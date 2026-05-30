@@ -72,6 +72,7 @@ src/
       SourceFilesTab.tsx        ← Source file list (.ai etc.) with share + download actions
   pages/
     ArchivesPage.tsx            ← Archives file library; file rows have Preview / Share / Download / Delete
+    SampleRoomPage.tsx          ← Sample Room: free-form location tree (Browse + Manage modes)
 ```
 
 ## Language System
@@ -177,14 +178,32 @@ Key data structures in `src/mock/orgTree.ts`:
 
 `OrgNode.hasCustomConfig` flag drives the "定制权限 / Custom" badge shown on users in the tree.
 
+Permissions are configured **at the member level only** — selecting a company or department node shows a "select a member" prompt instead of the config panel. Each feature in `MODULE_FEATURES` carries three independent action toggles via `FeatureActionPerm = { view; edit; delete }` (each a `PermVal`); the legacy separate "Buttons" tab has been merged away.
+
+## Sample Room (`SampleRoomPage.tsx`)
+
+A storage-location management system with a **free-form, per-root location hierarchy**. Two view modes toggled by `viewMode` state:
+
+- **Browse mode**: left location tree (w-72) + right content panel. Selecting a non-leaf node shows a grid of all descendant leaf slots (occupied cards carry a product thumbnail, status, item#, and the relative path; empty cards are click-to-assign). Selecting a leaf shows its `PositionDetail` (product card or empty state).
+- **Manage mode**: full-width tree editor — inline rename, add child / batch-add slots, cascade delete, and per-root **Level Settings** (gear icon on each root row).
+
+Key concepts:
+- `LocationNode` — self-referencing tree node (`levelIndex`, `parentId`, `isLeaf`, `order`). A node `isLeaf` when `levelIndex === rootSchema.levels.length - 1` — **never hardcode the depth**.
+- `LocationSchema = { levels: { label: string }[] }` — user-defined level names; **1–8 levels, configured per root node** and held in `schemas: Record<rootId, LocationSchema>` state. Use `getRootId(nodeId, nodes)` to resolve a node's owning schema.
+- `SampleAssignment` — links a leaf `positionId` to a `productId` (1:1); assignment carries `assignedBy`, `assignedAt`, `notes`.
+- Changing a root's schema depth recomputes `isLeaf` for its whole subtree (`handleSaveSchema`).
+- Occupancy ratio stats were intentionally removed — only leaf status dots remain.
+
+PRD lives at `docs/PRD-SampleRoom.md`.
+
 ## Mock Data
 
 Always update mock data in the same session as type changes to keep TypeScript clean. Key mock files:
 - `src/mock/productDetail.ts` — single `mockProduct` object (all PDP data)
 - `src/mock/products.ts` — `MOCK_PRODUCTS[]` + `CATEGORY_TREE`
-- `src/mock/orgTree.ts` — `ORG_TREE`, `PERM_CONFIGS`, `COMPANY_DEFAULTS`, `MODULE_FEATURES`, `MENU_ITEMS`, `BUTTON_ACTIONS`, `BUTTON_MODULES`
+- `src/mock/orgTree.ts` — `ORG_TREE`, `PERM_CONFIGS`, `COMPANY_DEFAULTS`, `MODULE_FEATURES`, `MENU_ITEMS`
 - `src/mock/archives.ts` — `MOCK_ARCHIVES: ArchiveFile[]`
-- `src/mock/sampleRoom.ts` — sample room slots and products
+- `src/mock/sampleRoom.ts` — `DEFAULT_SCHEMA`, `LOCATION_NODES`, `MOCK_ASSIGNMENTS`
 
 ## CI / Build notes
 
