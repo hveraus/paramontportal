@@ -485,6 +485,55 @@ export const mockProduct: ProductDetail = {
     },
   ],
 
+  salesRecords: [
+    // Walmart — present every month, steady growth
+    { period: '2024-07', customer: 'Walmart',     units: 18400, revenue: 58880 },
+    { period: '2024-08', customer: 'Walmart',     units: 21200, revenue: 67840 },
+    { period: '2024-09', customer: 'Walmart',     units: 24600, revenue: 78720 },
+    { period: '2024-10', customer: 'Walmart',     units: 31800, revenue: 101760 },
+    { period: '2024-11', customer: 'Walmart',     units: 42500, revenue: 136000 },
+    { period: '2024-12', customer: 'Walmart',     units: 39800, revenue: 127360 },
+    { period: '2025-01', customer: 'Walmart',     units: 22100, revenue: 70720 },
+    { period: '2025-02', customer: 'Walmart',     units: 25400, revenue: 81280 },
+    { period: '2025-03', customer: 'Walmart',     units: 28900, revenue: 92480 },
+    { period: '2025-04', customer: 'Walmart',     units: 30200, revenue: 96640 },
+    { period: '2025-05', customer: 'Walmart',     units: 33100, revenue: 105920 },
+    { period: '2025-06', customer: 'Walmart',     units: 35600, revenue: 113920 },
+
+    // Dollar Tree — moderate, holiday spike
+    { period: '2024-07', customer: 'Dollar Tree', units: 9200,  revenue: 11500 },
+    { period: '2024-08', customer: 'Dollar Tree', units: 10100, revenue: 12625 },
+    { period: '2024-09', customer: 'Dollar Tree', units: 12400, revenue: 15500 },
+    { period: '2024-10', customer: 'Dollar Tree', units: 16800, revenue: 21000 },
+    { period: '2024-11', customer: 'Dollar Tree', units: 22300, revenue: 27875 },
+    { period: '2024-12', customer: 'Dollar Tree', units: 19600, revenue: 24500 },
+    { period: '2025-01', customer: 'Dollar Tree', units: 8400,  revenue: 10500 },
+    { period: '2025-02', customer: 'Dollar Tree', units: 9100,  revenue: 11375 },
+    { period: '2025-03', customer: 'Dollar Tree', units: 11200, revenue: 14000 },
+    { period: '2025-04', customer: 'Dollar Tree', units: 12600, revenue: 15750 },
+    { period: '2025-05', customer: 'Dollar Tree', units: 13900, revenue: 17375 },
+    { period: '2025-06', customer: 'Dollar Tree', units: 14500, revenue: 18125 },
+
+    // Five Below — ramps in from Oct 2024
+    { period: '2024-10', customer: 'Five Below',  units: 4200,  revenue: 21000 },
+    { period: '2024-11', customer: 'Five Below',  units: 9800,  revenue: 49000 },
+    { period: '2024-12', customer: 'Five Below',  units: 8600,  revenue: 43000 },
+    { period: '2025-01', customer: 'Five Below',  units: 3900,  revenue: 19500 },
+    { period: '2025-02', customer: 'Five Below',  units: 5100,  revenue: 25500 },
+    { period: '2025-03', customer: 'Five Below',  units: 6700,  revenue: 33500 },
+    { period: '2025-04', customer: 'Five Below',  units: 7400,  revenue: 37000 },
+    { period: '2025-05', customer: 'Five Below',  units: 8900,  revenue: 44500 },
+    { period: '2025-06', customer: 'Five Below',  units: 10200, revenue: 51000 },
+
+    // Amazon — online channel, fast growth from Jan 2025
+    { period: '2025-01', customer: 'Amazon',      units: 5600,  revenue: 36400 },
+    { period: '2025-02', customer: 'Amazon',      units: 7200,  revenue: 46800 },
+    { period: '2025-03', customer: 'Amazon',      units: 9800,  revenue: 63700 },
+    { period: '2025-04', customer: 'Amazon',      units: 12400, revenue: 80600 },
+    { period: '2025-05', customer: 'Amazon',      units: 15100, revenue: 98150 },
+    { period: '2025-06', customer: 'Amazon',      units: 18700, revenue: 121550 },
+  ],
+
   pdComments: `2025-03-04 Sarah: Confirmed with factory that chipboard thickness will be 1.5mm — sufficient for the pick & stick tool pressure. No structural changes needed.
 
 2025-03-11 Mike: Walmart buyer requested the gem count be printed on front panel. Updated dieline sent to vendor. Awaiting revised sample.

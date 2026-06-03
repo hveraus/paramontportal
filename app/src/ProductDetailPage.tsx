@@ -17,11 +17,13 @@ import PatentsTab from './components/tabs/PatentsTab'
 
 import CommittedTab from './components/tabs/CommittedTab'
 import SourceFilesTab from './components/tabs/SourceFilesTab'
+import SalesTab from './components/tabs/SalesTab'
+import SalesTab2 from './components/tabs/SalesTab2'
 import ActivityPanel from './components/ActivityPanel'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 
-type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'patents' | 'committed' | 'source'
+type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'patents' | 'committed' | 'source' | 'sales' | 'sales2'
 
 const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean }[] = [
   { id: 'basic',           label: 'Basic Info' },
@@ -33,6 +35,8 @@ const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean
 
   { id: 'patents',         label: 'Patents',        patentOnly: true },
   { id: 'committed',       label: 'Program' },
+  { id: 'sales',           label: 'Sales' },
+  { id: 'sales2',          label: 'Sales #2' },
   { id: 'source',          label: 'Art Works' },
 ]
 
@@ -648,7 +652,7 @@ export default function ProductDetailPage() {
                     )}
 
                     {/* Other tabs: Edit / Save / Cancel */}
-                    {resolvedTab !== 'committed' && resolvedTab !== 'source' && (
+                    {resolvedTab !== 'committed' && resolvedTab !== 'source' && resolvedTab !== 'sales' && resolvedTab !== 'sales2' && (
                       <div className="flex items-center gap-2">
                         {editingTab === resolvedTab ? (
                           <>
@@ -710,6 +714,8 @@ export default function ProductDetailPage() {
                   {resolvedTab === 'customs'   && <CustomsTab     product={editingTab === 'customs' ? draft : product}  isEditing={editingTab === 'customs'}  onChange={onChange} />}
 {resolvedTab === 'patents'        && <PatentsTab        patents={editingTab === 'patents' ? draft.patents : product.patents} isEditing={editingTab === 'patents'} onChange={onChange} />}
                   {resolvedTab === 'committed'      && <CommittedTab      committedRecords={product.committedRecords} />}
+                  {resolvedTab === 'sales'          && <SalesTab          salesRecords={product.salesRecords} />}
+                  {resolvedTab === 'sales2'         && <SalesTab2         salesRecords={product.salesRecords} />}
                   {resolvedTab === 'source'         && <SourceFilesTab    sourceFiles={product.sourceFiles} />}
                 </div>
               </div>

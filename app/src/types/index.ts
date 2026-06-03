@@ -243,6 +243,9 @@ export interface ProductDetail {
   // ── Committed projects ───────────────────────────────────────────
   committedRecords: CommittedRecord[]
 
+  // ── Sales ────────────────────────────────────────────────────────
+  salesRecords: SalesRecord[]
+
   // ── PD Notes ─────────────────────────────────────────────────────
   pdComments: string | null
   nbPdComments: string | null
@@ -256,6 +259,14 @@ export interface CommittedRecord {
   projectId: string           // for deep-link to project page
   customer: string            // 客户名称 (sourced from external system)
   clientPending?: boolean     // true = pending fetch from external system
+}
+
+// One row = sales of this product to one customer in one period (month).
+export interface SalesRecord {
+  period: string              // ISO month "YYYY-MM"
+  customer: string            // customer name
+  units: number               // units sold
+  revenue: number             // revenue in USD
 }
 
 // ── Sample Room ───────────────────────────────────────────────────────────────
