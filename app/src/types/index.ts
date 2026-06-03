@@ -123,6 +123,7 @@ export interface ProductDetail {
   upc: string | null            // UPC#
   upc12Digit: string | null     // 12 Digit UPC
   productName: string           // 产品名称
+  itemDescriptionText: string   // Item Description (plain text)
   categoryPath: string[]        // 品类 (三级)
   productCategory: string       // Product Category
   brand: string                 // Brand
@@ -138,8 +139,12 @@ export interface ProductDetail {
   updatedAt: string
   designers: TeamMember[]
   designDueDate: string | null
+  usPd: TeamMember | null         // US PD
   nbSourcing: TeamMember | null
   nbPd: TeamMember | null
+  productFiling: string | null    // Product Filing (dropdown)
+  purchasingType: string | null   // Purchasing Type (dropdown)
+  moq: number | null              // Minimum Order Quantity
   itemDescription: string       // 描述 / Features & Benefits (rich text)
   solComments: string | null    // Comments from SOL
   productSpec: string | null    // Product Spec

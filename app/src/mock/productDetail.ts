@@ -41,6 +41,12 @@ export const mockProduct: ProductDetail = {
     },
   ],
   designDueDate:     '2025-03-15',
+  usPd: {
+    id: 'u06',
+    name: 'Sarah Thompson',
+    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=f59e0b&fontColor=ffffff',
+    team: 'US',
+  },
   nbSourcing: {
     id: 'u04',
     name: 'Wei Zhang',
@@ -53,10 +59,20 @@ export const mockProduct: ProductDetail = {
     avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=JP&backgroundColor=8b5cf6&fontColor=ffffff',
     team: 'China',
   },
+  productFiling:     'Filed',
+  purchasingType:    'Direct Import',
+  moq:               2400,
   ageGrade:          '6+',
   fobPoint:          'Ningbo',
   factoryName:       'Ningbo Sunshine Craft Co., Ltd.',
   estOrderQty:       48000,
+  itemDescriptionText:
+    'Features & Benefits: Rainbow 12-piece pom-pom yarn craft kit for ages 6 and up.\n' +
+    '• 12 vibrant yarn colors, approx. 15g each\n' +
+    '• Includes large and small plastic pom-pom makers plus instruction sheet\n' +
+    '• Certified to ASTM F963 & EN71 safety standards\n' +
+    '• Hang card retail packaging — ideal for impulse-buy shelf placement\n' +
+    '• Suitable for school projects, home décor, and seasonal crafts.',
   itemDescription: `
     <p><strong>Features &amp; Benefits:</strong> Rainbow 12-piece pom-pom yarn craft kit for ages 6 and up.</p>
     <ul>

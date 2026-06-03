@@ -1,8 +1,25 @@
-import type { ProductDetail } from '../../types'
+import type { ProductDetail, TeamMember } from '../../types'
 
 const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
 const TEXTAREA_CLS = "w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 resize-none transition-colors"
 const SELECT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors appearance-none"
+
+// ── dropdown option sets ────────────────────────────────────────────────────
+
+const PRODUCT_CATEGORY_OPTIONS = ['NB CRAFT CATEGORY', 'NB TOY CATEGORY', 'NB SEASONAL CATEGORY', 'NB STATIONERY CATEGORY']
+const BRAND_OPTIONS = ['WM - Hello Hobby', 'Hello Hobby', "Crafter's Square", 'Paramont', 'Generic']
+const INITIAL_SELECTION_OPTIONS = ['Dollar Tree', 'Walmart', 'Five Below', 'Target', 'Amazon']
+const PRODUCT_FILING_OPTIONS = ['Filed', 'Pending', 'Not Required']
+const PURCHASING_TYPE_OPTIONS = ['Domestic', 'Direct Import', 'FOB']
+
+// Roster used to populate the people dropdowns (US PD / NB Sourcing / NB PD)
+const MEMBER_ROSTER: TeamMember[] = [
+  { id: 'u01', name: 'Xiaomei Li',     avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=XL&backgroundColor=3b82f6&fontColor=ffffff', team: 'China' },
+  { id: 'u02', name: 'Wei Zhang',      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=WZ&backgroundColor=10b981&fontColor=ffffff', team: 'China' },
+  { id: 'u05', name: 'James Park',     avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=JP&backgroundColor=8b5cf6&fontColor=ffffff', team: 'China' },
+  { id: 'u06', name: 'Sarah Thompson', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=f59e0b&fontColor=ffffff', team: 'US' },
+  { id: 'u07', name: 'Emily Chen',     avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=EC&backgroundColor=ec4899&fontColor=ffffff', team: 'US' },
+]
 
 // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -16,6 +33,40 @@ function yesNo(v: boolean | null) {
 function val(v: string | number | null | undefined, mono = false) {
   if (v === null || v === undefined || v === '') return <span className="text-slate-300">—</span>
   return <span className={mono ? 'font-mono' : ''}>{v}</span>
+}
+
+// dropdown that always includes the current value even if outside the preset list
+function SelectField({ value, options, onChange }: { value: string | null; options: string[]; onChange: (v: string) => void }) {
+  const opts = value && !options.includes(value) ? [value, ...options] : options
+  return (
+    <select className={SELECT_CLS} value={value ?? ''} onChange={e => onChange(e.target.value)}>
+      <option value="">—</option>
+      {opts.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  )
+}
+
+// person dropdown (single member) + read-only display
+function PersonField({ member, isEditing, onChange }: { member: TeamMember | null; isEditing: boolean; onChange: (m: TeamMember | null) => void }) {
+  if (isEditing) {
+    return (
+      <select
+        className={SELECT_CLS}
+        value={member?.id ?? ''}
+        onChange={e => onChange(MEMBER_ROSTER.find(m => m.id === e.target.value) ?? null)}
+      >
+        <option value="">—</option>
+        {MEMBER_ROSTER.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+      </select>
+    )
+  }
+  if (!member) return <span className="text-slate-300">—</span>
+  return (
+    <div className="flex items-center gap-1.5">
+      <img src={member.avatar} alt={member.name} className="w-6 h-6 rounded-full flex-shrink-0" />
+      <span>{member.name}</span>
+    </div>
+  )
 }
 
 // ── sub-components ────────────────────────────────────────────────────────
@@ -55,60 +106,35 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
       {/* ── Identification ──────────────────────────────────────── */}
       <SectionDivider title="Identification" />
 
-      <Field label="Product Code">
+      <Field label="Product Code (Primary Key)">
         <span className="font-mono text-blue-700 font-medium">{product.productCode}</span>
       </Field>
 
-      <Field label="ITEM# (Primary Key)">
+      <Field label="ITEM#">
         <span className="font-mono font-medium">{product.itemNo}</span>
       </Field>
 
-      {/* ── Product Details ──────────────────────────────────────── */}
-      <SectionDivider title="Product Details" />
-
-      <Field label="Product Name" span2>
+      <Field label="Item Description" span2>
         {isEditing
-          ? <input type="text" className={INPUT_CLS} value={product.productName} onChange={e => onChange({ productName: e.target.value })} />
-          : <span className="font-medium text-slate-900">{product.productName}</span>
+          ? <textarea className={TEXTAREA_CLS} rows={6} value={product.itemDescriptionText} onChange={e => onChange({ itemDescriptionText: e.target.value })} />
+          : <p className="text-slate-700 leading-relaxed whitespace-pre-line">{product.itemDescriptionText}</p>
+        }
+      </Field>
+
+      {/* ── Classification ───────────────────────────────────────── */}
+      <SectionDivider title="Classification" />
+
+      <Field label="Product Category">
+        {isEditing
+          ? <SelectField value={product.productCategory} options={PRODUCT_CATEGORY_OPTIONS} onChange={v => onChange({ productCategory: v })} />
+          : val(product.productCategory)
         }
       </Field>
 
       <Field label="Brand">
         {isEditing
-          ? <input type="text" className={INPUT_CLS} value={product.brand} onChange={e => onChange({ brand: e.target.value })} />
+          ? <SelectField value={product.brand} options={BRAND_OPTIONS} onChange={v => onChange({ brand: v })} />
           : val(product.brand)
-        }
-      </Field>
-
-      <Field label="Product Category">
-        {isEditing
-          ? <input type="text" className={INPUT_CLS} value={product.productCategory} onChange={e => onChange({ productCategory: e.target.value })} />
-          : val(product.productCategory)
-        }
-      </Field>
-
-      <Field label="Category">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {product.categoryPath.map((c, i) => (
-            <span key={i} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-slate-300 text-xs">›</span>}
-              <span className={i === product.categoryPath.length - 1
-                ? 'text-blue-700 font-medium' : 'text-slate-600'}>{c}</span>
-            </span>
-          ))}
-        </div>
-      </Field>
-
-      <Field label="Age Grade">
-        {isEditing
-          ? <select className={SELECT_CLS} value={product.ageGrade ?? ''} onChange={e => onChange({ ageGrade: (e.target.value || null) as ProductDetail['ageGrade'] })}>
-              <option value="">—</option>
-              <option value="3+">3+</option>
-              <option value="6+">6+</option>
-              <option value="8+">8+</option>
-              <option value="14+">14+</option>
-            </select>
-          : val(product.ageGrade)
         }
       </Field>
 
@@ -125,9 +151,6 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
           : val(product.status)
         }
       </Field>
-
-      {/* ── Hierarchy & Planning ──────────────────────────────────── */}
-      <SectionDivider title="Hierarchy & Planning" />
 
       <Field label="Parent or Baby">
         {isEditing
@@ -147,28 +170,8 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
         }
       </Field>
 
-      <Field label="Committed?">
-        {isEditing
-          ? <label className="inline-flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={!!product.committed} onChange={e => onChange({ committed: e.target.checked })} className="w-4 h-4 rounded accent-blue-600" />
-              <span className="text-sm text-slate-600">{product.committed ? 'Yes' : 'No'}</span>
-            </label>
-          : yesNo(product.committed)
-        }
-      </Field>
-
-      <Field label="Item Data Finalized?">
-        {isEditing
-          ? <label className="inline-flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={!!product.itemDataFinalized} onChange={e => onChange({ itemDataFinalized: e.target.checked })} className="w-4 h-4 rounded accent-blue-600" />
-              <span className="text-sm text-slate-600">{product.itemDataFinalized ? 'Yes' : 'No'}</span>
-            </label>
-          : yesNo(product.itemDataFinalized)
-        }
-      </Field>
-
-      {/* ── Operations ───────────────────────────────────────────── */}
-      <SectionDivider title="Operations" />
+      {/* ── Team & Ownership ─────────────────────────────────────── */}
+      <SectionDivider title="Team & Ownership" />
 
       <Field label="Creating Team">
         {isEditing
@@ -185,87 +188,60 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
 
       <Field label="Designer">
         <div className="flex flex-wrap gap-3">
-          {product.designers.map(d => (
-            <div key={d.id} className="flex items-center gap-1.5">
-              <img src={d.avatar} alt={d.name} className="w-6 h-6 rounded-full flex-shrink-0" />
-              <span>{d.name}</span>
-            </div>
-          ))}
+          {product.designers.length === 0
+            ? <span className="text-slate-300">—</span>
+            : product.designers.map(d => (
+                <div key={d.id} className="flex items-center gap-1.5">
+                  <img src={d.avatar} alt={d.name} className="w-6 h-6 rounded-full flex-shrink-0" />
+                  <span>{d.name}</span>
+                </div>
+              ))}
         </div>
       </Field>
 
-      <Field label="Design Due Date">
-        {isEditing
-          ? <input type="date" className={INPUT_CLS} value={product.designDueDate ?? ''} onChange={e => onChange({ designDueDate: e.target.value || null })} />
-          : val(product.designDueDate)
-        }
+      <Field label="US PD">
+        <PersonField member={product.usPd} isEditing={isEditing} onChange={m => onChange({ usPd: m })} />
       </Field>
 
       <Field label="NB Sourcing">
-        {product.nbSourcing
-          ? <div className="flex items-center gap-1.5">
-              <img src={product.nbSourcing.avatar} alt={product.nbSourcing.name} className="w-6 h-6 rounded-full flex-shrink-0" />
-              <span>{product.nbSourcing.name}</span>
-            </div>
-          : <span className="text-slate-300">—</span>
-        }
+        <PersonField member={product.nbSourcing} isEditing={isEditing} onChange={m => onChange({ nbSourcing: m })} />
       </Field>
 
       <Field label="NB PD">
-        {product.nbPd
-          ? <div className="flex items-center gap-1.5">
-              <img src={product.nbPd.avatar} alt={product.nbPd.name} className="w-6 h-6 rounded-full flex-shrink-0" />
-              <span>{product.nbPd.name}</span>
-            </div>
-          : <span className="text-slate-300">—</span>
+        <PersonField member={product.nbPd} isEditing={isEditing} onChange={m => onChange({ nbPd: m })} />
+      </Field>
+
+      {/* ── Planning & Status ────────────────────────────────────── */}
+      <SectionDivider title="Planning & Status" />
+
+      <Field label="Product Filing">
+        {isEditing
+          ? <SelectField value={product.productFiling} options={PRODUCT_FILING_OPTIONS} onChange={v => onChange({ productFiling: v || null })} />
+          : val(product.productFiling)
         }
       </Field>
 
       <Field label="Initial Selection">
         {isEditing
-          ? <input type="text" className={INPUT_CLS} value={product.initialSelection} onChange={e => onChange({ initialSelection: e.target.value })} />
+          ? <SelectField value={product.initialSelection} options={INITIAL_SELECTION_OPTIONS} onChange={v => onChange({ initialSelection: v })} />
           : val(product.initialSelection)
         }
       </Field>
 
-      <Field label="Border - Domestic">
+      <Field label="Committed?">
         {isEditing
-          ? <select className={SELECT_CLS} value={product.borderDomestic ?? ''} onChange={e => onChange({ borderDomestic: (e.target.value || null) as ProductDetail['borderDomestic'] })}>
-              <option value="">—</option>
-              <option value="Domestic">Domestic</option>
-              <option value="Direct Import">Direct Import</option>
-            </select>
-          : val(product.borderDomestic)
+          ? <label className="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={!!product.committed} onChange={e => onChange({ committed: e.target.checked })} className="w-4 h-4 rounded accent-blue-600" />
+              <span className="text-sm text-slate-600">{product.committed ? 'Yes' : 'No'}</span>
+            </label>
+          : yesNo(product.committed)
         }
       </Field>
 
-      <Field label="FOB Point">
+      <Field label="Purchasing Type">
         {isEditing
-          ? <select className={SELECT_CLS} value={product.fobPoint ?? ''} onChange={e => onChange({ fobPoint: (e.target.value || null) as ProductDetail['fobPoint'] })}>
-              <option value="">—</option>
-              <option value="Ningbo">Ningbo</option>
-              <option value="Shenzhen">Shenzhen</option>
-              <option value="Huzhiming">Huzhiming</option>
-              <option value="Haiphong">Haiphong</option>
-              <option value="Shanghai">Shanghai</option>
-            </select>
-          : val(product.fobPoint)
-        }
-      </Field>
-
-      <Field label="Factory Name">
-        {isEditing
-          ? <input type="text" className={INPUT_CLS} value={product.factoryName ?? ''} onChange={e => onChange({ factoryName: e.target.value || null })} />
-          : val(product.factoryName)
-        }
-      </Field>
-
-      <Field label="Est. Order QTY">
-        {isEditing
-          ? <input type="number" className={INPUT_CLS} value={product.estOrderQty ?? ''} onChange={e => onChange({ estOrderQty: e.target.value === '' ? null : Number(e.target.value) })} />
-          : product.estOrderQty !== null
-            ? <span className="font-medium">{product.estOrderQty.toLocaleString()}</span>
-            : <span className="text-slate-300">—</span>
+          ? <SelectField value={product.purchasingType} options={PURCHASING_TYPE_OPTIONS} onChange={v => onChange({ purchasingType: v || null })} />
+          : val(product.purchasingType)
         }
       </Field>
 
@@ -277,37 +253,36 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
         <span className="text-slate-500">{product.updatedAt}</span>
       </Field>
 
-      {/* ── Descriptions ─────────────────────────────────────────── */}
-      <SectionDivider title="Descriptions" />
+      {/* ── Sourcing ─────────────────────────────────────────────── */}
+      <SectionDivider title="Sourcing" />
 
-      <Field label="Description (Features & Benefits)" span2>
+      <Field label="Factory Name">
         {isEditing
-          ? <textarea className={TEXTAREA_CLS} rows={5} value={product.itemDescription} onChange={e => onChange({ itemDescription: e.target.value })} />
-          : <div
-              className="text-sm text-slate-700 leading-relaxed prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.itemDescription }}
-            />
+          ? <input type="text" className={INPUT_CLS} value={product.factoryName ?? ''} onChange={e => onChange({ factoryName: e.target.value || null })} />
+          : val(product.factoryName)
         }
       </Field>
 
-      <Field label="Material Breakdown" span2>
+      <Field label="MOQ">
         {isEditing
-          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.materialBreakdown ?? ''} onChange={e => onChange({ materialBreakdown: e.target.value || null })} />
-          : product.materialBreakdown
-            ? <p className="text-slate-700 leading-relaxed">{product.materialBreakdown}</p>
+          ? <input type="number" className={INPUT_CLS} value={product.moq ?? ''} onChange={e => onChange({ moq: e.target.value === '' ? null : Number(e.target.value) })} />
+          : product.moq !== null && product.moq !== undefined
+            ? <span className="font-medium">{product.moq.toLocaleString()}</span>
             : <span className="text-slate-300">—</span>
         }
       </Field>
 
-      <Field label="Assortment Breakdown" span2>
+      {/* ── Comments ─────────────────────────────────────────────── */}
+      <SectionDivider title="Comments" />
+
+      <div className="col-span-2 text-sm text-slate-800">
         {isEditing
-          ? <textarea className={TEXTAREA_CLS} rows={4} value={product.assortmentBreakdown ?? ''} onChange={e => onChange({ assortmentBreakdown: e.target.value || null })} />
-          : product.assortmentBreakdown
-            ? <p className="text-slate-700 leading-relaxed">{product.assortmentBreakdown}</p>
+          ? <textarea className={TEXTAREA_CLS} rows={3} value={product.solComments ?? ''} onChange={e => onChange({ solComments: e.target.value || null })} />
+          : product.solComments
+            ? <p className="text-slate-700 leading-relaxed whitespace-pre-line">{product.solComments}</p>
             : <span className="text-slate-300">—</span>
         }
-      </Field>
-
+      </div>
 
     </div>
   )

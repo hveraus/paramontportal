@@ -3,9 +3,6 @@ import type { ProductDetail } from '../../types'
 const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
 const SELECT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors appearance-none"
 
-const IN_TO_M = 0.0254
-const CBM_TO_CUFT = 35.3147
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -27,23 +24,10 @@ interface Props {
 }
 
 export default function PackagingTab({ product, isEditing, onChange }: Props) {
-  const { masterQty, innerQty, countPerPackage, packagingType,
-          masterHeight, masterWidth, masterDepth, estOrderQty } = product
+  const { masterQty, innerQty, countPerPackage, packagingType } = product
 
   const innerPerMaster = masterQty > 0 && innerQty > 0
     ? Math.round(masterQty / innerQty) : null
-
-  const totalMasterCartons = masterQty && estOrderQty
-    ? Math.ceil(estOrderQty / masterQty) : null
-
-  const cbmPerCarton = masterHeight !== null && masterWidth !== null && masterDepth !== null
-    ? (masterHeight * IN_TO_M) * (masterWidth * IN_TO_M) * (masterDepth * IN_TO_M)
-    : null
-
-  const totalCbm = cbmPerCarton !== null && totalMasterCartons !== null
-    ? cbmPerCarton * totalMasterCartons : null
-
-  const totalCuFt = totalCbm !== null ? totalCbm * CBM_TO_CUFT : null
 
   return (
     <div className="space-y-6">
@@ -89,24 +73,6 @@ export default function PackagingTab({ product, isEditing, onChange }: Props) {
         <Field label="Inner per Master">
           {innerPerMaster !== null
             ? <span className="font-medium">{innerPerMaster} <span className="text-slate-400 text-xs ml-1">boxes</span></span>
-            : <span className="text-slate-300">—</span>}
-        </Field>
-
-        <Field label="Total Master Cartons">
-          {totalMasterCartons !== null
-            ? <span className="font-medium">{totalMasterCartons.toLocaleString()} <span className="text-slate-400 text-xs ml-1">ctns</span></span>
-            : <span className="text-slate-300">—</span>}
-        </Field>
-
-        <Field label="Total CBM">
-          {totalCbm !== null
-            ? <span className="font-medium">{totalCbm.toFixed(3)} <span className="text-slate-400 text-xs ml-1">m³</span></span>
-            : <span className="text-slate-300">—</span>}
-        </Field>
-
-        <Field label="Total Cu.Ft">
-          {totalCuFt !== null
-            ? <span className="font-medium">{totalCuFt.toFixed(2)} <span className="text-slate-400 text-xs ml-1">cu ft</span></span>
             : <span className="text-slate-300">—</span>}
         </Field>
 
