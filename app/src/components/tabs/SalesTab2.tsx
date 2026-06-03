@@ -6,6 +6,7 @@ interface SalesTab2Props {
 }
 
 type Metric = 'units' | 'revenue'
+type Granularity = 'month' | 'quarter'
 
 const CUSTOMER_COLORS = [
   '#6366f1', // indigo
@@ -20,6 +21,34 @@ function fmtMonth(period: string) {
   const [y, m] = period.split('-')
   const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m) - 1] ?? m
   return `${month} '${y.slice(2)}`
+}
+
+function periodToQuarter(period: string) {
+  const [y, m] = period.split('-')
+  return `${y}-Q${Math.floor((Number(m) - 1) / 3) + 1}`
+}
+
+function fmtQuarter(key: string) {
+  const [y, q] = key.split('-')
+  return `${q} '${y.slice(2)}`
+}
+
+function GranToggle({ value, onChange }: { value: Granularity; onChange: (g: Granularity) => void }) {
+  return (
+    <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-[11px] font-medium">
+      {(['month', 'quarter'] as Granularity[]).map(g => (
+        <button
+          key={g}
+          onClick={() => onChange(g)}
+          className={`px-2.5 py-1 transition-colors ${
+            value === g ? 'bg-slate-700 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'
+          }`}
+        >
+          {g === 'month' ? 'Monthly' : 'Quarterly'}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function fmtValue(v: number, metric: Metric) {
@@ -45,6 +74,7 @@ function donutArc(cx: number, cy: number, rOuter: number, rInner: number, startA
 
 export default function SalesTab2({ salesRecords }: SalesTab2Props) {
   const [metric, setMetric] = useState<Metric>('units')
+  const [trendGran, setTrendGran] = useState<Granularity>('month')
 
   const { periods, customers, byPeriod, byCustomer, grandTotal, mom } = useMemo(() => {
     const periodSet = Array.from(new Set(salesRecords.map(r => r.period))).sort()
@@ -94,23 +124,33 @@ export default function SalesTab2({ salesRecords }: SalesTab2Props) {
   const lastPeriod = byPeriod[byPeriod.length - 1]
   const momVal = mom[metric]
 
-  // ── Multi-line chart geometry ────────────────────────────────────────────
+  // ── Multi-line chart geometry (respects month/quarter granularity) ─────────
+  const bucketOf = trendGran === 'quarter' ? periodToQuarter : (p: string) => p
+  const fmtBucket = trendGran === 'quarter' ? fmtQuarter : fmtMonth
+  const trendKeys = Array.from(new Set(salesRecords.map(r => bucketOf(r.period)))).sort()
+  // value of customer within a bucket (null if no record)
+  const bucketVal = (customer: string, key: string): number | null => {
+    const rows = salesRecords.filter(r => r.customer === customer && bucketOf(r.period) === key)
+    if (!rows.length) return null
+    return rows.reduce((s, r) => s + r[metric], 0)
+  }
+
   const W = 1000, H = 320, padL = 56, padR = 16, padT = 16, padB = 28
   const innerW = W - padL - padR
   const innerH = H - padT - padB
   const maxSeriesVal = Math.max(
-    ...customers.flatMap(c => periods.map(p => salesRecords.find(r => r.customer === c && r.period === p)?.[metric] ?? 0)),
+    ...customers.flatMap(c => trendKeys.map(k => bucketVal(c, k) ?? 0)),
     1,
   )
-  const xFor = (i: number) => padL + (periods.length === 1 ? innerW / 2 : (i / (periods.length - 1)) * innerW)
+  const xFor = (i: number) => padL + (trendKeys.length === 1 ? innerW / 2 : (i / (trendKeys.length - 1)) * innerW)
   const yFor = (v: number) => padT + innerH - (v / maxSeriesVal) * innerH
 
   const series = customers.map(c => ({
     customer: c,
     color: colorOf(c),
-    points: periods.map((p, i) => {
-      const rec = salesRecords.find(r => r.customer === c && r.period === p)
-      return { x: xFor(i), y: yFor(rec?.[metric] ?? 0), has: !!rec, v: rec?.[metric] ?? 0 }
+    points: trendKeys.map((k, i) => {
+      const v = bucketVal(c, k)
+      return { x: xFor(i), y: yFor(v ?? 0), has: v !== null, v: v ?? 0 }
     }),
   }))
 
@@ -182,17 +222,20 @@ export default function SalesTab2({ salesRecords }: SalesTab2Props) {
 
       {/* Multi-line trend chart */}
       <div className="rounded-xl border border-slate-200 p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-xs font-semibold text-slate-600">
+        <div className="flex items-center justify-between mb-3 gap-3">
+          <h4 className="text-xs font-semibold text-slate-600 flex-shrink-0">
             {metric === 'units' ? 'Units' : 'Revenue'} Trend by Customer
           </h4>
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {customers.map(c => (
-              <span key={c} className="inline-flex items-center gap-1.5 text-[11px] text-slate-500">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colorOf(c) }} />
-                {c}
-              </span>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end">
+              {customers.map(c => (
+                <span key={c} className="inline-flex items-center gap-1.5 text-[11px] text-slate-500">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colorOf(c) }} />
+                  {c}
+                </span>
+              ))}
+            </div>
+            <GranToggle value={trendGran} onChange={setTrendGran} />
           </div>
         </div>
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 'auto' }} preserveAspectRatio="none">
@@ -206,9 +249,9 @@ export default function SalesTab2({ salesRecords }: SalesTab2Props) {
             </g>
           ))}
           {/* X labels */}
-          {periods.map((p, i) => (
-            <text key={p} x={xFor(i)} y={H - 6} textAnchor="middle" className="fill-slate-400" style={{ fontSize: 13 }}>
-              {fmtMonth(p)}
+          {trendKeys.map((k, i) => (
+            <text key={k} x={xFor(i)} y={H - 6} textAnchor="middle" className="fill-slate-400" style={{ fontSize: 13 }}>
+              {fmtBucket(k)}
             </text>
           ))}
           {/* Series lines */}
@@ -224,7 +267,7 @@ export default function SalesTab2({ salesRecords }: SalesTab2Props) {
               />
               {s.points.map((pt, i) => (
                 <circle key={i} cx={pt.x} cy={pt.y} r={3} fill="#fff" stroke={s.color} strokeWidth={2}>
-                  <title>{`${s.customer} · ${fmtMonth(periods[i])}: ${fmtValue(pt.v, metric)}`}</title>
+                  <title>{`${s.customer} · ${fmtBucket(trendKeys[i])}: ${fmtValue(pt.v, metric)}`}</title>
                 </circle>
               ))}
             </g>

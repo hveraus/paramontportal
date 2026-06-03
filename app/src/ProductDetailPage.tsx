@@ -27,6 +27,8 @@ type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 
 
 const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean }[] = [
   { id: 'basic',           label: 'Basic Info' },
+  { id: 'sales',           label: 'Sales Data' },
+  { id: 'sales2',          label: 'Sales Data #2' },
   { id: 'specs',           label: 'Specifications' },
   { id: 'packaging',       label: 'Packaging' },
   { id: 'quality',         label: 'Quality' },
@@ -35,8 +37,6 @@ const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean
 
   { id: 'patents',         label: 'Patents',        patentOnly: true },
   { id: 'committed',       label: 'Program' },
-  { id: 'sales',           label: 'Sales' },
-  { id: 'sales2',          label: 'Sales #2' },
   { id: 'source',          label: 'Art Works' },
 ]
 

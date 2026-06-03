@@ -6,6 +6,7 @@ interface SalesTabProps {
 }
 
 type Metric = 'units' | 'revenue'
+type Granularity = 'month' | 'quarter'
 
 // Fixed palette for up to 6 customers
 const CUSTOMER_COLORS = [
@@ -17,11 +18,24 @@ const CUSTOMER_COLORS = [
   '#14b8a6', // teal
 ]
 
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 function fmtMonth(period: string) {
   // "2025-01" → "Jan '25"
   const [y, m] = period.split('-')
-  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m) - 1] ?? m
-  return `${month} '${y.slice(2)}`
+  return `${MONTH_NAMES[Number(m) - 1] ?? m} '${y.slice(2)}`
+}
+
+function periodToQuarter(period: string) {
+  const [y, m] = period.split('-')
+  const q = Math.floor((Number(m) - 1) / 3) + 1
+  return `${y}-Q${q}`
+}
+
+function fmtQuarter(key: string) {
+  // "2024-Q3" → "Q3 '24"
+  const [y, q] = key.split('-')
+  return `${q} '${y.slice(2)}`
 }
 
 function fmtValue(v: number, metric: Metric) {
@@ -33,24 +47,58 @@ function fmtValue(v: number, metric: Metric) {
   return `${v}`
 }
 
+// Small Month/Quarter switch
+function GranToggle({ value, onChange }: { value: Granularity; onChange: (g: Granularity) => void }) {
+  return (
+    <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-[11px] font-medium">
+      {(['month', 'quarter'] as Granularity[]).map(g => (
+        <button
+          key={g}
+          onClick={() => onChange(g)}
+          className={`px-2.5 py-1 transition-colors ${
+            value === g ? 'bg-slate-700 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'
+          }`}
+        >
+          {g === 'month' ? 'Monthly' : 'Quarterly'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function SalesTab({ salesRecords }: SalesTabProps) {
   const [metric, setMetric] = useState<Metric>('units')
+  const [trendGran, setTrendGran] = useState<Granularity>('month')
+  const [tableGran, setTableGran] = useState<Granularity>('month')
 
-  const { periods, customers, byPeriod, byCustomer, grandTotal } = useMemo(() => {
-    const periodSet = Array.from(new Set(salesRecords.map(r => r.period))).sort()
+  const { customers, byCustomer, grandTotal, monthPeak, buckets } = useMemo(() => {
     const customerSet = Array.from(new Set(salesRecords.map(r => r.customer)))
 
-    // Total per period (for trend chart)
-    const byPeriod = periodSet.map(p => {
-      const rows = salesRecords.filter(r => r.period === p)
-      return {
-        period: p,
-        units: rows.reduce((s, r) => s + r.units, 0),
-        revenue: rows.reduce((s, r) => s + r.revenue, 0),
+    // Build bucketed aggregates for a given granularity
+    const build = (gran: Granularity) => {
+      const bucketOf = gran === 'quarter' ? periodToQuarter : (p: string) => p
+      const fmt = gran === 'quarter' ? fmtQuarter : fmtMonth
+      const keys = Array.from(new Set(salesRecords.map(r => bucketOf(r.period)))).sort()
+      const totals = keys.map(k => {
+        const rows = salesRecords.filter(r => bucketOf(r.period) === k)
+        return {
+          key: k,
+          label: fmt(k),
+          units: rows.reduce((s, r) => s + r.units, 0),
+          revenue: rows.reduce((s, r) => s + r.revenue, 0),
+        }
+      })
+      // value of one customer within one bucket (null if no record)
+      const cell = (customer: string, key: string): { units: number; revenue: number } | null => {
+        const rows = salesRecords.filter(r => r.customer === customer && bucketOf(r.period) === key)
+        if (!rows.length) return null
+        return { units: rows.reduce((s, r) => s + r.units, 0), revenue: rows.reduce((s, r) => s + r.revenue, 0) }
       }
-    })
+      return { keys, totals, cell }
+    }
 
-    // Total per customer (for comparison chart), sorted desc by current metric handled later
+    const buckets = { month: build('month'), quarter: build('quarter') }
+
     const byCustomer = customerSet.map(c => {
       const rows = salesRecords.filter(r => r.customer === c)
       return {
@@ -61,26 +109,36 @@ export default function SalesTab({ salesRecords }: SalesTabProps) {
     })
 
     const grandTotal = {
-      units: byPeriod.reduce((s, p) => s + p.units, 0),
-      revenue: byPeriod.reduce((s, p) => s + p.revenue, 0),
+      units: byCustomer.reduce((s, c) => s + c.units, 0),
+      revenue: byCustomer.reduce((s, c) => s + c.revenue, 0),
     }
 
-    return { periods: periodSet, customers: customerSet, byPeriod, byCustomer, grandTotal }
+    // peak month for the summary card
+    const monthTotals = buckets.month.totals
+    const monthPeak = {
+      units: monthTotals.reduce((a, b) => (b.units > a.units ? b : a)),
+      revenue: monthTotals.reduce((a, b) => (b.revenue > a.revenue ? b : a)),
+    }
+
+    return { customers: customerSet, byCustomer, grandTotal, monthPeak, buckets }
   }, [salesRecords])
 
   const colorOf = (customer: string) => CUSTOMER_COLORS[customers.indexOf(customer) % CUSTOMER_COLORS.length]
 
   if (salesRecords.length === 0) {
-    return (
-      <div className="py-16 text-center text-slate-400 text-sm">No sales data available for this product.</div>
-    )
+    return <div className="py-16 text-center text-slate-400 text-sm">No sales data available for this product.</div>
   }
 
-  // ── Trend chart geometry ───────────────────────────────────────────────
-  const maxPeriodVal = Math.max(...byPeriod.map(p => p[metric]), 1)
-  const peakPeriod = byPeriod.reduce((a, b) => (b[metric] > a[metric] ? b : a))
+  const monthKeys = buckets.month.totals
+  const peakBucket = monthPeak[metric]
 
-  // ── Customer comparison ────────────────────────────────────────────────
+  // selected bucket sets
+  const trend = buckets[trendGran]
+  const table = buckets[tableGran]
+  const maxTrendVal = Math.max(...trend.totals.map(t => t[metric]), 1)
+  const trendPeakKey = trend.totals.reduce((a, b) => (b[metric] > a[metric] ? b : a)).key
+
+  // customer comparison
   const customersSorted = [...byCustomer].sort((a, b) => b[metric] - a[metric])
   const maxCustomerVal = Math.max(...customersSorted.map(c => c[metric]), 1)
 
@@ -91,7 +149,7 @@ export default function SalesTab({ salesRecords }: SalesTabProps) {
         <div>
           <h3 className="text-sm font-semibold text-slate-700">Sales Performance</h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            {fmtMonth(periods[0])} – {fmtMonth(periods[periods.length - 1])} · {customers.length} customers
+            {monthKeys[0].label} – {monthKeys[monthKeys.length - 1].label} · {customers.length} customers
           </p>
         </div>
         <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
@@ -119,8 +177,8 @@ export default function SalesTab({ salesRecords }: SalesTabProps) {
         </div>
         <div className="rounded-xl border border-slate-200 p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Peak Month</p>
-          <p className="text-xl font-bold text-slate-900">{fmtMonth(peakPeriod.period)}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">{fmtValue(peakPeriod[metric], metric)}</p>
+          <p className="text-xl font-bold text-slate-900">{peakBucket.label}</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{fmtValue(peakBucket[metric], metric)}</p>
         </div>
         <div className="rounded-xl border border-slate-200 p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Top Customer</p>
@@ -131,35 +189,38 @@ export default function SalesTab({ salesRecords }: SalesTabProps) {
         </div>
       </div>
 
-      {/* ── Trend chart (monthly total) ──────────────────────────────── */}
+      {/* ── Trend chart ──────────────────────────────────────────────── */}
       <div className="rounded-xl border border-slate-200 p-5">
-        <h4 className="text-xs font-semibold text-slate-600 mb-4">
-          Monthly {metric === 'units' ? 'Units Sold' : 'Revenue'}
-        </h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-xs font-semibold text-slate-600">
+            {trendGran === 'quarter' ? 'Quarterly' : 'Monthly'} {metric === 'units' ? 'Units Sold' : 'Revenue'}
+          </h4>
+          <GranToggle value={trendGran} onChange={setTrendGran} />
+        </div>
         <div className="flex items-end gap-2 h-44">
-          {byPeriod.map(p => {
-            const h = (p[metric] / maxPeriodVal) * 100
-            const isPeak = p.period === peakPeriod.period
+          {trend.totals.map(t => {
+            const h = (t[metric] / maxTrendVal) * 100
+            const isPeak = t.key === trendPeakKey
             return (
-              <div key={p.period} className="flex-1 flex flex-col items-center justify-end h-full group">
+              <div key={t.key} className="flex-1 flex flex-col items-center justify-end h-full group">
                 <span className="text-[10px] font-medium text-slate-500 mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  {fmtValue(p[metric], metric)}
+                  {fmtValue(t[metric], metric)}
                 </span>
                 <div
                   className={`w-full rounded-t-md transition-all ${
                     isPeak ? 'bg-blue-600' : 'bg-blue-300 group-hover:bg-blue-400'
                   }`}
                   style={{ height: `${Math.max(h, 2)}%` }}
-                  title={`${fmtMonth(p.period)}: ${fmtValue(p[metric], metric)}`}
+                  title={`${t.label}: ${fmtValue(t[metric], metric)}`}
                 />
               </div>
             )
           })}
         </div>
         <div className="flex gap-2 mt-2">
-          {byPeriod.map(p => (
-            <span key={p.period} className="flex-1 text-center text-[9px] text-slate-400 whitespace-nowrap">
-              {fmtMonth(p.period)}
+          {trend.totals.map(t => (
+            <span key={t.key} className="flex-1 text-center text-[9px] text-slate-400 whitespace-nowrap">
+              {t.label}
             </span>
           ))}
         </div>
@@ -194,10 +255,13 @@ export default function SalesTab({ salesRecords }: SalesTabProps) {
         </div>
       </div>
 
-      {/* ── Per-customer monthly breakdown (stacked legend table) ─────── */}
+      {/* ── Per-customer breakdown table ─────────────────────────────── */}
       <div className="rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
-          <h4 className="text-xs font-semibold text-slate-600">Monthly Breakdown by Customer</h4>
+        <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <h4 className="text-xs font-semibold text-slate-600">
+            {tableGran === 'quarter' ? 'Quarterly' : 'Monthly'} Breakdown by Customer
+          </h4>
+          <GranToggle value={tableGran} onChange={setTableGran} />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -206,9 +270,9 @@ export default function SalesTab({ salesRecords }: SalesTabProps) {
                 <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                   Customer
                 </th>
-                {periods.map(p => (
-                  <th key={p} className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                    {fmtMonth(p)}
+                {table.totals.map(t => (
+                  <th key={t.key} className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                    {t.label}
                   </th>
                 ))}
                 <th className="text-right px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
@@ -225,11 +289,11 @@ export default function SalesTab({ salesRecords }: SalesTabProps) {
                       <span className="text-xs font-medium text-slate-700">{c.customer}</span>
                     </span>
                   </td>
-                  {periods.map(p => {
-                    const rec = salesRecords.find(r => r.customer === c.customer && r.period === p)
+                  {table.totals.map(t => {
+                    const cell = table.cell(c.customer, t.key)
                     return (
-                      <td key={p} className="text-right px-3 py-2.5 text-xs text-slate-500 tabular-nums whitespace-nowrap">
-                        {rec ? fmtValue(rec[metric], metric) : <span className="text-slate-300">—</span>}
+                      <td key={t.key} className="text-right px-3 py-2.5 text-xs text-slate-500 tabular-nums whitespace-nowrap">
+                        {cell ? fmtValue(cell[metric], metric) : <span className="text-slate-300">—</span>}
                       </td>
                     )
                   })}
@@ -242,9 +306,9 @@ export default function SalesTab({ salesRecords }: SalesTabProps) {
             <tfoot>
               <tr className="border-t-2 border-slate-200 bg-slate-50">
                 <td className="px-4 py-2.5 text-xs font-semibold text-slate-700 whitespace-nowrap">Total</td>
-                {byPeriod.map(p => (
-                  <td key={p.period} className="text-right px-3 py-2.5 text-xs font-semibold text-slate-700 tabular-nums whitespace-nowrap">
-                    {fmtValue(p[metric], metric)}
+                {table.totals.map(t => (
+                  <td key={t.key} className="text-right px-3 py-2.5 text-xs font-semibold text-slate-700 tabular-nums whitespace-nowrap">
+                    {fmtValue(t[metric], metric)}
                   </td>
                 ))}
                 <td className="text-right px-4 py-2.5 text-xs font-bold text-slate-900 tabular-nums whitespace-nowrap">
