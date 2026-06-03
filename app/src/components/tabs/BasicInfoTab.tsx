@@ -63,14 +63,6 @@ export default function BasicInfoTab({ product, isEditing, onChange }: Props) {
         <span className="font-mono font-medium">{product.itemNo}</span>
       </Field>
 
-      <Field label="UPC#">
-        {val(product.upc, true)}
-      </Field>
-
-      <Field label="12 Digit UPC">
-        {val(product.upc12Digit, true)}
-      </Field>
-
       {/* ── Product Details ──────────────────────────────────────── */}
       <SectionDivider title="Product Details" />
 
