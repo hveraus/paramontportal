@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage'
 import ProductDetailPage from './ProductDetailPage'
 import ProductsPage from './pages/ProductsPage'
 import ArchivesPage from './pages/ArchivesPage'
+import SOLFilesPage from './pages/SOLFilesPage'
 import SampleRoomPage from './pages/SampleRoomPage'
 import SettingsIndexPage from './pages/SettingsIndexPage'
 import SettingsPage from './pages/SettingsPage'
@@ -18,6 +19,7 @@ function PageRouter() {
   if (page === 'product-detail')       return <ProductDetailPage />
   if (page === 'products')             return <ProductsPage />
   if (page === 'archives')             return <ArchivesPage />
+  if (page === 'sol-files')            return <SOLFilesPage />
   if (page === 'sample-room')          return <SampleRoomPage />
   if (page === 'program')              return <ProgramPage />
   if (page === 'settings')             return <SettingsIndexPage />

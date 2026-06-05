@@ -114,6 +114,7 @@ function FilterPanel({ filters, onChange, categoryCounts }: {
   onChange: (f: FilterState) => void
   categoryCounts: Record<string, number>
 }) {
+  const { navigate } = useNavigation()
   const [expandedL1, setExpandedL1] = useState<Set<string>>(new Set())
   const [expandedL2, setExpandedL2] = useState<Set<string>>(new Set())
 
@@ -292,6 +293,23 @@ function FilterPanel({ filters, onChange, categoryCounts }: {
           <Toggle checked={filters.committed} onChange={() => onChange({ ...filters, committed: !filters.committed })} />
         </div>
       </FilterSection>
+
+      {/* ── SOL Files entry ── */}
+      <button
+        onClick={() => navigate('sol-files')}
+        className="mt-4 w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-slate-200
+          bg-white text-slate-700 hover:bg-slate-50 hover:border-blue-300 transition-colors group"
+      >
+        <span className="inline-flex items-center gap-2">
+          <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span className="text-sm font-medium">SOL Files</span>
+        </span>
+        <svg className="w-4 h-4 text-slate-300 group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
     </aside>
   )
 }

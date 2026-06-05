@@ -266,6 +266,18 @@ export interface CommittedRecord {
   clientPending?: boolean     // true = pending fetch from external system
 }
 
+// ── SOL files (Statement of Line) ───────────────────────────────────────────
+
+export type SOLStatus = 'Open' | 'Merged'
+
+export interface SOLFile {
+  id: string
+  date: string          // ISO date
+  name: string          // file / SOL name
+  customer: string
+  status: SOLStatus
+}
+
 // One row = sales of this product to one customer in one period (month).
 export interface SalesRecord {
   period: string              // ISO month "YYYY-MM"

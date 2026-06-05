@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
-export type Page = 'login' | 'dashboard' | 'products' | 'product-detail' | 'archives' | 'sample-room' | 'program' | 'settings' | 'settings-permissions' | 'search'
+export type Page = 'login' | 'dashboard' | 'products' | 'product-detail' | 'archives' | 'sample-room' | 'program' | 'settings' | 'settings-permissions' | 'search' | 'sol-files'
 
 interface NavigationCtx {
   page: Page
