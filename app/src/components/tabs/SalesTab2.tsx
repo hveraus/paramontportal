@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
-import type { SalesRecord } from '../../types'
+import type { SalesRecord, CommittedRecord } from '../../types'
+import CommittedTab from './CommittedTab'
 
 interface SalesTab2Props {
   salesRecords: SalesRecord[]
+  committedRecords: CommittedRecord[]
 }
 
 type Metric = 'units' | 'revenue'
@@ -72,7 +74,7 @@ function donutArc(cx: number, cy: number, rOuter: number, rInner: number, startA
   return `M ${x1} ${y1} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4} ${y4} Z`
 }
 
-export default function SalesTab2({ salesRecords }: SalesTab2Props) {
+export default function SalesTab2({ salesRecords, committedRecords }: SalesTab2Props) {
   const [metric, setMetric] = useState<Metric>('units')
   const [trendGran, setTrendGran] = useState<Granularity>('month')
 
@@ -305,6 +307,12 @@ export default function SalesTab2({ salesRecords }: SalesTab2Props) {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Sales Records (moved from Program tab) */}
+      <div>
+        <h4 className="text-xs font-semibold text-slate-600 mb-3">Sales Records</h4>
+        <CommittedTab committedRecords={committedRecords} />
       </div>
     </div>
   )

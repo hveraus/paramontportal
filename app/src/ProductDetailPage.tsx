@@ -15,20 +15,17 @@ import CostTab from './components/tabs/CostTab'
 import CustomsTab from './components/tabs/CustomsTab'
 import PatentsTab from './components/tabs/PatentsTab'
 
-import CommittedTab from './components/tabs/CommittedTab'
 import SourceFilesTab from './components/tabs/SourceFilesTab'
-import SalesTab from './components/tabs/SalesTab'
 import SalesTab2 from './components/tabs/SalesTab2'
 import ActivityPanel from './components/ActivityPanel'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 
-type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'patents' | 'committed' | 'source' | 'sales' | 'sales2'
+type TabId = 'basic' | 'specs' | 'packaging' | 'quality' | 'cost' | 'customs' | 'patents' | 'source' | 'sales2'
 
 const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean }[] = [
   { id: 'basic',           label: 'Basic Info' },
-  { id: 'sales',           label: 'Sales Data' },
-  { id: 'sales2',          label: 'Sales Data #2' },
+  { id: 'sales2',          label: 'Sales Data' },
   { id: 'specs',           label: 'Specifications' },
   { id: 'packaging',       label: 'Packaging' },
   { id: 'quality',         label: 'Quality' },
@@ -36,7 +33,6 @@ const TABS: { id: TabId; label: string; costOnly?: boolean; patentOnly?: boolean
   { id: 'customs',         label: 'Customs' },
 
   { id: 'patents',         label: 'Patents',        patentOnly: true },
-  { id: 'committed',       label: 'Program' },
   { id: 'source',          label: 'Art Works' },
 ]
 
@@ -614,16 +610,6 @@ export default function ProductDetailPage() {
                       )}
                     </div>
 
-                    {/* Program tab: CRM tip (no edit button) */}
-                    {resolvedTab === 'committed' && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-slate-400 mr-auto truncate py-1 border border-transparent">
-                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Customer names are sourced from the external CRM system. Pending entries will update automatically when data is available.
-                      </span>
-                    )}
-
                     {/* Source Files tab: Upload button */}
                     {resolvedTab === 'source' && (
                       <>
@@ -652,7 +638,7 @@ export default function ProductDetailPage() {
                     )}
 
                     {/* Other tabs: Edit / Save / Cancel */}
-                    {resolvedTab !== 'committed' && resolvedTab !== 'source' && resolvedTab !== 'sales' && resolvedTab !== 'sales2' && (
+                    {resolvedTab !== 'source' && resolvedTab !== 'sales2' && (
                       <div className="flex items-center gap-2">
                         {editingTab === resolvedTab ? (
                           <>
@@ -713,9 +699,7 @@ export default function ProductDetailPage() {
                   {resolvedTab === 'cost'      && <CostTab        product={editingTab === 'cost' ? draft : product}     isEditing={editingTab === 'cost'}     onChange={onChange} />}
                   {resolvedTab === 'customs'   && <CustomsTab     product={editingTab === 'customs' ? draft : product}  isEditing={editingTab === 'customs'}  onChange={onChange} />}
 {resolvedTab === 'patents'        && <PatentsTab        patents={editingTab === 'patents' ? draft.patents : product.patents} isEditing={editingTab === 'patents'} onChange={onChange} />}
-                  {resolvedTab === 'committed'      && <CommittedTab      committedRecords={product.committedRecords} />}
-                  {resolvedTab === 'sales'          && <SalesTab          salesRecords={product.salesRecords} />}
-                  {resolvedTab === 'sales2'         && <SalesTab2         salesRecords={product.salesRecords} />}
+                  {resolvedTab === 'sales2'         && <SalesTab2         salesRecords={product.salesRecords} committedRecords={product.committedRecords} />}
                   {resolvedTab === 'source'         && <SourceFilesTab    sourceFiles={product.sourceFiles} />}
                 </div>
               </div>
