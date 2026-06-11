@@ -23,12 +23,6 @@ export default function CommittedTab({ committedRecords }: CommittedTabProps) {
                   Date
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Program
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-36">
-                  Program Code
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-40">
                   Customer
                 </th>
               </tr>
@@ -39,16 +33,6 @@ export default function CommittedTab({ committedRecords }: CommittedTabProps) {
                   {/* Date */}
                   <td className="px-4 py-3.5 text-sm text-slate-600 whitespace-nowrap">
                     {formatDate(record.committedDate)}
-                  </td>
-
-                  {/* Program name */}
-                  <td className="px-4 py-3.5">
-                    <span className="text-sm font-medium text-slate-800">{record.projectName}</span>
-                  </td>
-
-                  {/* Program code */}
-                  <td className="px-4 py-3.5">
-                    <span className="font-mono text-sm text-slate-600">{record.programCode}</span>
                   </td>
 
                   {/* Customer */}
