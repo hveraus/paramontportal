@@ -16,8 +16,6 @@ export interface QualityRecord {
   images: ProductImage[]
 }
 
-export type PatentStatus = 'Pending' | 'Granted' | 'Expired'
-
 export interface PatentFile {
   id: string
   name: string
@@ -28,11 +26,10 @@ export interface PatentFile {
 
 export interface PatentRecord {
   id: string
-  patentName: string
-  patentNumber: string
-  applicationDate: string | null
-  status: PatentStatus | null
-  files: PatentFile[]
+  patentName: string       // 专利名称
+  patentNumber: string     // 专利号
+  grantDate: string | null // 授权公告日
+  files: PatentFile[]      // PDF 附件
 }
 
 export type CertificationType = 'CE' | 'FCC' | 'RoHS' | 'Other'
@@ -302,6 +299,7 @@ export interface SampleAssignment {
   id: string
   positionId: string   // LocationNode.id where isLeaf===true
   productId: string    // matches MOCK_PRODUCTS[n].id
+  quantity: number     // number of sample units stored
   assignedAt: string
   assignedBy: string
   notes?: string

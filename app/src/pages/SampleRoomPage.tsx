@@ -99,11 +99,12 @@ function AssignDialog({
 }: {
   positionId: string
   nodes: LocationNode[]
-  onConfirm: (productId: string, notes: string) => void
+  onConfirm: (productId: string, quantity: number, notes: string) => void
   onCancel: () => void
 }) {
   const [search, setSearch] = useState('')
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const [quantity, setQuantity] = useState(1)
   const [notes, setNotes] = useState('')
 
   const path = buildPath(positionId, nodes)
@@ -172,6 +173,18 @@ function AssignDialog({
           )}
         </div>
 
+        {/* Quantity */}
+        <div className="px-6 py-3 border-t border-slate-100">
+          <label className="block text-xs font-medium text-slate-500 mb-1">Quantity</label>
+          <input
+            type="number"
+            min={1}
+            value={quantity}
+            onChange={e => setQuantity(Math.max(1, Math.round(Number(e.target.value) || 1)))}
+            className="w-28 h-9 px-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
         {/* Notes */}
         <div className="px-6 py-3 border-t border-slate-100">
           <label className="block text-xs font-medium text-slate-500 mb-1">Notes (optional)</label>
@@ -193,7 +206,7 @@ function AssignDialog({
             Cancel
           </button>
           <button
-            onClick={() => selectedProductId && onConfirm(selectedProductId, notes)}
+            onClick={() => selectedProductId && onConfirm(selectedProductId, quantity, notes)}
             disabled={!selectedProductId}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -562,7 +575,12 @@ function ManageTreeNode({
 
         {/* Leaf status — sits right next to the name */}
         {node.isLeaf && leafProduct && (
-          <span className="text-[11px] text-emerald-700 truncate max-w-[180px]">{leafProduct.name}</span>
+          <>
+            <span className="text-[11px] text-emerald-700 truncate max-w-[180px]">{leafProduct.name}</span>
+            {leafAssignment && (
+              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 rounded-full px-1.5 py-0.5 flex-shrink-0">×{leafAssignment.quantity}</span>
+            )}
+          </>
         )}
         {node.isLeaf && !leafProduct && (
           <span className="text-[11px] text-slate-400 italic">Empty</span>
@@ -700,6 +718,10 @@ function PositionDetail({
           {/* Details */}
           <div className="px-6 py-4 grid grid-cols-2 gap-4">
             <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Quantity</p>
+              <p className="text-sm font-semibold text-slate-900">{assignment.quantity} <span className="text-slate-400 font-normal text-xs">pcs</span></p>
+            </div>
+            <div>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Brand</p>
               <p className="text-sm text-slate-700">{product.brand}</p>
             </div>
@@ -828,7 +850,10 @@ function NodeGrid({
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <StatusTag label={product.status} variant={STATUS_VARIANT[product.status] ?? 'gray'} dot={false} />
+                    <div className="flex items-center justify-between gap-1">
+                      <StatusTag label={product.status} variant={STATUS_VARIANT[product.status] ?? 'gray'} dot={false} />
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 rounded-full px-1.5 py-0.5 flex-shrink-0">×{asgn.quantity}</span>
+                    </div>
                     <p className="font-mono text-[10px] text-slate-400 mt-1.5">{product.itemNo}</p>
                   </div>
                 </div>
@@ -910,11 +935,12 @@ export default function SampleRoomPage() {
 
   // ── CRUD operations ────────────────────────────────────────────────────
 
-  const addAssignment = useCallback((positionId: string, productId: string, notes?: string) => {
+  const addAssignment = useCallback((positionId: string, productId: string, quantity: number, notes?: string) => {
     const newAsgn: SampleAssignment = {
       id: genId('asgn'),
       positionId,
       productId,
+      quantity,
       assignedAt: new Date().toISOString().slice(0, 10),
       assignedBy: 'Sarah Thompson',
       notes: notes || undefined,
@@ -1029,8 +1055,8 @@ export default function SampleRoomPage() {
 
   // ── Assign/Remove handlers ─────────────────────────────────────────────
 
-  const handleAssignConfirm = (productId: string, notes: string) => {
-    if (assignDialog) addAssignment(assignDialog.positionId, productId, notes)
+  const handleAssignConfirm = (productId: string, quantity: number, notes: string) => {
+    if (assignDialog) addAssignment(assignDialog.positionId, productId, quantity, notes)
     setAssignDialog(null)
   }
   const handleRemoveConfirm = () => {

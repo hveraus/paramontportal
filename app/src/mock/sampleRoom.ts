@@ -88,35 +88,35 @@ export const LOCATION_NODES: LocationNode[] = [
 // ── Assignments (~20 of 32 slots occupied) ─────────────────────────────────
 export const MOCK_ASSIGNMENTS: SampleAssignment[] = [
   // Zone A / Shelf 1 / Row 1
-  { id: 'asgn-001', positionId: 'slt-001', productId: 'p-01', assignedAt: '2024-09-10', assignedBy: 'Sarah Thompson', notes: 'Q4 range review' },
-  { id: 'asgn-002', positionId: 'slt-002', productId: 'p-02', assignedAt: '2024-10-05', assignedBy: 'Summer Li' },
-  { id: 'asgn-003', positionId: 'slt-003', productId: 'p-03', assignedAt: '2024-10-18', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-001', positionId: 'slt-001', productId: 'p-01', quantity: 3, assignedAt: '2024-09-10', assignedBy: 'Sarah Thompson', notes: 'Q4 range review' },
+  { id: 'asgn-002', positionId: 'slt-002', productId: 'p-02', quantity: 5, assignedAt: '2024-10-05', assignedBy: 'Summer Li' },
+  { id: 'asgn-003', positionId: 'slt-003', productId: 'p-03', quantity: 2, assignedAt: '2024-10-18', assignedBy: 'Sarah Thompson' },
   // slt-004 empty
   // Zone A / Shelf 1 / Row 2
-  { id: 'asgn-004', positionId: 'slt-005', productId: 'p-04', assignedAt: '2024-11-01', assignedBy: 'Summer Li', notes: 'Pending QC sign-off' },
-  { id: 'asgn-005', positionId: 'slt-006', productId: 'p-05', assignedAt: '2024-11-15', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-004', positionId: 'slt-005', productId: 'p-04', quantity: 4, assignedAt: '2024-11-01', assignedBy: 'Summer Li', notes: 'Pending QC sign-off' },
+  { id: 'asgn-005', positionId: 'slt-006', productId: 'p-05', quantity: 6, assignedAt: '2024-11-15', assignedBy: 'Sarah Thompson' },
   // slt-007, slt-008 empty
   // Zone A / Shelf 2 / Row 1
-  { id: 'asgn-006', positionId: 'slt-009', productId: 'p-06', assignedAt: '2024-08-20', assignedBy: 'Summer Li' },
-  { id: 'asgn-007', positionId: 'slt-010', productId: 'p-07', assignedAt: '2024-09-30', assignedBy: 'Sarah Thompson', notes: 'WMT buyer preview' },
-  { id: 'asgn-008', positionId: 'slt-011', productId: 'p-08', assignedAt: '2024-10-12', assignedBy: 'Summer Li' },
+  { id: 'asgn-006', positionId: 'slt-009', productId: 'p-06', quantity: 1, assignedAt: '2024-08-20', assignedBy: 'Summer Li' },
+  { id: 'asgn-007', positionId: 'slt-010', productId: 'p-07', quantity: 8, assignedAt: '2024-09-30', assignedBy: 'Sarah Thompson', notes: 'WMT buyer preview' },
+  { id: 'asgn-008', positionId: 'slt-011', productId: 'p-08', quantity: 3, assignedAt: '2024-10-12', assignedBy: 'Summer Li' },
   // slt-012 empty
   // Zone A / Shelf 2 / Row 2
-  { id: 'asgn-009', positionId: 'slt-013', productId: 'p-09', assignedAt: '2024-09-22', assignedBy: 'Sarah Thompson' },
-  { id: 'asgn-010', positionId: 'slt-014', productId: 'p-10', assignedAt: '2024-11-03', assignedBy: 'Summer Li' },
+  { id: 'asgn-009', positionId: 'slt-013', productId: 'p-09', quantity: 5, assignedAt: '2024-09-22', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-010', positionId: 'slt-014', productId: 'p-10', quantity: 2, assignedAt: '2024-11-03', assignedBy: 'Summer Li' },
   // slt-015, slt-016 empty
   // Zone B / Shelf 1 / Row 1
-  { id: 'asgn-011', positionId: 'slt-017', productId: 'p-11', assignedAt: '2024-10-08', assignedBy: 'Sarah Thompson' },
-  { id: 'asgn-012', positionId: 'slt-018', productId: 'p-12', assignedAt: '2024-10-25', assignedBy: 'Summer Li', notes: 'Strategy game prototype' },
+  { id: 'asgn-011', positionId: 'slt-017', productId: 'p-11', quantity: 4, assignedAt: '2024-10-08', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-012', positionId: 'slt-018', productId: 'p-12', quantity: 6, assignedAt: '2024-10-25', assignedBy: 'Summer Li', notes: 'Strategy game prototype' },
   // slt-019, slt-020 empty
   // Zone B / Shelf 1 / Row 2
-  { id: 'asgn-013', positionId: 'slt-021', productId: 'p-01', assignedAt: '2025-01-08', assignedBy: 'Sarah Thompson' },
-  { id: 'asgn-014', positionId: 'slt-022', productId: 'p-02', assignedAt: '2025-01-20', assignedBy: 'Summer Li' },
+  { id: 'asgn-013', positionId: 'slt-021', productId: 'p-01', quantity: 3, assignedAt: '2025-01-08', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-014', positionId: 'slt-022', productId: 'p-02', quantity: 5, assignedAt: '2025-01-20', assignedBy: 'Summer Li' },
   // slt-023, slt-024 empty
   // Zone B / Shelf 2 / Row 1
-  { id: 'asgn-015', positionId: 'slt-025', productId: 'p-03', assignedAt: '2025-02-05', assignedBy: 'Sarah Thompson' },
-  { id: 'asgn-016', positionId: 'slt-026', productId: 'p-04', assignedAt: '2025-02-14', assignedBy: 'Summer Li', notes: 'TGT line review' },
-  { id: 'asgn-017', positionId: 'slt-027', productId: 'p-05', assignedAt: '2025-02-28', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-015', positionId: 'slt-025', productId: 'p-03', quantity: 2, assignedAt: '2025-02-05', assignedBy: 'Sarah Thompson' },
+  { id: 'asgn-016', positionId: 'slt-026', productId: 'p-04', quantity: 4, assignedAt: '2025-02-14', assignedBy: 'Summer Li', notes: 'TGT line review' },
+  { id: 'asgn-017', positionId: 'slt-027', productId: 'p-05', quantity: 6, assignedAt: '2025-02-28', assignedBy: 'Sarah Thompson' },
   // slt-028 empty
   // Zone B / Shelf 2 / Row 2 — all empty (slt-029 through slt-032)
 ]

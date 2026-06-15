@@ -365,8 +365,7 @@ export const mockProduct: ProductDetail = {
       id: 'pat-01',
       patentName: 'Dual-Size Pom-Pom Maker with Integrated Yarn Guide',
       patentNumber: 'US11,234,567 B2',
-      applicationDate: '2022-03-14',
-      status: 'Granted',
+      grantDate: '2023-06-20',
       files: [
         {
           id: 'pf-01',
@@ -381,8 +380,7 @@ export const mockProduct: ProductDetail = {
       id: 'pat-02',
       patentName: 'Ergonomic Yarn Tensioner for Craft Kits',
       patentNumber: 'CN202310456789.X',
-      applicationDate: '2023-04-01',
-      status: 'Pending',
+      grantDate: '2024-01-15',
       files: [
         {
           id: 'pf-02',
@@ -404,8 +402,7 @@ export const mockProduct: ProductDetail = {
       id: 'pat-03',
       patentName: 'Biodegradable Packaging Insert for Craft Accessories',
       patentNumber: 'US10,987,654 B1',
-      applicationDate: '2018-11-22',
-      status: 'Expired',
+      grantDate: '2020-08-04',
       files: [],
     },
   ],

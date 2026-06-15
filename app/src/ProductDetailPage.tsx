@@ -172,7 +172,7 @@ function AddToProposalButton() {
 
 // ── Sample Room assign modal ───────────────────────────────────────────────
 
-interface SampleLocation { path: string[]; leafId: string }
+interface SampleLocation { path: string[]; leafId: string; quantity: number }
 
 function levelLabel(idx: number): string {
   return DEFAULT_SCHEMA.levels[idx]?.label ?? `Level ${idx + 1}`
@@ -200,6 +200,7 @@ function SampleAssignModal({
 }) {
   // ids selected at each depth (root → … → leaf)
   const [selected, setSelected] = useState<string[]>(() => current?.leafId ? idChainFor(current.leafId) : [])
+  const [quantity, setQuantity] = useState(current?.quantity ?? 1)
 
   const childrenOf = (parentId: string | null) =>
     LOCATION_NODES.filter(n => n.parentId === parentId).sort((a, b) => a.order - b.order)
@@ -233,7 +234,7 @@ function SampleAssignModal({
 
   const confirm = () => {
     if (!isComplete) return
-    onAssign({ path: selected.map(id => nodeOf(id)?.name ?? ''), leafId: lastId })
+    onAssign({ path: selected.map(id => nodeOf(id)?.name ?? ''), leafId: lastId, quantity })
   }
 
   const selectStyle = {
@@ -289,13 +290,26 @@ function SampleAssignModal({
               {!isComplete && <span className="text-amber-500"> — pick down to a slot</span>}
             </p>
           )}
+
+          {/* Quantity */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Quantity</label>
+            <input
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={e => setQuantity(Math.max(1, Math.round(Number(e.target.value) || 1)))}
+              className="w-28 h-10 px-3 text-sm rounded-lg border border-slate-200 bg-white
+                text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+          </div>
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
           {current && (
             <button
-              onClick={() => { onAssign({ path: [], leafId: '' }); onClose() }}
+              onClick={() => { onAssign({ path: [], leafId: '', quantity: 0 }); onClose() }}
               className="text-xs text-slate-400 hover:text-red-500 transition-colors"
             >
               Remove location
@@ -502,6 +516,8 @@ export default function ProductDetailPage() {
                       <span className={i === sampleLoc.path.length - 1 ? 'font-mono font-semibold' : ''}>{seg}</span>
                     </span>
                   ))}
+                  <span className="text-violet-300">·</span>
+                  <span className="font-semibold">×{sampleLoc.quantity}</span>
                   <button onClick={() => setShowAssign(true)} title="Edit location"
                     className="ml-0.5 p-0.5 rounded-full hover:bg-violet-100 transition-colors">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -590,34 +606,12 @@ export default function ProductDetailPage() {
                           Cost data is confidential. Do not share externally.
                         </span>
                       )}
-                      {/* Patents: summary counts */}
+                      {/* Patents: summary count */}
                       {resolvedTab === 'patents' && (() => {
                         const pts = editingTab === 'patents' ? draft.patents : product.patents
                         if (pts.length === 0) return null
-                        const counts = { Granted: 0, Pending: 0, Expired: 0 }
-                        pts.forEach(p => { if (p.status) counts[p.status as keyof typeof counts]++ })
                         return (
-                          <span className="flex items-center gap-3">
-                            <span className="text-xs text-slate-400">{pts.length} patent{pts.length !== 1 ? 's' : ''}</span>
-                            {counts.Granted > 0 && (
-                              <span className="flex items-center gap-1 text-xs text-emerald-600">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                {counts.Granted} Granted
-                              </span>
-                            )}
-                            {counts.Pending > 0 && (
-                              <span className="flex items-center gap-1 text-xs text-amber-600">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                {counts.Pending} Pending
-                              </span>
-                            )}
-                            {counts.Expired > 0 && (
-                              <span className="flex items-center gap-1 text-xs text-slate-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                                {counts.Expired} Expired
-                              </span>
-                            )}
-                          </span>
+                          <span className="text-xs text-slate-400">{pts.length} patent{pts.length !== 1 ? 's' : ''}</span>
                         )
                       })()}
                       {editingTab === resolvedTab && (
