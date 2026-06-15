@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { mockProduct } from './mock/productDetail'
-import { LOCATION_NODES } from './mock/sampleRoom'
+import { LOCATION_NODES, DEFAULT_SCHEMA } from './mock/sampleRoom'
 import { useRole } from './context/RoleContext'
 import type { ProductDetail } from './types'
 import Breadcrumb from './components/Breadcrumb'
@@ -172,7 +172,22 @@ function AddToProposalButton() {
 
 // ── Sample Room assign modal ───────────────────────────────────────────────
 
-interface SampleLocation { room: string; shelf: string; position: string }
+interface SampleLocation { path: string[]; leafId: string }
+
+function levelLabel(idx: number): string {
+  return DEFAULT_SCHEMA.levels[idx]?.label ?? `Level ${idx + 1}`
+}
+
+// Resolve a leaf node id into its full root→leaf id chain
+function idChainFor(leafId: string): string[] {
+  const chain: string[] = []
+  let cur = LOCATION_NODES.find(n => n.id === leafId)
+  while (cur) {
+    chain.unshift(cur.id)
+    cur = cur.parentId ? LOCATION_NODES.find(n => n.id === cur!.parentId) : undefined
+  }
+  return chain
+}
 
 function SampleAssignModal({
   current,
@@ -183,19 +198,43 @@ function SampleAssignModal({
   onAssign: (loc: SampleLocation) => void
   onClose: () => void
 }) {
-  const rooms = useMemo(() => LOCATION_NODES.filter(n => n.levelIndex === 2).map(n => n.name).sort(), [])
+  // ids selected at each depth (root → … → leaf)
+  const [selected, setSelected] = useState<string[]>(() => current?.leafId ? idChainFor(current.leafId) : [])
 
-  const [room,     setRoom]     = useState(current?.room     ?? '')
-  const [shelf,    setShelf]    = useState(current?.shelf    ?? '')
-  const [position, setPosition] = useState(current?.position ?? '')
-  const [slotId,   setSlotId]   = useState('')
+  const childrenOf = (parentId: string | null) =>
+    LOCATION_NODES.filter(n => n.parentId === parentId).sort((a, b) => a.order - b.order)
 
-  const shelves = useMemo(() => {
-    if (!room) return []
-    const roomNode = LOCATION_NODES.find(n => n.levelIndex === 2 && n.name === room)
-    if (!roomNode) return []
-    return LOCATION_NODES.filter(n => n.levelIndex === 3 && n.parentId === roomNode.id).map(n => n.name).sort()
-  }, [room])
+  const nodeOf = (id: string) => LOCATION_NODES.find(n => n.id === id)
+
+  // Build the list of selector levels to render: one per depth that still has options
+  const selectors: { levelIndex: number; options: typeof LOCATION_NODES; value: string }[] = []
+  let parentId: string | null = null
+  for (let depth = 0; depth < 8; depth++) {
+    const options = childrenOf(parentId)
+    if (options.length === 0) break
+    const value = selected[depth] ?? ''
+    selectors.push({ levelIndex: depth, options, value })
+    if (!value) break                    // stop until this level is chosen
+    if (nodeOf(value)?.isLeaf) break      // reached a leaf — no deeper levels
+    parentId = value
+  }
+
+  const lastId = selected[selected.length - 1]
+  const lastNode = lastId ? nodeOf(lastId) : undefined
+  const isComplete = !!lastNode?.isLeaf
+
+  const handleSelect = (depth: number, id: string) => {
+    setSelected(prev => {
+      const next = prev.slice(0, depth)
+      if (id) next.push(id)
+      return next
+    })
+  }
+
+  const confirm = () => {
+    if (!isComplete) return
+    onAssign({ path: selected.map(id => nodeOf(id)?.name ?? ''), leafId: lastId })
+  }
 
   const selectStyle = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
@@ -203,9 +242,6 @@ function SampleAssignModal({
     backgroundPosition: 'right 10px center',
     backgroundSize: '14px',
   }
-
-  // slotId is used internally for future slot tracking
-  void slotId
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -226,62 +262,40 @@ function SampleAssignModal({
           </button>
         </div>
 
-        {/* Body */}
+        {/* Body — one cascading selector per hierarchy level */}
         <div className="px-6 py-5 space-y-4">
-          {/* Room */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Room</label>
-            <select
-              value={room}
-              onChange={e => { setRoom(e.target.value); setShelf(''); setSlotId('') }}
-              className="w-full h-10 pl-3 pr-9 text-sm rounded-lg border border-slate-200 bg-white
-                text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 appearance-none"
-              style={selectStyle}
-            >
-              <option value="">Select room…</option>
-              {rooms.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
+          {selectors.map(sel => (
+            <div key={sel.levelIndex}>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                {levelLabel(sel.levelIndex)}
+              </label>
+              <select
+                value={sel.value}
+                onChange={e => handleSelect(sel.levelIndex, e.target.value)}
+                className="w-full h-10 pl-3 pr-9 text-sm rounded-lg border border-slate-200 bg-white
+                  text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 appearance-none"
+                style={selectStyle}
+              >
+                <option value="">Select {levelLabel(sel.levelIndex).toLowerCase()}…</option>
+                {sel.options.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </div>
+          ))}
 
-          {/* Shelf */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Shelf</label>
-            <select
-              value={shelf}
-              onChange={e => { setShelf(e.target.value); setSlotId('') }}
-              disabled={!room}
-              className="w-full h-10 pl-3 pr-9 text-sm rounded-lg border border-slate-200 bg-white
-                text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 appearance-none
-                disabled:opacity-40 disabled:cursor-not-allowed"
-              style={selectStyle}
-            >
-              <option value="">Select shelf…</option>
-              {shelves.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-
-          {/* Position */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Position</label>
-            <input
-              type="text"
-              value={position}
-              onChange={e => setPosition(e.target.value)}
-              disabled={!shelf}
-              placeholder="e.g. A-02-03"
-              className="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 bg-white
-                text-slate-700 placeholder:text-slate-400 font-mono
-                focus:outline-none focus:ring-2 focus:ring-violet-500
-                disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-50"
-            />
-          </div>
+          {/* Selected path preview */}
+          {selected.length > 0 && (
+            <p className="text-xs text-slate-400 truncate">
+              {selected.map(id => nodeOf(id)?.name).filter(Boolean).join(' › ')}
+              {!isComplete && <span className="text-amber-500"> — pick down to a slot</span>}
+            </p>
+          )}
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
           {current && (
             <button
-              onClick={() => { onAssign({ room: '', shelf: '', position: '' }); onClose() }}
+              onClick={() => { onAssign({ path: [], leafId: '' }); onClose() }}
               className="text-xs text-slate-400 hover:text-red-500 transition-colors"
             >
               Remove location
@@ -295,8 +309,8 @@ function SampleAssignModal({
               Cancel
             </button>
             <button
-              onClick={() => room && shelf && position.trim() && onAssign({ room, shelf, position: position.trim() })}
-              disabled={!room || !shelf || !position.trim()}
+              onClick={confirm}
+              disabled={!isComplete}
               className="px-4 py-2 text-sm rounded-lg bg-violet-600 text-white font-medium
                 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
@@ -482,11 +496,12 @@ export default function ProductDetailPage() {
                   <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                   </svg>
-                  <span>{sampleLoc.room}</span>
-                  <span className="text-violet-300">·</span>
-                  <span>{sampleLoc.shelf}</span>
-                  <span className="text-violet-300">·</span>
-                  <span className="font-mono font-semibold">{sampleLoc.position}</span>
+                  {sampleLoc.path.map((seg, i) => (
+                    <span key={i} className="flex items-center gap-2">
+                      {i > 0 && <span className="text-violet-300">·</span>}
+                      <span className={i === sampleLoc.path.length - 1 ? 'font-mono font-semibold' : ''}>{seg}</span>
+                    </span>
+                  ))}
                   <button onClick={() => setShowAssign(true)} title="Edit location"
                     className="ml-0.5 p-0.5 rounded-full hover:bg-violet-100 transition-colors">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -724,7 +739,7 @@ export default function ProductDetailPage() {
       {showAssign && (
         <SampleAssignModal
           current={sampleLoc}
-          onAssign={loc => { setSampleLoc(loc.position ? loc : null); setShowAssign(false) }}
+          onAssign={loc => { setSampleLoc(loc.leafId ? loc : null); setShowAssign(false) }}
           onClose={() => setShowAssign(false)}
         />
       )}
