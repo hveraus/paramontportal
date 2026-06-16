@@ -874,25 +874,18 @@ function mockShareData(fileId: string) {
   }
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-  return (
-    <button
-      onClick={() => {
-        navigator.clipboard.writeText(text).catch(() => {})
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1800)
-      }}
-      className="flex-shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200
-        text-slate-500 hover:bg-slate-50 transition-colors min-w-[64px]"
-    >
-      {copied ? '✓ Copied' : 'Copy'}
-    </button>
-  )
-}
-
 function ShareModal({ file, onClose }: { file: ArchiveFile; onClose: () => void }) {
   const share = mockShareData(file.id)
+  const [created, setCreated] = useState(false)
+  const [password, setPassword] = useState(share.password)
+  const [copied, setCopied] = useState(false)
+
+  const copyBoth = () => {
+    navigator.clipboard.writeText(`Link: ${share.link}\nPassword: ${password}`).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onClose} />
@@ -915,27 +908,57 @@ function ShareModal({ file, onClose }: { file: ArchiveFile; onClose: () => void 
         <div className="px-6 py-5 space-y-4">
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Share link</p>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                <p className="text-sm text-slate-700 truncate font-mono">{share.link}</p>
-              </div>
-              <CopyButton text={share.link} />
+            <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+              <p className="text-sm text-slate-700 truncate font-mono">{share.link}</p>
             </div>
           </div>
 
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Access password</p>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                <p className="text-sm text-slate-700 font-mono tracking-widest">{share.password}</p>
-              </div>
-              <CopyButton text={share.password} />
-            </div>
+            <input
+              type="text"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              disabled={created}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2
+                text-sm text-slate-700 font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors
+                disabled:opacity-70 disabled:cursor-not-allowed"
+            />
+            {!created && (
+              <p className="text-[11px] text-slate-400 mt-1">You can edit the password before sharing.</p>
+            )}
           </div>
 
           <p className="text-xs text-slate-400">
             Anyone with this link and password can download the file. Share responsibly.
           </p>
+
+          {!created ? (
+            <button
+              onClick={() => setCreated(true)}
+              className="w-full px-4 py-2.5 text-sm rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+            >
+              Create Link
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <button
+                onClick={copyBoth}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                {copied ? '✓ Copied link & password' : 'Copy link & password'}
+              </button>
+              <button
+                onClick={() => setCreated(false)}
+                className="w-full px-4 py-2.5 text-sm rounded-lg border border-red-200 text-red-600 font-medium hover:bg-red-50 transition-colors"
+              >
+                Stop Sharing
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
