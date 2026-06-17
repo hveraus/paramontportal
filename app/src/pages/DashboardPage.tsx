@@ -121,14 +121,20 @@ const CATEGORIES = [
 
 // ── Brand data ────────────────────────────────────────────────────────────
 
+const BRAND_BASE = `${import.meta.env.BASE_URL}brands/`
+
 const BRANDS = [
-  { name: 'Paramont Global', logo: 'https://www.paramontgroup.com/assets/images/logo-paramont-global.png', bg: '#f0f4ff' },
-  { name: 'WeVeel',          logo: 'https://www.paramontgroup.com/assets/images/logo-weveel.png',          bg: '#fff7ed' },
-  { name: 'Evergreat',       logo: 'https://www.paramontgroup.com/assets/images/logo-evergreat.png',       bg: '#f0fdf4' },
-  { name: 'Zhike',           logo: 'https://www.paramontgroup.com/assets/images/logo-zhike.png',           bg: '#fdf4ff' },
-  { name: 'Scentos®',        logo: 'https://www.paramontgroup.com/assets/images/logo-scentos.png',         bg: '#fff1f2' },
-  { name: 'Sugar Rush',      logo: 'https://www.paramontgroup.com/assets/images/logo-sugar-rush.png',      bg: '#fffbeb' },
-  { name: 'YAY HOORAY!™',    logo: 'https://www.paramontgroup.com/assets/images/logo-yay-hooray.png',      bg: '#f0fdfa' },
+  { name: 'Scentos Beauty',           logo: `${BRAND_BASE}scentos.png`,                bg: '#fefce8' },
+  { name: 'Sugar Rush',               logo: `${BRAND_BASE}sugar-rush.png`,             bg: '#fdf2fb', scale: 1.6 },
+  { name: 'YAY HOORAY!™',             logo: `${BRAND_BASE}yay-hooray.png`,             bg: '#ecfeff', scale: 1.6 },
+  { name: 'WeVeel',                   logo: `${BRAND_BASE}weveel.png`,                 bg: '#eef2ff' },
+  { name: 'Tooblerz',                 logo: `${BRAND_BASE}tooblerz.png`,               bg: '#f5f3ff' },
+  { name: 'Crafty Creations',         logo: `${BRAND_BASE}crafty-creations.png`,       bg: '#ffffff' },
+  { name: 'The Influencer Initiative',logo: `${BRAND_BASE}influencer-initiative.png`,  bg: '#f8fafc', scale: 1.5 },
+  { name: 'Mane Street Couture',      logo: `${BRAND_BASE}mane-street.png`,            bg: '#f6f6f7' },
+  { name: 'Back To Basics Luxe',      logo: `${BRAND_BASE}back-to-basics.png`,         bg: '#FFECE9', scale: 1.6 },
+  { name: 'Koko & Milo Beauty',       logo: `${BRAND_BASE}koko-milo.png`,              bg: '#faf6f0' },
+  { name: 'Yumzee Care',              logo: `${BRAND_BASE}yumzee.png`,                 bg: '#f5f7fa' },
 ]
 
 // Mock favorites
@@ -245,25 +251,29 @@ function CategoryCard({ name, count, image, label, onClick }: {
 
 // ── Brand card ────────────────────────────────────────────────────────────
 
-function BrandCard({ name, logo, bg }: { name: string; logo: string; bg: string }) {
+function BrandCard({ name, logo, bg, scale = 1 }: { name: string; logo: string; bg: string; scale?: number }) {
   return (
     <div
-      className="rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center
-                 justify-center p-2 gap-1 hover:shadow-md hover:-translate-y-0.5
+      className="rounded-2xl border border-slate-200 shadow-sm flex items-center
+                 justify-center p-3 hover:shadow-md hover:-translate-y-0.5
                  transition-all duration-200 cursor-pointer h-24"
       style={{ backgroundColor: bg }}
+      title={name}
     >
-      <img
-        src={logo}
-        alt={name}
-        className="max-h-16 max-w-full object-contain"
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = 'none'
-          const next = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null
-          if (next) next.style.display = 'block'
-        }}
-      />
-      <span className="hidden text-xs font-bold text-slate-600 text-center leading-tight">{name}</span>
+      {/* Fixed-size box keeps every logo at a uniform visual scale (scale overrides per brand) */}
+      <div className="w-full flex items-center justify-center" style={{ height: `${48 * scale}px` }}>
+        <img
+          src={logo}
+          alt={name}
+          className="max-h-full max-w-full object-contain"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none'
+            const next = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null
+            if (next) next.style.display = 'block'
+          }}
+        />
+        <span className="hidden text-xs font-bold text-slate-600 text-center leading-tight">{name}</span>
+      </div>
     </div>
   )
 }
@@ -483,9 +493,9 @@ export default function DashboardPage() {
             {/* ── Our Brands ─────────────────────────────────────── */}
             <section>
               <SectionHeader title={t.our_brands} />
-              <div className="grid grid-cols-7 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {BRANDS.map(b => (
-                  <BrandCard key={b.name} name={b.name} logo={b.logo} bg={b.bg} />
+                  <BrandCard key={b.name} name={b.name} logo={b.logo} bg={b.bg} scale={(b as { scale?: number }).scale} />
                 ))}
               </div>
             </section>
