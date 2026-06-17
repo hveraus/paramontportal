@@ -619,33 +619,6 @@ export default function ProductDetailPage() {
                       )}
                     </div>
 
-                    {/* Source Files tab: Upload button */}
-                    {resolvedTab === 'source' && (
-                      <>
-                        <input
-                          type="file"
-                          id="source-file-upload"
-                          className="hidden"
-                          accept=".ai,.psd,.pdf,.eps,.svg,.zip"
-                          multiple
-                          onChange={e => {
-                            // Mock: just clear the input for now
-                            if (e.target) e.target.value = ''
-                          }}
-                        />
-                        <label
-                          htmlFor="source-file-upload"
-                          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-md
-                            bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors cursor-pointer"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                          </svg>
-                          Upload
-                        </label>
-                      </>
-                    )}
-
                     {/* Other tabs: Edit / Save / Cancel */}
                     {resolvedTab !== 'source' && resolvedTab !== 'sales2' && (
                       <div className="flex items-center gap-2">
