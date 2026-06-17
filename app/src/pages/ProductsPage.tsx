@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import TopBar from '../components/TopBar'
 import Sidebar from '../components/Sidebar'
 import { useNavigation } from '../context/NavigationContext'
-import { MOCK_PRODUCTS, CATEGORY_TREE, type ProductListItem } from '../mock/products'
+import { MOCK_PRODUCTS, CATEGORY_TREE, HIERARCHY_TREE, type ProductListItem } from '../mock/products'
 
 const PAGE_SIZE = 12
 const TOTAL_RESULTS = 47 // simulated total
@@ -11,6 +11,7 @@ const TOTAL_RESULTS = 47 // simulated total
 
 interface FilterState {
   categories: string[]
+  hierarchies: string[]
   statuses: string[]
   brands: string[]
   everydaySeasonal: 'all' | 'Everyday' | 'Seasonal'
@@ -21,6 +22,7 @@ interface FilterState {
 
 const DEFAULT_FILTERS: FilterState = {
   categories: [],
+  hierarchies: [],
   statuses: [],
   brands: [],
   everydaySeasonal: 'all',
@@ -66,7 +68,7 @@ function Checkbox({ label, checked, onChange, indeterminate = false, count, leve
                   'text-sm text-slate-500 group-hover:text-slate-700'
   const boxSz = 'w-4 h-4'
   return (
-    <label className="flex items-center gap-2 py-0.5 cursor-pointer group">
+    <label className="flex items-center gap-2 py-0.5 cursor-pointer group flex-1 min-w-0">
       <div className={`${boxSz} rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors
         ${checked || indeterminate
           ? 'bg-blue-600 border-blue-600'
@@ -78,9 +80,9 @@ function Checkbox({ label, checked, onChange, indeterminate = false, count, leve
         </svg>}
         {indeterminate && <div className="w-1.5 h-0.5 bg-white rounded" />}
       </div>
-      <span className={`flex-1 transition-colors select-none leading-tight ${labelCls}`}>{label}</span>
+      <span title={label} className={`flex-1 min-w-0 truncate transition-colors select-none leading-tight ${labelCls}`}>{label}</span>
       {count !== undefined && (
-        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none transition-colors
+        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full min-w-[18px] flex-shrink-0 text-center leading-none transition-colors
           ${checked || indeterminate
             ? 'bg-blue-100 text-blue-600'
             : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
@@ -109,33 +111,36 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
 
 // ── Filter panel ──────────────────────────────────────────────────────────
 
-function FilterPanel({ filters, onChange, categoryCounts }: {
+function FilterPanel({ filters, onChange, categoryCounts, hierarchyCounts }: {
   filters: FilterState
   onChange: (f: FilterState) => void
   categoryCounts: Record<string, number>
+  hierarchyCounts: Record<string, number>
 }) {
   const { navigate } = useNavigation()
   const [expandedL1, setExpandedL1] = useState<Set<string>>(new Set())
-  const [expandedL2, setExpandedL2] = useState<Set<string>>(new Set())
+  const [expandedHier, setExpandedHier] = useState<Set<string>>(new Set())
 
   const toggleExpL1 = (name: string) =>
     setExpandedL1(prev => { const s = new Set(prev); s.has(name) ? s.delete(name) : s.add(name); return s })
-  const toggleExpL2 = (name: string) =>
-    setExpandedL2(prev => { const s = new Set(prev); s.has(name) ? s.delete(name) : s.add(name); return s })
+  const toggleExpHier = (name: string) =>
+    setExpandedHier(prev => { const s = new Set(prev); s.has(name) ? s.delete(name) : s.add(name); return s })
 
-  const toggleArr = (key: 'categories' | 'statuses' | 'brands' | 'holidays', val: string) => {
+  const toggleArr = (key: 'categories' | 'hierarchies' | 'statuses' | 'brands' | 'holidays', val: string) => {
     const arr = filters[key] as string[]
     onChange({ ...filters, [key]: arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val] })
   }
 
-  const allLeaves = (children: (string | { name: string; children: string[] })[]): string[] =>
-    children.flatMap(c => typeof c === 'string' ? [c] : c.children)
-
-  const toggleParentCat = (_parent: string, children: (string | { name: string; children: string[] })[]) => {
-    const leaves = allLeaves(children)
-    const allSelected = leaves.every(c => filters.categories.includes(c))
+  const toggleParentCat = (_parent: string, leaves: string[]) => {
+    const allSelected = leaves.length > 0 && leaves.every(c => filters.categories.includes(c))
     const without = filters.categories.filter(c => !leaves.includes(c))
     onChange({ ...filters, categories: allSelected ? without : [...without, ...leaves] })
+  }
+
+  const toggleParentHier = (values: string[]) => {
+    const allSelected = values.length > 0 && values.every(v => filters.hierarchies.includes(v))
+    const without = filters.hierarchies.filter(v => !values.includes(v))
+    onChange({ ...filters, hierarchies: allSelected ? without : [...without, ...values] })
   }
 
   return (
@@ -152,10 +157,10 @@ function FilterPanel({ filters, onChange, categoryCounts }: {
       <FilterSection title="Category">
         <div className="space-y-1">
           {CATEGORY_TREE.map(cat => {
-            const l1Leaves = allLeaves(cat.children)
-            const l1All  = l1Leaves.every(c => filters.categories.includes(c))
-            const l1Some = l1Leaves.some(c => filters.categories.includes(c))
-            const l1Count = l1Leaves.reduce((s, c) => s + (categoryCounts[c] ?? 0), 0)
+            const leaves = cat.children
+            const l1All  = leaves.length > 0 && leaves.every(c => filters.categories.includes(c))
+            const l1Some = leaves.some(c => filters.categories.includes(c))
+            const l1Count = leaves.reduce((s, c) => s + (categoryCounts[c] ?? 0), 0)
             const l1Open = expandedL1.has(cat.name)
             return (
               <div key={cat.name}>
@@ -168,52 +173,70 @@ function FilterPanel({ filters, onChange, categoryCounts }: {
                     count={l1Count || undefined}
                     level={1}
                   />
-                  <button onClick={() => toggleExpL1(cat.name)} className="ml-auto p-0.5 text-slate-400 hover:text-slate-600 flex-shrink-0">
-                    <svg className={`w-3 h-3 transition-transform ${l1Open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  {leaves.length > 0 && (
+                    <button onClick={() => toggleExpL1(cat.name)} className="ml-auto p-0.5 text-slate-400 hover:text-slate-600 flex-shrink-0">
+                      <svg className={`w-3 h-3 transition-transform ${l1Open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {l1Open && leaves.length > 0 && (
+                  <div className="ml-3 mt-0.5 mb-1 border-l-2 border-slate-100 pl-3 space-y-0">
+                    {leaves.map(leaf => (
+                      <Checkbox
+                        key={leaf} label={leaf}
+                        checked={filters.categories.includes(leaf)}
+                        onChange={() => toggleArr('categories', leaf)}
+                        count={categoryCounts[leaf] || undefined}
+                        level={2}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </FilterSection>
+
+      {/* ── Hierarchy — 2 levels, collapsible ── */}
+      <FilterSection title="Hierarchy">
+        <div className="space-y-1">
+          {HIERARCHY_TREE.map(group => {
+            const values = group.children.map(c => c.value)
+            const all  = values.length > 0 && values.every(v => filters.hierarchies.includes(v))
+            const some = values.some(v => filters.hierarchies.includes(v))
+            const count = values.reduce((s, v) => s + (hierarchyCounts[v] ?? 0), 0)
+            const open = expandedHier.has(group.name)
+            return (
+              <div key={group.name}>
+                <div className="flex items-center gap-0.5 py-0.5">
+                  <Checkbox
+                    label={group.name}
+                    checked={all}
+                    indeterminate={!all && some}
+                    onChange={() => toggleParentHier(values)}
+                    count={count || undefined}
+                    level={1}
+                  />
+                  <button onClick={() => toggleExpHier(group.name)} className="ml-auto p-0.5 text-slate-400 hover:text-slate-600 flex-shrink-0">
+                    <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                 </div>
-                {l1Open && (
-                  <div className="ml-3 mt-0.5 mb-1 border-l-2 border-slate-100 pl-3 space-y-0.5">
-                    {cat.children.map(sub => {
-                      const l2All  = sub.children.every(c => filters.categories.includes(c))
-                      const l2Some = sub.children.some(c => filters.categories.includes(c))
-                      const l2Count = sub.children.reduce((s, c) => s + (categoryCounts[c] ?? 0), 0)
-                      const l2Open = expandedL2.has(sub.name)
-                      return (
-                        <div key={sub.name}>
-                          <div className="flex items-center gap-0.5">
-                            <Checkbox
-                              label={sub.name}
-                              checked={l2All}
-                              indeterminate={!l2All && l2Some}
-                              onChange={() => toggleParentCat(sub.name, sub.children)}
-                              count={l2Count || undefined}
-                              level={2}
-                            />
-                            <button onClick={() => toggleExpL2(sub.name)} className="ml-auto p-0.5 text-slate-400 hover:text-slate-600 flex-shrink-0">
-                              <svg className={`w-3 h-3 transition-transform ${l2Open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                          </div>
-                          {l2Open && (
-                            <div className="ml-3 mt-0.5 mb-0.5 border-l border-slate-100 pl-3 space-y-0">
-                              {sub.children.map(leaf => (
-                                <Checkbox
-                                  key={leaf} label={leaf}
-                                  checked={filters.categories.includes(leaf)}
-                                  onChange={() => toggleArr('categories', leaf)}
-                                  count={categoryCounts[leaf] || undefined}
-                                  level={3}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
+                {open && (
+                  <div className="ml-3 mt-0.5 mb-1 border-l-2 border-slate-100 pl-3 space-y-0">
+                    {group.children.map(leaf => (
+                      <Checkbox
+                        key={leaf.value} label={leaf.label}
+                        checked={filters.hierarchies.includes(leaf.value)}
+                        onChange={() => toggleArr('hierarchies', leaf.value)}
+                        count={hierarchyCounts[leaf.value] || undefined}
+                        level={2}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -459,8 +482,29 @@ export default function ProductsPage() {
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {}
+    // Seed each subcategory with a deterministic mock count (1–9) so badges vary
+    CATEGORY_TREE.forEach(cat => cat.children.forEach(leaf => {
+      let h = 0
+      for (let i = 0; i < leaf.length; i++) h = (h * 31 + leaf.charCodeAt(i)) >>> 0
+      counts[leaf] = (h % 9) + 1
+    }))
+    // Real product matches add on top
     MOCK_PRODUCTS.forEach(p => {
       counts[p.subsubcategory] = (counts[p.subsubcategory] ?? 0) + 1
+    })
+    return counts
+  }, [])
+
+  const hierarchyCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    // Seed each hierarchy leaf with a deterministic mock count (1–9) so badges vary
+    HIERARCHY_TREE.forEach(g => g.children.forEach(leaf => {
+      let h = 0
+      for (let i = 0; i < leaf.value.length; i++) h = (h * 31 + leaf.value.charCodeAt(i)) >>> 0
+      counts[leaf.value] = (h % 9) + 1
+    }))
+    MOCK_PRODUCTS.forEach(p => {
+      counts[p.hierarchy] = (counts[p.hierarchy] ?? 0) + 1
     })
     return counts
   }, [])
@@ -468,6 +512,7 @@ export default function ProductsPage() {
   const filtered = useMemo(() => {
     let list = [...MOCK_PRODUCTS]
     if (filters.categories.length)      list = list.filter(p => filters.categories.includes(p.subsubcategory))
+    if (filters.hierarchies.length)     list = list.filter(p => filters.hierarchies.includes(p.hierarchy))
     if (filters.statuses.length)        list = list.filter(p => filters.statuses.includes(p.status))
     if (filters.brands.length)          list = list.filter(p => filters.brands.includes(p.brand))
     if (filters.everydaySeasonal !== 'all') list = list.filter(p => p.everydaySeasonal === filters.everydaySeasonal)
@@ -486,7 +531,7 @@ export default function ProductsPage() {
   }, [filtered, sortBy])
 
   // Simulate larger total for pagination display
-  const hasActiveFilters = filters.categories.length > 0 || filters.statuses.length > 0 ||
+  const hasActiveFilters = filters.categories.length > 0 || filters.hierarchies.length > 0 || filters.statuses.length > 0 ||
     filters.brands.length > 0 || filters.everydaySeasonal !== 'all' ||
     filters.holidays.length > 0 || filters.hasSample || filters.committed
 
@@ -496,6 +541,7 @@ export default function ProductsPage() {
 
   const activeFilterCount = [
     filters.categories.length,
+    filters.hierarchies.length,
     filters.statuses.length,
     filters.brands.length,
     filters.everydaySeasonal !== 'all' ? 1 : 0,
@@ -524,7 +570,7 @@ export default function ProductsPage() {
           {/* Content */}
           <div className="flex gap-5 items-start">
             {/* Filter panel */}
-            <FilterPanel filters={filters} onChange={(f) => { setFilters(f); setPage(1) }} categoryCounts={categoryCounts} />
+            <FilterPanel filters={filters} onChange={(f) => { setFilters(f); setPage(1) }} categoryCounts={categoryCounts} hierarchyCounts={hierarchyCounts} />
 
             {/* Results */}
             <div className="flex-1 min-w-0 space-y-4">
