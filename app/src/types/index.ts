@@ -72,6 +72,34 @@ export interface ProductImage {
   alt: string
 }
 
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+export type ApprovalKind = 'image' | 'download'
+
+export interface ApprovalImageItem {
+  id: string
+  fileName: string
+  imageUrl: string
+  imageType: ProductImage['type']
+  replaceImageId?: string
+}
+
+export interface ApprovalRequest {
+  id: string
+  kind: ApprovalKind
+  status: ApprovalStatus
+  productCode: string
+  productName: string
+  requesterId: string
+  requesterName: string
+  departmentId: string
+  approverId: string
+  approverName: string
+  submittedAt: string
+  reviewedAt: string | null
+  images?: ApprovalImageItem[] // 图片上传工单：整批审批
+  reason?: string
+}
+
 export interface SourceFile {
   id: string
   name: string
@@ -265,14 +293,17 @@ export interface CommittedRecord {
 
 // ── SOL files (Statement of Line) ───────────────────────────────────────────
 
-export type SOLStatus = 'Open' | 'Merged'
+export type SOLStatus = 'Imported' | 'Pending' | 'Failed' | 'Processing' | 'Queued'
 
 export interface SOLFile {
   id: string
-  date: string          // ISO date
-  name: string          // file / SOL name
+  name: string              // file / SOL name
   customer: string
   status: SOLStatus
+  updatedTime: string       // ISO datetime — last update
+  mergeTime: string | null  // ISO datetime the data was merged, or null
+  totalEntries: number      // total data rows in the SOL
+  mergedEntries: number     // rows already merged into PDM
 }
 
 // One row = sales of this product to one customer in one period (month).

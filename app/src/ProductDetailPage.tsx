@@ -6,6 +6,8 @@ import type { ProductDetail } from './types'
 import Breadcrumb from './components/Breadcrumb'
 import { useNavigation } from './context/NavigationContext'
 import ImageGallery from './components/ImageGallery'
+import ImageApprovalUploader from './components/ImageApprovalUploader'
+import { useApprovals } from './context/approvalStore'
 import StatusTag from './components/StatusTag'
 import BasicInfoTab from './components/tabs/BasicInfoTab'
 import SpecsTab from './components/tabs/SpecsTab'
@@ -341,6 +343,7 @@ function SampleAssignModal({
 
 export default function ProductDetailPage() {
   const { can } = useRole()
+  const { effectiveImages } = useApprovals()
   const { navigate } = useNavigation()
   const [activeTab, setActiveTab]       = useState<TabId>('basic')
   const [sampleLoc, setSampleLoc]   = useState<SampleLocation | null>(null)
@@ -557,7 +560,8 @@ export default function ProductDetailPage() {
           {/* Image panel */}
           <div className="w-[40%] flex-shrink-0 sticky top-[52px]">
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
-              <ImageGallery images={product.images} />
+              <ImageGallery images={effectiveImages(product.productCode, product.images)} />
+              <ImageApprovalUploader productCode={product.productCode} productName={product.productName} images={effectiveImages(product.productCode, product.images)} />
             </div>
           </div>
 
@@ -677,12 +681,12 @@ export default function ProductDetailPage() {
                   {resolvedTab === 'basic'     && <BasicInfoTab   product={editingTab === 'basic' ? draft : product}     isEditing={editingTab === 'basic'}     onChange={onChange} />}
                   {resolvedTab === 'specs'     && <SpecsTab       product={editingTab === 'specs' ? draft : product}     isEditing={editingTab === 'specs'}     onChange={onChange} />}
                   {resolvedTab === 'packaging' && <PackagingTab   product={editingTab === 'packaging' ? draft : product} isEditing={editingTab === 'packaging'} onChange={onChange} />}
-                  {resolvedTab === 'quality'   && <QualityTab     qualityRecords={editingTab === 'quality' ? draft.qualityRecords : product.qualityRecords} isEditing={editingTab === 'quality'} onChange={onChange} />}
+                  {resolvedTab === 'quality'   && <QualityTab     qualityRecords={editingTab === 'quality' ? draft.qualityRecords : product.qualityRecords} productCode={product.productCode} productName={product.productName} isEditing={editingTab === 'quality'} onChange={onChange} />}
                   {resolvedTab === 'cost'      && <CostTab        product={editingTab === 'cost' ? draft : product}     isEditing={editingTab === 'cost'}     onChange={onChange} />}
                   {resolvedTab === 'customs'   && <CustomsTab     product={editingTab === 'customs' ? draft : product}  isEditing={editingTab === 'customs'}  onChange={onChange} />}
-{resolvedTab === 'patents'        && <PatentsTab        patents={editingTab === 'patents' ? draft.patents : product.patents} isEditing={editingTab === 'patents'} onChange={onChange} />}
+{resolvedTab === 'patents'        && <PatentsTab        patents={editingTab === 'patents' ? draft.patents : product.patents} productCode={product.productCode} productName={product.productName} isEditing={editingTab === 'patents'} onChange={onChange} />}
                   {resolvedTab === 'sales2'         && <SalesTab2         salesRecords={product.salesRecords} committedRecords={product.committedRecords} />}
-                  {resolvedTab === 'source'         && <SourceFilesTab    sourceFiles={product.sourceFiles} />}
+                  {resolvedTab === 'source'         && <SourceFilesTab    sourceFiles={product.sourceFiles} productCode={product.productCode} productName={product.productName} />}
                 </div>
               </div>
             </div>

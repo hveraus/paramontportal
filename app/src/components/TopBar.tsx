@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { useRole } from '../context/RoleContext'
+import { useApprovals } from '../context/approvalStore'
 import { useLang } from '../context/LanguageContext'
 import { useNavigation } from '../context/NavigationContext'
 import { MOCK_PRODUCTS } from '../mock/products'
@@ -57,8 +58,9 @@ function Highlight({ text, query }: { text: string; query: string }) {
 
 export default function TopBar() {
   const { role, setRole, currentUser } = useRole()
+  const { requests } = useApprovals()
   const { lang, setLang } = useLang()
-  const { navigate, setSearchQuery } = useNavigation()
+  const { page, navigate, setSearchQuery } = useNavigation()
   const [langOpen, setLangOpen]       = useState(false)
   const [roleOpen, setRoleOpen]       = useState(false)
   const [notifOpen, setNotifOpen]     = useState(false)
@@ -74,6 +76,8 @@ export default function TopBar() {
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const activeLang = LANGUAGES.find(l => l.code === lang) ?? LANGUAGES[0]
+  const pendingApprovalCount = requests.filter(request => request.approverId === currentUser.id
+    && request.requesterId !== currentUser.id && request.status === 'pending').length
 
   const expandedQuery = expandAbbr(inputValue)
 
@@ -275,6 +279,28 @@ export default function TopBar() {
           )}
         </div>
 
+        {/* Approval inbox: document with a checkmark */}
+        <button
+          type="button"
+          onClick={() => { navigate('approvals'); setLangOpen(false); setNotifOpen(false); setRoleOpen(false) }}
+          aria-label={lang === 'en' ? `Approvals${pendingApprovalCount ? `, ${pendingApprovalCount} pending` : ''}` : `审批单${pendingApprovalCount ? `，${pendingApprovalCount} 条待审核` : ''}`}
+          aria-current={page === 'approvals' ? 'page' : undefined}
+          title={lang === 'en' ? 'Approvals' : '审批单'}
+          className={`relative w-9 h-9 flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+            ${page === 'approvals' ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" />
+            <path d="M9 3h6a1 1 0 0 1 1 1v2H8V4a1 1 0 0 1 1-1Z" />
+            <path d="m8.5 13 2.4 2.4 4.7-4.8" />
+          </svg>
+          {pendingApprovalCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-blue-600 border-2 border-white px-0.5 flex items-center justify-center text-[10px] font-bold leading-none text-white">
+              {pendingApprovalCount > 9 ? '9+' : pendingApprovalCount}
+            </span>
+          )}
+        </button>
+
         {/* Notification bell */}
         <div className="relative">
           <button
@@ -294,6 +320,17 @@ export default function TopBar() {
                 <p className="text-sm font-semibold text-slate-800">{lang === 'en' ? 'Notifications' : '通知'}</p>
                 <span className="text-xs text-blue-600 font-medium">{lang === 'en' ? 'Mark all read' : '全部已读'}</span>
               </div>
+              {requests.filter(request => (request.approverId === currentUser.id && request.status === 'pending')
+                || (request.requesterId === currentUser.id && request.status !== 'pending')).slice(0, 4).map(request => (
+                <button key={request.id} onClick={() => { setNotifOpen(false); navigate('approvals') }} className="w-full text-left flex gap-3 px-4 py-3 border-b border-slate-50 bg-blue-50/40 hover:bg-blue-50">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+                  <span className="text-xs text-slate-700 leading-snug">
+                    {request.requesterId === currentUser.id
+                      ? `${request.kind === 'download' ? 'Download access' : 'Image upload'} ${request.status} · ${request.productCode}`
+                      : `New ${request.kind === 'download' ? 'download' : 'image'} request from ${request.requesterName} · ${request.productCode}`}
+                  </span>
+                </button>
+              ))}
               {[
                 { text: lang === 'en' ? 'QC report uploaded for PDM-20241001-138' : 'PDM-20241001-138 质检报告已上传', time: '2h ago', unread: true },
                 { text: lang === 'en' ? 'Sarah commented on Pom-Pom Yarn Kit' : 'Sarah 评论了 Pom-Pom 毛线套装', time: '5h ago', unread: true },

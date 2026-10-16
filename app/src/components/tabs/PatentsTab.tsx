@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { PatentRecord, PatentFile, ProductDetail } from '../../types'
+import DownloadApprovalButton from '../DownloadApprovalButton'
 
 const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
 
@@ -30,11 +31,15 @@ function PatentCard({
   isEditing,
   onEdit,
   onDelete,
+  productCode,
+  productName,
 }: {
   patent: PatentRecord
   isEditing: boolean
   onEdit: () => void
   onDelete: () => void
+  productCode: string
+  productName: string
 }) {
   return (
     <div className="border border-slate-200 rounded-xl p-4 space-y-4">
@@ -80,9 +85,8 @@ function PatentCard({
         {patent.files.length > 0 ? (
           <div className="space-y-1.5">
             {patent.files.map(file => (
-              <a
+              <div
                 key={file.id}
-                href={file.url}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors group"
               >
                 <FileIcon />
@@ -92,10 +96,8 @@ function PatentCard({
                   </p>
                   <p className="text-xs text-slate-400">{file.size} · Uploaded {formatDate(file.uploadedAt)}</p>
                 </div>
-                <svg className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </a>
+                <DownloadApprovalButton productCode={productCode} productName={productName} fileName={file.name} fileUrl={file.url} className="text-xs text-blue-600 hover:text-blue-800" />
+              </div>
             ))}
           </div>
         ) : (
@@ -251,11 +253,13 @@ function PatentForm({
 
 interface Props {
   patents: PatentRecord[]
+  productCode: string
+  productName: string
   isEditing: boolean
   onChange: (fields: Partial<ProductDetail>) => void
 }
 
-export default function PatentsTab({ patents, isEditing, onChange }: Props) {
+export default function PatentsTab({ patents, productCode, productName, isEditing, onChange }: Props) {
   const [editingPatent, setEditingPatent] = useState<PatentRecord | null>(null)
   const [isAddingNew, setIsAddingNew] = useState(false)
 
@@ -308,6 +312,8 @@ export default function PatentsTab({ patents, isEditing, onChange }: Props) {
           isEditing={isEditing}
           onEdit={() => { setEditingPatent(patent); setIsAddingNew(false) }}
           onDelete={() => handleDeletePatent(patent)}
+          productCode={productCode}
+          productName={productName}
         />
       ))}
 

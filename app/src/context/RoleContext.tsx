@@ -35,7 +35,7 @@ const ROLE_USERS: Record<UserRole, CurrentUser> = {
   admin:           { id: 'u-sarah',  name: 'Sarah Thompson', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=f59e0b&fontColor=ffffff', team: 'US' },
   product_manager: { id: 'u-sarah',  name: 'Sarah Thompson', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=f59e0b&fontColor=ffffff', team: 'US' },
   pd_china:        { id: 'u-xiaomei', name: 'Xiaomei Li',    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=XL&backgroundColor=3b82f6&fontColor=ffffff', team: 'NB' },
-  pd_us:           { id: 'u-sarah',  name: 'Sarah Thompson', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ST&backgroundColor=f59e0b&fontColor=ffffff', team: 'US' },
+  pd_us:           { id: 'u-josh',  name: 'Josh Miller', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=JM&backgroundColor=6366f1&fontColor=ffffff', team: 'US' },
   sales:           { id: 'u-wei',    name: 'Wei Zhang',      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=WZ&backgroundColor=10b981&fontColor=ffffff',  team: 'NB' },
 }
 

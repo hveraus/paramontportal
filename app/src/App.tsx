@@ -12,6 +12,8 @@ import SettingsPage from './pages/SettingsPage'
 import ProgramPage from './pages/ProgramPage'
 import SearchResultsPage from './pages/SearchResultsPage'
 import LoginPage from './pages/LoginPage'
+import ApprovalsPage from './pages/ApprovalsPage'
+import { ApprovalProvider } from './context/ApprovalContext'
 
 function PageRouter() {
   const { page } = useNavigation()
@@ -20,6 +22,7 @@ function PageRouter() {
   if (page === 'products')             return <ProductsPage />
   if (page === 'archives')             return <ArchivesPage />
   if (page === 'sol-files')            return <SOLFilesPage />
+  if (page === 'approvals')            return <ApprovalsPage />
   if (page === 'sample-room')          return <SampleRoomPage />
   if (page === 'program')              return <ProgramPage />
   if (page === 'settings')             return <SettingsIndexPage />
@@ -33,7 +36,9 @@ export default function App() {
     <RoleProvider>
       <LangProvider>
         <NavigationProvider>
-          <PageRouter />
+          <ApprovalProvider>
+            <PageRouter />
+          </ApprovalProvider>
         </NavigationProvider>
       </LangProvider>
     </RoleProvider>

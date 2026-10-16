@@ -1,10 +1,13 @@
 import type { SourceFile } from '../../types'
+import DownloadApprovalButton from '../DownloadApprovalButton'
 
 interface Props {
   sourceFiles: SourceFile[]
+  productCode: string
+  productName: string
 }
 
-export default function SourceFilesTab({ sourceFiles }: Props) {
+export default function SourceFilesTab({ sourceFiles, productCode, productName }: Props) {
   if (sourceFiles.length === 0) {
     return <p className="text-sm text-slate-400 py-6 text-center">No source files uploaded.</p>
   }
@@ -18,7 +21,7 @@ export default function SourceFilesTab({ sourceFiles }: Props) {
             <span className="text-[11px] font-bold text-orange-600 leading-none">Ai</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-800 truncate">{f.name}</p>
+            <DownloadApprovalButton productCode={productCode} productName={productName} fileName={f.name} label={f.name} className="text-sm font-medium text-slate-800 truncate hover:text-blue-700 hover:underline text-left" />
             <p className="text-xs text-slate-400 mt-0.5">{f.size} · {f.uploadedAt} · {f.uploadedBy}</p>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">

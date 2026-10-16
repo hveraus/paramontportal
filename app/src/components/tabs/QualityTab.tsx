@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { QualityRecord, QualityStatus, QualityAttachment, ProductDetail } from '../../types'
 import StatusTag from '../StatusTag'
+import DownloadApprovalButton from '../DownloadApprovalButton'
 
 const INPUT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors"
 const SELECT_CLS = "w-full h-9 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors appearance-none"
@@ -25,7 +26,7 @@ function SectionLabel({ title, count }: { title: string; count?: number }) {
   )
 }
 
-function AttachmentRow({ att }: { att: QualityAttachment }) {
+function AttachmentRow({ att, productCode, productName }: { att: QualityAttachment; productCode: string; productName: string }) {
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors group">
       <div className="w-8 h-8 bg-red-50 rounded-md flex items-center justify-center flex-shrink-0">
@@ -40,19 +41,14 @@ function AttachmentRow({ att }: { att: QualityAttachment }) {
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50 transition-colors">Preview</button>
-        <button className="text-xs text-slate-500 hover:text-slate-700 px-2 py-1 rounded hover:bg-slate-100 transition-colors flex items-center gap-1">
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Download
-        </button>
+        <DownloadApprovalButton productCode={productCode} productName={productName} fileName={att.name} fileUrl={att.url} className="text-xs text-slate-500 hover:text-blue-700 px-2 py-1 rounded hover:bg-blue-50" />
       </div>
     </div>
   )
 }
 
 
-function DetailPanel({ record }: { record: QualityRecord }) {
+function DetailPanel({ record, productCode, productName }: { record: QualityRecord; productCode: string; productName: string }) {
   return (
     <div className="border border-slate-200 rounded-xl p-5 space-y-5 bg-slate-50/50">
       {/* Status row */}
@@ -89,7 +85,7 @@ function DetailPanel({ record }: { record: QualityRecord }) {
       <div>
         <SectionLabel title="Test Reports" count={record.attachments.length} />
         {record.attachments.length > 0
-          ? <div className="space-y-1.5">{record.attachments.map(att => <AttachmentRow key={att.id} att={att} />)}</div>
+          ? <div className="space-y-1.5">{record.attachments.map(att => <AttachmentRow key={att.id} att={att} productCode={productCode} productName={productName} />)}</div>
           : <p className="text-xs text-slate-300 italic">No test reports uploaded</p>
         }
       </div>
@@ -99,6 +95,8 @@ function DetailPanel({ record }: { record: QualityRecord }) {
 
 interface Props {
   qualityRecords: QualityRecord[]
+  productCode: string
+  productName: string
   isEditing: boolean
   onChange: (fields: Partial<ProductDetail>) => void
 }
@@ -115,7 +113,7 @@ function emptyRecord(): QualityRecord {
   }
 }
 
-export default function QualityTab({ qualityRecords, isEditing, onChange }: Props) {
+export default function QualityTab({ qualityRecords, productCode, productName, isEditing, onChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(
     qualityRecords.length > 0 ? qualityRecords[0].id : null
   )
@@ -332,7 +330,7 @@ export default function QualityTab({ qualityRecords, isEditing, onChange }: Prop
       )}
 
       {/* Detail panel — read mode only */}
-      {!isEditing && selected && <DetailPanel record={selected} />}
+      {!isEditing && selected && <DetailPanel record={selected} productCode={productCode} productName={productName} />}
     </div>
   )
 }
